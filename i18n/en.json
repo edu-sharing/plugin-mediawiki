@@ -1,0 +1,27 @@
+{
+	"@metadata": {
+		"authors": [
+      "http://edu-sharing.net",
+			"http://idea-sketch.com"
+		]
+	},
+  "edusharing-desc": "Enables the inclusion of media content from the Edu-Sharing Repository",
+  "wikieditor-toolbar-edusharing-title": "Insert edu object",
+  "wikieditor-toolbar-edusharing-object": "Object",
+  "wikieditor-toolbar-edusharing-search": "Search",
+  "wikieditor-toolbar-edusharing-caption": "Title",
+  "wikieditor-toolbar-edusharing-height": "Height",
+  "wikieditor-toolbar-edusharing-width": "Width",
+  "wikieditor-toolbar-edusharing-insert": "Apply",
+  "wikieditor-toolbar-edusharing-cancel": "Cancel",
+  "wikieditor-toolbar-edusharing-px": "px",
+  "wikieditor-toolbar-edusharing-float": "Float",
+  "wikieditor-toolbar-edusharing-float-left": "Left",
+  "wikieditor-toolbar-edusharing-float-none": "None",
+  "wikieditor-toolbar-edusharing-float-right": "Right",
+  "wikieditor-toolbar-edusharing-float-inline": "Inline",
+  "wikieditor-toolbar-edusharing-constrainPropoertions": "Constrain proportions",
+  "wikieditor-toolbar-edusharing-version": "Version",
+  "wikieditor-toolbar-edusharing-version-latest": "Latest",
+  "wikieditor-toolbar-edusharing-version-current": "Current"
+}

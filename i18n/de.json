@@ -1,0 +1,27 @@
+{
+	"@metadata": {
+		"authors": [
+      "http://edu-sharing.net",
+			"http://idea-sketch.com"
+		]
+	},
+  "edusharing-desc": "Ermöglicht die Einbindung von Medieninhalten aud dem Edu Sharing Repository",
+  "wikieditor-toolbar-edusharing-title": "Edu-Objekt einfügen",
+	"wikieditor-toolbar-edusharing-object": "Objekt",
+	"wikieditor-toolbar-edusharing-search": "Suche",
+	"wikieditor-toolbar-edusharing-caption": "Titel",
+	"wikieditor-toolbar-edusharing-height": "Höhe",
+	"wikieditor-toolbar-edusharing-width": "Breite",
+	"wikieditor-toolbar-edusharing-insert": "Einfügen",
+	"wikieditor-toolbar-edusharing-cancel": "Abbrechen",
+	"wikieditor-toolbar-edusharing-px": "px",
+	"wikieditor-toolbar-edusharing-float": "Fluss",
+	"wikieditor-toolbar-edusharing-float-left": "Links",
+	"wikieditor-toolbar-edusharing-float-none": "Kein",
+	"wikieditor-toolbar-edusharing-float-right": "Rechts",
+	"wikieditor-toolbar-edusharing-float-inline": "Inline",
+	"wikieditor-toolbar-edusharing-constrainPropoertions": "Proportionen erhalten",
+  "wikieditor-toolbar-edusharing-version": "Version",
+  "wikieditor-toolbar-edusharing-version-latest": "Aktuellste",
+  "wikieditor-toolbar-edusharing-version-current": "Diese"
+}

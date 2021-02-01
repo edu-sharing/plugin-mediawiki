@@ -1,0 +1,82 @@
+{
+	"name": "EduSharing",
+	"version": "2.0",
+	"author": [
+		"http://edu-sharing.net",
+		"http://idea-sketch.com"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:EduSharing",
+	"descriptionmsg": "edusharing-desc",
+	"requires": {
+		"MediaWiki": ">= 1.35.0",
+		"extensions": {
+			"WikiEditor": "*"
+		}
+	},
+	"license-name": "MIT",
+	"type": "",
+	"MessagesDirs": {
+		"EduSharing": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"EduSharingHooks": "includes/EduSharingHooks.php",
+		"EduSharing": "includes/EduSharing.php"
+	},
+	"Hooks": {
+		"BeforePageDisplay": [
+			"EduSharingHooks::onBeforePageDisplay"
+		]
+	},
+	"ResourceModules": {
+		"ext.eduSharing.dialog": {
+			"styles":	"less/ext.eduSharing.screen.less",
+			"scripts": "js/ext.eduSharing.dialog.js",
+			"dependencies": [
+				"ext.wikiEditor"
+			],
+			"messages": [
+				"wikieditor-toolbar-edusharing-title",
+				"wikieditor-toolbar-edusharing-object",
+				"wikieditor-toolbar-edusharing-search",
+				"wikieditor-toolbar-edusharing-caption",
+				"wikieditor-toolbar-edusharing-height",
+				"wikieditor-toolbar-edusharing-width",
+				"wikieditor-toolbar-edusharing-insert",
+				"wikieditor-toolbar-edusharing-cancel",
+				"wikieditor-toolbar-edusharing-px",
+				"wikieditor-toolbar-edusharing-float",
+				"wikieditor-toolbar-edusharing-float-left",
+				"wikieditor-toolbar-edusharing-float-none",
+				"wikieditor-toolbar-edusharing-float-right",
+				"wikieditor-toolbar-edusharing-float-inline",
+				"wikieditor-toolbar-edusharing-constrainPropoertions",
+				"wikieditor-toolbar-edusharing-version",
+				"wikieditor-toolbar-edusharing-version-latest",
+				"wikieditor-toolbar-edusharing-version-current"
+			],
+			"targets": [
+				"mobile",
+				"desktop"
+			]
+		},
+		"ext.eduSharing.display": {
+			"styles":	"less/ext.eduSharing.filter.less",
+			"scripts": "js/ext.eduSharing.edu.js",
+			"dependencies": [],
+			"messages": [],
+			"targets": [
+				"mobile",
+				"desktop"
+			],
+			"position": "top"
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "EduSharing/resources"
+	},
+	"manifest_version": 2
+}
+

@@ -1,0 +1,28 @@
+{
+	"@metadata": {
+		"authors": [
+      "http://edu-sharing.net",
+			"http://idea-sketch.com"
+		]
+	},
+  "edusharing-desc": "可以整合教育共享资源库中的媒体内容。",
+  "wikieditor-toolbar-edusharing-title":"插入对象",
+  "wikieditor-toolbar-edusharing-object":"对象",
+  "wikieditor-toolbar-edusharing-search":"搜索",
+  "wikieditor-toolbar-edusharing-caption":"标题",
+  "wikieditor-toolbar-edusharing-height":"高度",
+  "wikieditor-toolbar-edusharing-width":"宽度",
+  "wikieditor-toolbar-edusharing-insert":"应用",
+  "wikieditor-toolbar-edusharing-cancel":"取消",
+  "wikieditor-toolbar-edusharing-px":"像素",
+  "wikieditor-toolbar-edusharing-float":"浮动",
+  "wikieditor-toolbar-edusharing-float-left":"左",
+  "wikieditor-toolbar-edusharing-float-none":"无",
+  "wikieditor-toolbar-edusharing-float-right":"右",
+  "wikieditor-toolbar-edusharing-float-inline":"内嵌",
+  "wikieditor-toolbar-edusharing-constrainPropoertions":"等比例",
+  "wikieditor-toolbar-edusharing-version":"版本",
+  "wikieditor-toolbar-edusharing-version-latest":"最新",
+  "wikieditor-toolbar-edusharing-version-current":"当前"
+}
+
