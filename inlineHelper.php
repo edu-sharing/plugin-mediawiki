@@ -4,7 +4,7 @@ session_name ( 'my_wiki2_session' );
 session_id ( $_GET ['SID'] );
 session_start ();
 
-require_once ('classes/ESApp.php');
+require_once ('includes/ESApp.php');
 
 $redirect_url = $_GET['reUrl'];
 $parts = parse_url($redirect_url);
@@ -38,8 +38,8 @@ $paramString .= '&closeOnBack=true';
 
 $ticket = $_SESSION["repository_ticket"];
 if(empty($ticket)) {
-    require_once __DIR__ . '/classes/edu-sharingWS.php';
-    $eduws = new eduSharingWS();
+    require_once __DIR__ . '/includes/EduSharingWS.php';
+    $eduws = new EduSharingWS();
     $ticket = $eduws -> getTicket();
 }
 

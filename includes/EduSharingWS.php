@@ -4,7 +4,7 @@
 require_once 'EduSharingWebServiceFactory.php';
 require_once 'RenderParameter.php';
 
-class eduSharingWS {
+class EduSharingWS {
 
     private $edu_webservice;
     private $edu_authentication_wsdl;

@@ -21,17 +21,43 @@
 		]
 	},
 	"AutoloadClasses": {
-		"EduSharingHooks": "includes/EduSharingHooks.php",
-		"EduSharing": "includes/EduSharing.php"
+		"EduSharing": "includes/EduSharing.php",
+		"ESApp": "includes/ESApp.php",
+		"EduSharingWS": "includes/EduSharingWS.php",
+		"EduSharingHooks": "includes/EduSharingHooks.php"
 	},
 	"Hooks": {
+		"BeforePageDisplayLeckMichAmArsch": [
+			"EduSharingHooks::onBeforePageDisplay"
+		],
+		"EditPage::showEditForm:initial": [
+			"EduSharingHooks::editPageShowEditFormInitial"
+		],
+		"ParserFirstCallInit": [
+			"EduSharingHooks::wfEdusharingExtensionInit"
+		],
+		"ArticleSave": [
+			"EduSharingHooks::onArticleSave"
+		],
+		"ArticleDelete": [
+			"EduSharingHooks::onArticleDelete"
+		],
+		"ArticleUndelete": [
+			"EduSharingHooks::onArticleUndelete"
+		],
 		"BeforePageDisplay": [
 			"EduSharingHooks::onBeforePageDisplay"
+		],
+		"LoadExtensionSchemaUpdates": [
+			"EduSharingHooks::fnEdusharingDatabase"
+		],
+		"ArticleInsertComplete": [
+			"EduSharingHooks::onArticleInsertComplete"
 		]
 	},
 	"ResourceModules": {
 		"ext.eduSharing.dialog": {
-			"styles":	"less/ext.eduSharing.screen.less",
+			"styles": "less/ext.eduSharing.screen.less",
 			"scripts": "js/ext.eduSharing.dialog.js",
 			"dependencies": [
 				"ext.wikiEditor"
@@ -62,7 +88,7 @@
 			]
 		},
 		"ext.eduSharing.display": {
-			"styles":	"less/ext.eduSharing.filter.less",
+			"styles": "less/ext.eduSharing.filter.less",
 			"scripts": "js/ext.eduSharing.edu.js",
 			"dependencies": [],
 			"messages": [],
@@ -79,4 +105,3 @@
 	},
 	"manifest_version": 2
 }
-
