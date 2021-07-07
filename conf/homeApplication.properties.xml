@@ -4,24 +4,38 @@
 	<comment>metacoon / es scenario</comment>
 	<entry key="trustedclient">true</entry>
 	<entry key="type">LMS</entry>
-	<entry key="host">127.0.0.1</entry>
-	<entry key="port">80</entry>
-	<entry key="contenturl">http://127.0.0.1:8080/edu-sharing/renderingproxy</entry>
+	<entry key="host">redaktion-staging.openeduhub.net</entry>
+	<entry key="port">443</entry>
+	<entry key="contenturl">https://redaktion-staging.openeduhub.net/edu-sharing/renderingproxy</entry>
 	
-	<entry key="appcaption">local</entry>
-	<entry key="appid">wiki</entry>
-	<entry key="repid">local</entry>
-	<entry key="inline_helper">http://127.0.0.1/mediawiki-1.26.2/extensions/edu-sharing/inlineHelper.php</entry>
+	<entry key="appcaption">OEH Redaktion</entry>
+	<entry key="appid">is-wiki-1.26</entry>
+	<entry key="repid">redaktion-staging.openeduhub.net</entry>
+	<entry key="inline_helper">https://edu-test.idea-sketch.com/extensions/edu-sharing/inlineHelper.php</entry>
 
-	<entry key="edu-webservice">http://127.0.0.1:8080/edu-sharing/services</entry>
+	<entry key="edu-webservice">https://redaktion-staging.openeduhub.net/edu-sharing/services</entry>
 	<entry key="edu-authentication_wsdl">/authbyapp?wsdl</entry>
 	<entry key="edu-usage_wsdl">/usage2?wsdl</entry>
 	<entry key="edu-alfwrapper_wsdl">/NativeAlfrescoWrapper?wsdl</entry>
-	
-	
-    <entry key="edu_url">http://127.0.0.1:8080/edu-sharing/</entry>
+	<!-- 
+		redaktion-staging.openeduhub.net
+		141.5.100.17
+	-->
+    <entry key="edu_url">https://redaktion-staging.openeduhub.net/edu-sharing/</entry>
+
 	<entry key="alf_authentication_path">/authentication?wsdl</entry>
-	<entry key="cc_gui_url">http://127.0.0.1:8080/edu-sharing/index.html</entry>
+	<entry key="cc_gui_url">https://redaktion-staging.openeduhub.net/edu-sharing/index.html</entry>
+
+	<entry key="clientprotocol">https</entry>
+	<entry key="authenticationwebservice">https://redaktion-staging.openeduhub.net/edu-sharing/services/authbyapp</entry>
+	<entry key="usagewebservice">https://redaktion-staging.openeduhub.net/edu-sharing/services/usage2</entry>
+	<entry key="clientport">443</entry>
+	<entry key="domain">redaktion-staging.openeduhub.net</entry>
+	<entry key="authenticationwebservice_wsdl">https://redaktion-staging.openeduhub.net/edu-sharing/services/authbyapp?wsdl</entry>
+	<entry key="usagewebservice_wsdl">https://redaktion-staging.openeduhub.net/edu-sharing/services/usage2?wsdl</entry>
+	<entry key="protocol">https</entry>
+
+
 
     <entry key="private_key">-----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCvJH49pO6mTgBm
@@ -62,13 +76,13 @@ p3B9w+7OI/Ybio6XjFoG9ZfZlPOjsoARrkQbDtdG6oF5vdgSKuo2g8Eniu4r9s1D
 YQIDAQAB
 -----END PUBLIC KEY-----</entry>
 <entry key="repo_public_key">-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAryR+PaTupk4AZnphw2Mb
-gBs1vYbZ3185mGzx95G7CpY1ZRiDVi+Cmb40tqLDv273Jx61UR0gse4e4QIJkrDQ
-Sisc33Btm0Qzs2Ac1e4fkD9+sDTvg8oCvqjllkemGzlWuDHXQDr8Yr6BXrtaOZCZ
-2o6rjEWGOmJsL3SqsdnePIuWT9NJ2BH0rSBC00ovFzUNnTp8VsQ98+C+1UnEE2GM
-SEUJVXXCJnbwrar+WBRaNKUJ9qDlX4IMZhZLeztyyeO/V6W5d8ucTaOAFYN5vHBG
-p3B9w+7OI/Ybio6XjFoG9ZfZlPOjsoARrkQbDtdG6oF5vdgSKuo2g8Eniu4r9s1D
-YQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmp8x7dIkaHrDii5hUZpI
+9XdpRRNOpDfSQVNa76oTEtqjh/WVOxaJOXSD/A63txmkLioLweEEMjdW2d8Lt20E
+NqbmGJujnYIl1QQuA4VsG4pxZP5wDcFxaR6NjGhuLCardd85V5d6sk0qv1n6FyL7
+o/plkJiVmUJtindFsaZ59TDmkM9VdrktCvrGNQw33BPSocEcH6py9WcsA8ojik4L
+zwGhEg4m33TsXH19CQ08+AQjcqHg6vMiuvvcA4fGOfyHoe0haMTdYaLPpxwmLc6V
+ARXrXStiNu3DZBqHDMITxL9dbXGF3EepqWM+eUooR8c+Q9LSip6sYfsAUruOgxMx
+gwIDAQAB
 -----END PUBLIC KEY-----</entry>
 </properties>
 

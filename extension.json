@@ -27,9 +27,6 @@
 		"EduSharingHooks": "includes/EduSharingHooks.php"
 	},
 	"Hooks": {
-		"BeforePageDisplayLeckMichAmArsch": [
-			"EduSharingHooks::onBeforePageDisplay"
-		],
 		"EditPage::showEditForm:initial": [
 			"EduSharingHooks::editPageShowEditFormInitial"
 		],
@@ -55,10 +52,17 @@
 			"EduSharingHooks::onArticleInsertComplete"
 		]
 	},
+	"attributes": {
+		"VisualEditor": {
+			"PluginModules": [
+				"ext.eduSharing.visualEditor"
+			]
+		}
+	},
 	"ResourceModules": {
 		"ext.eduSharing.dialog": {
-			"styles": "less/ext.eduSharing.screen.less",
-			"scripts": "js/ext.eduSharing.dialog.js",
+			"styles": "resources/less/ext.eduSharing.screen.less",
+			"scripts": "resources/js/ext.eduSharing.dialog.js",
 			"dependencies": [
 				"ext.wikiEditor"
 			],
@@ -88,8 +92,8 @@
 			]
 		},
 		"ext.eduSharing.display": {
-			"styles": "less/ext.eduSharing.filter.less",
-			"scripts": "js/ext.eduSharing.edu.js",
+			"styles": "resources/less/ext.eduSharing.filter.less",
+			"scripts": "resources/js/ext.eduSharing.edu.js",
 			"dependencies": [],
 			"messages": [],
 			"targets": [
@@ -97,11 +101,41 @@
 				"desktop"
 			],
 			"position": "top"
+		},
+		"ext.eduSharing.visualEditor": {
+			"scripts": [
+				"modules/ve.ce.MWEduSharingNode.js",
+				"modules/ve.dm.MWEduSharingModel.js",
+				"modules/ve.dm.MWEduSharingNode.js",
+				"modules/ve.ui.MWEduSharingDialog.js",
+				"modules/ve.ui.MWEduSharingDialogTool.js"
+			],
+			"styles": [
+				"modules/ve.ce.MWEduSharingNode.css",
+				"modules/ve.ui.MWEduSharingIcons.css"
+			],
+			"dependencies": [
+				"oojs-ui.styles.icons-editing-advanced",
+				"ext.visualEditor.mwcore",
+				"ext.visualEditor.mwimage.core",
+				"mediawiki.widgets.Table"
+			],
+			"messages": [
+				"edusharing-ve-dialog-button",
+				"edusharing-ve-dialog-edit-page-parameter",
+				"edusharing-ve-dialog-edit-page-select",
+				"edusharing-ve-dialog-edit-title"
+			],
+			"targets": [
+				"mobile",
+				"desktop"
+			]
 		}
 	},
+
 	"ResourceFileModulePaths": {
-		"localBasePath": "resources",
-		"remoteExtPath": "EduSharing/resources"
+		"localBasePath": "",
+		"remoteExtPath": "EduSharing"
 	},
 	"manifest_version": 2
 }

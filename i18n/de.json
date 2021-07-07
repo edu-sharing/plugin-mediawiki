@@ -23,5 +23,10 @@
 	"wikieditor-toolbar-edusharing-constrainPropoertions": "Proportionen erhalten",
   "wikieditor-toolbar-edusharing-version": "Version",
   "wikieditor-toolbar-edusharing-version-latest": "Aktuellste",
-  "wikieditor-toolbar-edusharing-version-current": "Diese"
+	"wikieditor-toolbar-edusharing-version-current": "Diese",
+	
+	"edusharing-ve-dialog-button": "EduSharing Objekt",
+	"edusharing-ve-dialog-edit-page-parameter": "Erweitert",
+	"edusharing-ve-dialog-edit-page-select": "Objekt auswählen",
+	"edusharing-ve-dialog-edit-title": "EduSharing Objekt einfügen"
 }

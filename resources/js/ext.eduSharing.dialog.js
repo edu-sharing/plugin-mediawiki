@@ -1,54 +1,3 @@
-/*
-    alert("Test4");
-
-    console.log('Test3');
-    
-    $( '#wpTextbox1' ).wikiEditor( 'addToToolbar', {
-        section: 'main',
-        groups: {
-            list: {
-                tools: {
-                    templates: {
-                        label: 'Templates',
-                        type: 'select',
-                        list: {
-                            'Ping-button': {
-                                label: '{{Ping}}',
-                                action: {
-                                    type: 'encapsulate',
-                                    options: {
-                                        pre: '{{Ping|',
-                                        post: '}}'
-                                    }
-                                }
-                            },
-                            'Clear-button': {
-                                label: 'Clear',
-                                action: {
-                                    type: 'encapsulate',
-                                    options: {
-                                        pre: '{{Clear}}'
-                                    }
-                                }
-                            },
-                            'Done-button': {
-                                label: 'Done',
-                                action: {
-                                    type: 'encapsulate',
-                                    options: {
-                                        pre: '{{Done}}'
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } );
-
-*/
-
 
 var customizeToolbar = function () {
 
@@ -209,7 +158,7 @@ mw.loader.using('user.options',
 );
 
 
-function resetForm () {
+function resetForm() {
     // Restore form state
     $(['#wikieditor-toolbar-edu-object',
         '#wikieditor-toolbar-edu-caption',
@@ -238,11 +187,11 @@ window.setWidth = function () {
     $('#wikieditor-toolbar-edu-width').val(Math.round($('#wikieditor-toolbar-edu-height').val() * getOrigImageRatio()));
 }
 
-function getOrigImageRatio () {
+function getOrigImageRatio() {
     return $('#origImageRatio').val();
 }
 
-function updatePreview (val) {
+function updatePreview(val) {
     element = $('#wikieditor-toolbar-edu-preview-res');
     switch (val) {
         case 'none': element.css('margin', '10px 0').css('display', 'block').css('float', val); break;
@@ -308,7 +257,7 @@ window.setData = function (objid, caption, mimetype, width, height, version, rep
     $('#wikieditor-toolbar-edu-preview-res').html('').append(append);
 }
 
-function getPreviewText (short) {
+function getPreviewText(short) {
     if (short)
         return 'Lorem ipsum dolor';
     return 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.';

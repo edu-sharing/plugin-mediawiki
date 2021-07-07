@@ -5,7 +5,7 @@ if(!(empty($_GET['SID'])))
     session_id($_GET['SID']);
 @session_start();
 
-require_once ('classes/ESApp.php');
+require_once ('includes/ESApp.php');
 
 class edurender {
     public function getRedirectUrl($eduobj, $display_mode = 'inline') {

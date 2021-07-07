@@ -630,6 +630,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
     public static function onBeforePageDisplay( OutputPage &$out, Skin &$skin ) {
         global $wgOut;
         $wgOut->addModules( 'ext.eduSharing.display' );
+        $wgOut->addModules( 'ext.eduSharing.visualEditor' );
         return true;
     }
 
