@@ -65,35 +65,40 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 	this.$edusharing.empty();
 	var spec = node.getModel().getSpec()
 
-	console.log("jdslkfjlkdf", this.$edusharing)
-	var plot = $("<h2>" + spec.caption + "</h2>")
-	// node.$
+	var plot = $("<div><h2>" + spec.caption + "</h2></div>")
+	console.log("spec", spec);
+	console.log("mw.config.values", mw.config.values);
+
+	const regex = /ccrep:\/\/(.*)\/(.*)/gm;
+	const match = regex.exec(spec.id);
+	var repid = match[1];	
+	var oid = match[2];
+	console.log("match", oid, repid);
+	console.log("match", match);
+	var params = {
+		oid: oid,
+		appid:  mw.config.values.eduappid,
+		repid: repid,
+		resid: spec.resourceid,
+		height: spec.height,
+		width: spec.width,
+		mime: spec.mimetype,
+		// pid: spec.caption,
+		// SID: mw.config.values.edusid,
+		printTitle: spec.caption,
+		language: "de",
+	};	
+	var query = Object.keys(params)
+		.map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+		.join('&');
+		const url = "/extensions/EduSharing/proxy.php?"+query;
+		console.log(url)
+	fetch(url).then(response=>{
+		return response.text().then(text => {
+			plot.html(text)
+		});
+  	});
 	node.$edusharing.append(plot);
-
-	mw.loader.using('ext.edusharing.vega2').done(function () {
-		console.log("jdslkfjlksdfdsfdsöäfk fkslödf")
-		node.$plot.detach();
-
-		node.constructor.static.vegaParseSpec(node.getModel().getSpec(), node.$edusharing[0]).then(
-			function (view) {
-				// HACK: We need to know which eduVersion values Vega computes in case
-				// of automatic eduVersion, but it isn't properly exposed in the view				
-				node.$edusharing.append(node.$plot);
-				// eslint-disable-next-line no-underscore-dangle
-				node.$plot.css(view._eduVersion);
-
-				node.calculateHighlights();
-			},
-			function (failMessageKey) {
-				// The following messages are used here:
-				// * edusharing-ve-no-spec
-				// * edusharing-ve-empty-edusharing
-				// * edusharing-ve-vega-error-no-render
-				// * edusharing-ve-vega-error
-				node.$edusharing.text(ve.msg(failMessageKey));
-			}
-		);
-	});
 };
 
 /**

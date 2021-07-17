@@ -153,6 +153,7 @@ class EduSharingWS {
     }
 
     public function getTicket() {
+        var_dump('bla');
 
         try {
             $eduservice = $this -> getAuthentication();
@@ -168,15 +169,13 @@ class EduSharingWS {
                 try {
                     $alfReturn = $eduservice -> checkTicket($params);
 
-                    if ($alfReturn === true) {
-
+                    if ($alfReturn->checkTicketReturn === true) {
                         return $_SESSION["repository_ticket"];
                     }
                 } catch (Exception $e) {
                     return $e;
                 }
             }
-
 
             $paramsTrusted = array("applicationId" => $this -> HomePropArray['appid'], "ticket" => session_id(), "ssoData" => array(array('key' => 'userid','value' => $userid)));
 

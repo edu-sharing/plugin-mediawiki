@@ -9,9 +9,9 @@
 	<entry key="contenturl">https://redaktion-staging.openeduhub.net/edu-sharing/renderingproxy</entry>
 	
 	<entry key="appcaption">OEH Redaktion</entry>
-	<entry key="appid">is-wiki-1.26</entry>
+	<entry key="appid">is-wiki</entry>
 	<entry key="repid">redaktion-staging.openeduhub.net</entry>
-	<entry key="inline_helper">https://edu-test.idea-sketch.com/extensions/edu-sharing/inlineHelper.php</entry>
+	<entry key="inline_helper">https://edusharing.idea-sketch.com/extensions/edu-sharing/inlineHelper.php</entry>
 
 	<entry key="edu-webservice">https://redaktion-staging.openeduhub.net/edu-sharing/services</entry>
 	<entry key="edu-authentication_wsdl">/authbyapp?wsdl</entry>
