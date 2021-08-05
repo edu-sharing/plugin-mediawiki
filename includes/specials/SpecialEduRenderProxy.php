@@ -1,12 +1,51 @@
 <?php
-session_name('my_wiki2_session');
-if(!(empty($_GET['SID'])))
-    session_id($_GET['SID']);
-@session_start();
+require_once (__DIR__ . '/../ESApp.php');
 
-require_once ('includes/ESApp.php');
+class SpecialEduRenderProxy extends SpecialPage {
 
-class edurender {
+    function __construct() {
+		parent::__construct( 'EduRenderProxy', '', false );
+	}
+
+    public function execute( $par ) {
+
+        $request = $this->getRequest();
+
+        $edu_sharing = new stdClass ();
+
+        $edu_sharing->id = $request->getVal('oid');
+        $edu_sharing->appid = $request->getVal('appid');
+        $edu_sharing->repid = $request->getVal('repid');
+        $edu_sharing->resourceid = $request->getVal('resid');
+        $edu_sharing->height = $request->getVal('height');
+        $edu_sharing->width = $request->getVal('width');
+        $edu_sharing->mimetype = $request->getVal('mime');
+        $edu_sharing->pageid = $request->getVal('pid');
+        $edu_sharing->printTitle = $request->getVal('printTitle');
+        $edu_sharing->language = $request->getVal('language');
+        
+        $es = new ESApp ();
+        $es->loadApps ();
+        $conf = $es->getHomeConf ();
+        $edu_sharing->contenturl = $conf->prop_array ['contenturl'];
+        
+        $url = $this->getRedirectUrl ( $edu_sharing, 'inline' );
+        
+        $url .= $this->getSecurityParams ( $conf, $edu_sharing->id , $es);
+        $url .= "&version=0";
+        
+        $html = $this->getRenderHtml ( $url );
+        
+        // DEBUG
+        //$html .= '<code>' . $url . '</code>';
+        //$html .= $e->getRenderHtml ( $url );
+        // DEBUG
+        
+        // take over output since we dont't want any stuff around our html
+        $this->getOutput()->disable();
+        print($this->display ( $html, $edu_sharing, $conf ));
+    }
+
     public function getRedirectUrl($eduobj, $display_mode = 'inline') {
 
         if (empty ( $eduobj->contenturl )) {
@@ -21,9 +60,6 @@ class edurender {
         }
 
         $url .= '?app_id=' . urlencode ( $app_id );
-
-        $sessionId = $eduobj->SID;
-        $url .= '&session=' . urlencode ( $sessionId );
 
         $rep_id = $eduobj->repid;
         if (empty ( $rep_id )) {
@@ -93,7 +129,7 @@ class edurender {
         /*
          * replaces {{{LMS_INLINE_HELPER_SCRIPT}}}
          */
-        $html = str_replace("{{{LMS_INLINE_HELPER_SCRIPT}}}", $conf -> prop_array['inline_helper'] . "?reUrl=".urlencode($this -> getRedirectUrl ($eduobj, 'window')) . "&SID=" . $_GET ['SID'], $html);
+        $html = str_replace("{{{LMS_INLINE_HELPER_SCRIPT}}}", SpecialPage::getTitleFor('EduInlineHelper')->getLocalUrl() . "&reUrl=".urlencode($this -> getRedirectUrl ($eduobj, 'window')), $html);
 
         /*
          * replaces <es:title ...>...</es:title>
@@ -112,7 +148,7 @@ class edurender {
                 $html .= '<p class="caption">' . $eduobj->printTitle . '</p>';
         }
 
-        echo $html;
+        return $html;
     }
 
     public function getSecurityParams($conf, $object_id, $es) {
@@ -121,7 +157,7 @@ class edurender {
         $ts = round ( microtime ( true ) * 1000 );
         $paramString .= '&ts=' . $ts;
         
-        $userid = trim(strtolower($_SESSION ['wsUserName']));
+        $userid = trim(strtolower($this->getRequest()->getSession()->get('wsUserName')));
         if(filter_var($userid, FILTER_VALIDATE_IP) !== false)
             $userid = 'mw_guest';
 
@@ -129,6 +165,7 @@ class edurender {
 
         $signature = '';
         $priv_key = $conf->prop_array ['private_key'];
+     
         $pkeyid = openssl_get_privatekey ( $priv_key );
         openssl_sign ( $conf->prop_array ['appid'] . $ts . $object_id, $signature, $pkeyid );
         $signature = base64_encode ( $signature );
@@ -139,65 +176,3 @@ class edurender {
         return $paramString;
     }
 }
-
-$edu_sharing = new stdClass ();
-
-$edu_sharing->id = $_GET ['oid'];
-$edu_sharing->appid = $_GET ['appid'];
-$edu_sharing->repid = $_GET ['repid'];
-$edu_sharing->resourceid = $_GET ['resid'];
-$edu_sharing->height = $_GET ['height'];
-$edu_sharing->width = $_GET ['width'];
-$edu_sharing->mimetype = $_GET ['mime'];
-$edu_sharing->pageid = $_GET ['pid'];
-$edu_sharing->SID = $_GET ['SID'];
-$edu_sharing->printTitle = $_GET ['printTitle'];
-$edu_sharing->language = $_GET ['language'];
-
-$es = new ESApp ();
-$es->loadApps ();
-$conf = $es->getHomeConf ();
-$edu_sharing->contenturl = $conf->prop_array ['contenturl'];
-
-$e = new edurender ();
-$url = $e->getRedirectUrl ( $edu_sharing, 'inline' );
-
-$url .= $e->getSecurityParams ( $conf, $edu_sharing->id , $es);
-
-$html = $e->getRenderHtml ( $url );
-$e->display ( $html, $edu_sharing, $conf );
-
-
-
-// $time = round(microtime(true) * 1000);
-
-// $url = $previewservice;
-// $url .= '?appId=' . get_config('edusharing', 'application_appid');
-// $url .= '&courseId=' . $edusharing->course;
-// $url .= '&repoId=' . edusharing_get_repository_id_from_url($edusharing->object_url);
-// $url .= '&proxyRepId=' . get_config('edusharing', 'application_homerepid');
-// $url .= '&nodeId=' . edusharing_get_object_id_from_url($edusharing->object_url);
-// $url .= '&resourceId=' . $resourceid;
-// $url .= '&version=' . $edusharing->object_version;
-// $sigdata = get_config('edusharing', 'application_appid') . $time . edusharing_get_object_id_from_url($edusharing->object_url);
-// $sig = urlencode(edusharing_get_signature($sigdata));
-// $url .= '&sig=' . $sig;
-// $url .= '&signed=' . $sigdata;
-// $url .= '&ts=' . $time;
-
-// $curlhandle = curl_init($url);
-// curl_setopt($curlhandle, CURLOPT_SSL_VERIFYPEER, false);
-// curl_setopt($curlhandle, CURLOPT_SSL_VERIFYHOST, false);
-// curl_setopt($curlhandle, CURLOPT_FOLLOWLOCATION, 1);
-// curl_setopt($curlhandle, CURLOPT_HEADER, 0);
-// curl_setopt($curlhandle, CURLOPT_RETURNTRANSFER, 1);
-// curl_setopt($curlhandle, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-// $output = curl_exec($curlhandle);
-// $mimetype = curl_getinfo($curlhandle, CURLINFO_CONTENT_TYPE);
-// curl_close($curlhandle);
-// header('Content-type: ' . $mimetype);
-// echo $output;
-// exit();
-
-?>
-

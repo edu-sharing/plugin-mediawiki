@@ -99,7 +99,7 @@ class EduSharingHooks {
         /*
          * Get db access 
          */
-        $dbr = wfGetDB(DB_SLAVE);
+        $dbr = wfGetDB(DB_REPLICA);
         
         /*
          * Select all edu-sharing resources of this article.
@@ -118,7 +118,7 @@ class EduSharingHooks {
          * For each resource add usage
          */
         foreach($res as $resource) {
-            $dbr = wfGetDB(DB_MASTER);
+            $dbr = wfGetDB(DB_PRIMARY);
             $dbr -> update('edusharing_resource',
             array('EDUSHARING_RESOURCE_PAGE_ID' => $title -> mArticleID),
             array('EDUSHARING_RESOURCE_TITLE = "' . $title -> mTextform.'"'),
@@ -130,7 +130,7 @@ class EduSharingHooks {
             $edu_sharing -> height = $resource -> EDUSHARING_RESOURCE_HEIGHT;
             $edu_sharing -> width = $resource -> EDUSHARING_RESOURCE_WIDTH;
             $edu_sharing -> pageid = $title -> mArticleID;
-            $edu_sharing -> ticket = $_SESSION['repository_ticket'];
+            $edu_sharing -> ticket = RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket');
             $edu_sharing -> user = strtolower($wgUser -> getName());
             $edu_sharing -> float = $resource -> EDUSHARING_RESOURCE_FLOAT;
             $edu_sharing -> resourceid = $resource -> EDUSHARING_RESOURCE_ID;
@@ -182,7 +182,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $_version = (string)$Response['version'];
             $_versionShow = (string)$Response['versionShow'];
 
-            $dbr = wfGetDB(DB_MASTER);
+            $dbr = wfGetDB(DB_PRIMARY);
             $dbr -> update('edusharing_resource',
             array('EDUSHARING_RESOURCE_PAGE_ID' => $article -> getId()),
             array('EDUSHARING_RESOURCE_ID = "' . $_resourceId . '"'),
@@ -200,7 +200,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $edu_sharing -> width = $_width;
             $edu_sharing -> mimetype = $_mimetype;
             $edu_sharing -> pageid = $article -> getId();
-            $edu_sharing -> ticket = $_SESSION['repository_ticket'];
+            $edu_sharing -> ticket = RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket');
             $edu_sharing -> user = strtolower($wgUser -> getName());
             $edu_sharing -> float = $_float;
             $edu_sharing -> version = $_version;
@@ -234,6 +234,8 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         $title = $parser->getTitle();
         $wikiPage = WikiPage::factory( $title );
 
+        $session= RequestContext::getMain()->getRequest()->getSession();
+        
         /*
          * Get db access
          */
@@ -295,7 +297,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                 $edu_sharing -> mimetype = $_mimetype;
                 $edu_sharing -> pageid = $wikiPage -> getId();
                 
-                $edu_sharing -> ticket = $_SESSION['repository_ticket'];
+                $edu_sharing -> ticket = $session->get('repository_ticket');
                 $edu_sharing -> user = strtolower($user -> getName());
                 $edu_sharing -> float = $_float;
                 $edu_sharing -> version = $_version;
@@ -304,7 +306,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                 /*
                  * Insert record
                  */
-                $dbw = wfGetDB( DB_MASTER );
+                $dbw = wfGetDB( DB_PRIMARY );
                 $_data = array('EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 'EDUSHARING_RESOURCE_TITLE' => $title, 'EDUSHARING_RESOURCE_WIDTH' => $_width, 'EDUSHARING_RESOURCE_HEIGHT' => $_height, 'EDUSHARING_RESOURCE_FLOAT' => $_float);
                 $dbw -> insert('edusharing_resource', $_data, 'Database::insert');
                 $insert_id = $dbw -> insertId();
@@ -371,7 +373,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     $edu_sharing -> width = $_width;
                     $edu_sharing -> mimetype = $_mimetype;
                     $edu_sharing -> pageid = $wikiPage -> getId();
-                    $edu_sharing -> ticket = $_SESSION['repository_ticket'];
+                    $edu_sharing -> ticket = $session->get('repository_ticket');
                     $edu_sharing -> user = strtolower($user -> getName());
                     $edu_sharing -> float = $_float;
                     $edu_sharing -> version = $_version;
@@ -380,7 +382,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     /*
                      * Insert record 
                      */
-                    $dbw = wfGetDB(DB_MASTER);
+                    $dbw = wfGetDB(DB_PRIMARY);
                     $_data = array('EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage -> getId(), 'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 'EDUSHARING_RESOURCE_TITLE' => $title, 'EDUSHARING_RESOURCE_WIDTH' => $_width, 'EDUSHARING_RESOURCE_HEIGHT' => $_height, 'EDUSHARING_RESOURCE_FLOAT' => $_float);
                     $dbw -> insert('edusharing_resource', $_data, 'Database::insert');
                     $insert_id = $dbw -> insertId();
@@ -424,7 +426,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             /*
              * Delete record in db
              */
-            $dbr = wfGetDB( DB_MASTER );
+            $dbr = wfGetDB( DB_PRIMARY );
             $dbr -> delete('edusharing_resource', array('EDUSHARING_RESOURCE_ID = ' . $item -> EDUSHARING_RESOURCE_ID), $fname = 'Database::delete');
         }
         return true;
@@ -454,9 +456,9 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         /**
          * When the parser sees the <edusharing> tag, it executes the render function (see below)
          */
-        $parser -> setHook("edusharing", "EduSharingHooks::wfEduSharingRender");
+        $parser -> setHook("edusharing", array( __CLASS__, 'wfEduSharingRender' ));
 
-        global $wgUser;
+        $user = RequestContext::getMain()->getRequest()->getSession()->getUser();
 
         $eduws = new EduSharingWS();
 
@@ -466,25 +468,22 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         $ticket = $eduws -> getTicket();
         self::$ticket = $ticket;
         
-        $_SESSION["repository_ticket"] = $ticket;
-        $_SESSION["repository_home"] = self::$hc;
+        RequestContext::getMain()->getRequest()->getSession()->set("repository_ticket", $ticket);
+        RequestContext::getMain()->getRequest()->getSession()->set("repository_home", self::$hc);
 
         global $wgOut, $wgServer, $wgScriptPath, $eduIconMimeVideo, $eduIconMimeAudio;
-      
         
         $wgOut -> addJsConfigVars(array('eduticket' => $ticket));
         ### added:
-        $wgOut -> addJsConfigVars(array('edusid' => session_id() ));
-        $wgOut -> addJsConfigVars(array('eduusername' =>$_SESSION["wsUserName"] ));
+        $wgOut -> addJsConfigVars(array('eduusername' => RequestContext::getMain()->getRequest()->getSession()->get("wsUserName") ));
         $wgOut -> addJsConfigVars(array('eduappid' => self::$hc['appid'] ));
-        
         
         ###
         $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php');
-        $wgOut -> addJsConfigVars(array('edugui' => $_SESSION["repository_home"]["edu_url"] . 'components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.strtolower($wgUser -> getName())));
+        $wgOut -> addJsConfigVars(array('edugui' => self::$hc["edu_url"] . 'components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.strtolower($user -> getName())));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_video' => $eduIconMimeVideo));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_audio' => $eduIconMimeAudio));
-        $wgOut -> addJsConfigVars(array('edupreview' => $_SESSION["repository_home"]["edu_url"] . 'preview?'));
+        $wgOut -> addJsConfigVars(array('edupreview' => self::$hc["edu_url"] . 'preview?'));
         $wgOut -> addJsConfigVars(array('eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg'));
 
         return true;
@@ -548,9 +547,9 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $param .= '&repid=' . $edu_sharing -> repid;
             $param .= '&printTitle=' . addslashes($input);
             $param .= '&language=' . $wgUser -> mOptions['language'];
-			$dataUrl = $wgServer . $wgScriptPath.'/extensions/EduSharing/proxy.php?SID=' . session_id() . $param;
 
-			
+            $dataUrl = SpecialPage::getTitleFor('EduRenderProxy')->getLocalUrl() . $param;
+
             switch($edu_sharing -> float) {
                 case 'left': $style = "float: left; display: block; margin: 10px 10px 10px 0;"; break;
                 case 'none': $style = "float: none; display: block; margin: 10px 0;"; break;
@@ -591,6 +590,8 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      */
     public static function getPreview($edu_sharing, $input, $style) {
         global $eduIconMimeVideo, $eduIconMimeAudio;
+
+        $session = RequestContext::getMain()->getRequest()->getSession();
         $wrapperStyle = "style=\"height:auto; width:auto; " . $style . "\"";
                     
             $mimeSwitchHelper = '';
@@ -604,7 +605,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                 $mimeSwitchHelper = 'textlike';
             switch($mimeSwitchHelper) {
                 case 'image':
-                    $content = "<img src=\"".$_SESSION["repository_home"]["edu_url"]."preview?nodeId=".$edu_sharing -> id."&ticket=".$_SESSION["repository_ticket"]."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\" />";
+                    $content = "<img src=\"".$session->get("repository_home")["edu_url"]."preview?nodeId=".$edu_sharing -> id."&ticket=".$session->get("repository_ticket")."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\" />";
                     $content .= "<p>".$input."</p>";
                 break;
                 case 'audio':

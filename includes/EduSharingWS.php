@@ -153,7 +153,6 @@ class EduSharingWS {
     }
 
     public function getTicket() {
-        var_dump('bla');
 
         try {
             $eduservice = $this -> getAuthentication();

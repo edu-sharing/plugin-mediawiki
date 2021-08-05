@@ -15,6 +15,10 @@
 	},
 	"license-name": "MIT",
 	"type": "",
+	"SpecialPages": {
+		"EduRenderProxy": "SpecialEduRenderProxy",
+		"EduInlineHelper": "SpecialEduInlineHelper"
+	},	
 	"MessagesDirs": {
 		"EduSharing": [
 			"i18n"
@@ -24,7 +28,9 @@
 		"EduSharing": "includes/EduSharing.php",
 		"ESApp": "includes/ESApp.php",
 		"EduSharingWS": "includes/EduSharingWS.php",
-		"EduSharingHooks": "includes/EduSharingHooks.php"
+		"EduSharingHooks": "includes/EduSharingHooks.php",
+		"SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
+		"SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
 	"Hooks": {
 		"EditPage::showEditForm:initial": [
@@ -124,7 +130,13 @@
 				"edusharing-ve-dialog-button",
 				"edusharing-ve-dialog-edit-page-parameter",
 				"edusharing-ve-dialog-edit-page-select",
-				"edusharing-ve-dialog-edit-title"
+				"edusharing-ve-dialog-edit-title",
+				"edusharing-ve-dialog-edit-caption",
+				"edusharing-ve-dialog-edit-field-caption",
+				"edusharing-ve-dialog-edit-version",
+				"edusharing-ve-dialog-edit-version-help",
+				"edusharing-ve-dialog-edit-version-current",
+				"edusharing-ve-dialog-edit-version-latest"
 			],
 			"targets": [
 				"mobile",
