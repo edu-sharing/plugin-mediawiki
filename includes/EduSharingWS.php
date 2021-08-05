@@ -162,26 +162,26 @@ class EduSharingWS {
             else
                 $userid = trim(strtolower($this -> User -> getName()));
 
-            if (isset($_SESSION["repository_ticket"])) {
+            if ( RequestContext::getMain()->getRequest()->getSession()->exists('repository_ticket') ) {
                 // ticket available.. is it valid?
-                $params = array("userid" => $userid, "ticket" => $_SESSION["repository_ticket"]);
+                $params = array("userid" => $userid, "ticket" => RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket'));
                 try {
                     $alfReturn = $eduservice -> checkTicket($params);
 
                     if ($alfReturn->checkTicketReturn === true) {
-                        return $_SESSION["repository_ticket"];
+                        return RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket');
                     }
                 } catch (Exception $e) {
                     return $e;
                 }
             }
 
-            $paramsTrusted = array("applicationId" => $this -> HomePropArray['appid'], "ticket" => session_id(), "ssoData" => array(array('key' => 'userid','value' => $userid)));
+            $paramsTrusted = array("applicationId" => $this -> HomePropArray['appid'], "ticket" => RequestContext::getMain()->getRequest()->getSession()->getId(), "ssoData" => array(array('key' => 'userid','value' => $userid)));
 
             $alfReturn = $eduservice -> authenticateByTrustedApp($paramsTrusted);
             $ticket = $alfReturn -> authenticateByTrustedAppReturn -> ticket;
 
-            $_SESSION["repository_ticket"] = $ticket;
+            RequestContext::getMain()->getRequest()->getSession()->set('repository_ticket', $ticket);
             return $ticket;
 
 

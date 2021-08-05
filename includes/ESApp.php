@@ -87,7 +87,7 @@ class ESApp {
 		try {
             $eduservice =  new edusharingWebService($cUrl, array());
             
-            $paramsTrusted = array("applicationId" => $hc->prop_array['appid'], "ticket" => session_id(), "ssoData" => array(array('key' => 'eppn','value' => $username)));
+            $paramsTrusted = array("applicationId" => $hc->prop_array['appid'], "ticket" => RequestContext::getMain()->getRequest()->getSession()->getId(), "ssoData" => array(array('key' => 'eppn','value' => $username)));
             $alfReturn = $eduservice -> authenticateByTrustedApp($paramsTrusted);
             $ticket = $alfReturn -> authenticateByTrustedAppReturn -> ticket;   
             
