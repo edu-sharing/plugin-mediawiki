@@ -26,7 +26,7 @@ class SpecialEduInlineHelper extends SpecialPage {
         $ES_IV = $conf -> prop_array['encrypt_initvector'];
 
         $userid = trim(strtolower($this->getRequest()->getSession()->get('wsUserName')));
-        if(filter_var($userid, FILTER_VALIDATE_IP) !== false)
+        if( empty($userid) || filter_var($userid, FILTER_VALIDATE_IP) !== false)
             $userid = 'mw_guest';
 
         $paramString .= '&u=' . urlencode ( base64_encode ( $es -> edusharing_encrypt_with_repo_public($userid)));
