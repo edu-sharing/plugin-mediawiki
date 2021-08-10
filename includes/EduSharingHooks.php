@@ -232,6 +232,10 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      public static function onParserPreSaveTransformComplete( $parser, &$text ) {
         $user = $parser->getUser();
         $title = $parser->getTitle();
+
+        // check if called from the "right" context, i.e. while saving a normal wikipage
+        if ( $title->getNamespace == -1 )
+            return true;
         $wikiPage = WikiPage::factory( $title );
 
         $session= RequestContext::getMain()->getRequest()->getSession();
