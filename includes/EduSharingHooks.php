@@ -234,6 +234,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         $title = $parser->getTitle();
 
         // check if called from the "right" context, i.e. while saving a normal wikipage
+        // to prevent exception when running in visual editor context
         if ( $title->getNamespace() == -1 )
             return true;
         $wikiPage = WikiPage::factory( $title );
