@@ -452,13 +452,14 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      */
     public static function wfEdusharingExtensionInit(Parser $parser) {
 
-        
+        global $wgUser;
+
         /**
          * When the parser sees the <edusharing> tag, it executes the render function (see below)
          */
         $parser -> setHook("edusharing", array( __CLASS__, 'wfEduSharingRender' ));
 
-        $user = RequestContext::getMain()->getRequest()->getSession()->getUser();
+        $user = $wgUser;
 
         $eduws = new EduSharingWS();
 
@@ -468,14 +469,14 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         $ticket = $eduws -> getTicket();
         self::$ticket = $ticket;
         
-        RequestContext::getMain()->getRequest()->getSession()->set("repository_ticket", $ticket);
-        RequestContext::getMain()->getRequest()->getSession()->set("repository_home", self::$hc);
+        //RequestContext::getMain()->getRequest()->getSession()->set("repository_ticket", $ticket);
+        //RequestContext::getMain()->getRequest()->getSession()->set("repository_home", self::$hc);
 
         global $wgOut, $wgServer, $wgScriptPath, $eduIconMimeVideo, $eduIconMimeAudio;
         
         $wgOut -> addJsConfigVars(array('eduticket' => $ticket));
         ### added:
-        $wgOut -> addJsConfigVars(array('eduusername' => RequestContext::getMain()->getRequest()->getSession()->get("wsUserName") ));
+        $wgOut -> addJsConfigVars(array('eduusername' => $user -> getName() ));
         $wgOut -> addJsConfigVars(array('eduappid' => self::$hc['appid'] ));
         
         ###
