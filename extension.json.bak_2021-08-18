@@ -33,9 +33,6 @@
 		"SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
 	"Hooks": {
-		"ResourceLoaderGetConfigVars": [
-			"EduSharingHooks::onResourceLoaderGetConfigVars"
-		],
 		"EditPage::showEditForm:initial": [
 			"EduSharingHooks::editPageShowEditFormInitial"
 		],
@@ -114,12 +111,13 @@
 		"ext.eduSharing.visualEditor": {
 			"scripts": [
 				"modules/ve.ce.MWEduSharingNode.js",
+				"modules/ve.dm.MWEduSharingModel.js",
 				"modules/ve.dm.MWEduSharingNode.js",
 				"modules/ve.ui.MWEduSharingDialog.js",
 				"modules/ve.ui.MWEduSharingDialogTool.js"
 			],
 			"styles": [
-				"modules/ve.ui.MWEduSharing.css",
+				"modules/ve.ce.MWEduSharingNode.css",
 				"modules/ve.ui.MWEduSharingIcons.css"
 			],
 			"dependencies": [
@@ -129,38 +127,21 @@
 				"mediawiki.widgets.Table"
 			],
 			"messages": [
-				"visualeditor-mwedusharingdialog-button",
-				"visualeditor-mwedusharingdialog-title",
-				"visualeditor-mwedusharingdialog-help-title",
-				"visualeditor-mwedusharingdialog-select",
-				"visualeditor-mwedusharingdialog-options",
-				"visualeditor-mwedusharingdialog-action",
-				"visualeditor-mwedusharingdialog-id",
-				"visualeditor-mwedusharingdialog-caption",
-				"visualeditor-mwedusharingdialog-mimetype",
-				"visualeditor-mwedusharingdialog-version",
-				"visualeditor-mwedusharingdialog-repotype",
-				"visualeditor-mwedusharingdialog-versionshow",
-				"visualeditor-mwedusharingdialog-versionshow-latest",
-				"visualeditor-mwedusharingdialog-versionshow-current",
-				"visualeditor-mwedusharingdialog-size",
-				"visualeditor-mwedusharingdialog-align"
+				"edusharing-ve-dialog-button",
+				"edusharing-ve-dialog-edit-page-parameter",
+				"edusharing-ve-dialog-edit-page-select",
+				"edusharing-ve-dialog-edit-title",
+				"edusharing-ve-dialog-edit-caption",
+				"edusharing-ve-dialog-edit-field-caption",
+				"edusharing-ve-dialog-edit-version",
+				"edusharing-ve-dialog-edit-version-help",
+				"edusharing-ve-dialog-edit-version-current",
+				"edusharing-ve-dialog-edit-version-latest"
 			],
 			"targets": [
 				"mobile",
 				"desktop"
 			]
-		}
-	},
-
-	"ConfigRegistry": {
-		"edusharing": "GlobalVarConfig::newInstance"
-	},
-
-	"config": {
-		"EduSharingUrl": {
-			"description": "Defines the URL of the edu-sharing repository",
-			"value": true
 		}
 	},
 

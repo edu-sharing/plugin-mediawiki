@@ -1,6 +1,6 @@
 !function(){function a(a,b){var c=void 0!==window.pageYOffset?window.pageYOffset:(document.documentElement||document.body.parentNode||document.body).scrollTop,d=document.documentElement.clientHeight,e=c+d;b=b||0;var f=a.getBoundingClientRect();if(0===f.height)return!1;var g=f.top+c-b,h=f.bottom+c+b;return h>c&&e>g}jQuery.expr[":"]["near-viewport"]=function(b,c,d){var e=parseInt(d[3])||0;return a(b,e)}}();
 
-$(document).ready(function() {
+function eduSharingScripts() {
 
 	$.ajaxSetup({ cache: false });
 	
@@ -14,7 +14,7 @@ $(document).ready(function() {
         url += '&videoFormat='+videoFormat;
 
 		if(typeof wrapper == 'undefined')
-			var wrapper = esObject.parent();
+            var wrapper = esObject.parent();
 
 		$.get(url, function(data) {
 			wrapper.html('').append(data);
@@ -22,7 +22,8 @@ $(document).ready(function() {
 				setTimeout(function(){ renderEsObject(esObject, wrapper);}, 1111);
 		});
 		
-		$('.edu_wrapper').css({width: 'auto', height: 'auto'});
+		// $('.edu_wrapper').css({width: 'auto', height: 'auto'});
+        $('.edu_wrapper').css({'min-width': '300px', 'height': 'auto'});
 		esObject.removeAttr("data-type");
 	}
 	
@@ -62,4 +63,11 @@ $(document).ready(function() {
             }
         }
     });
+};
+
+$(document).ready(function() {
+    eduSharingScripts();
 });
+  
+// Reload script when closing VisualEditor
+mw.hook( "ve.deactivate" ).add( eduSharingScripts );

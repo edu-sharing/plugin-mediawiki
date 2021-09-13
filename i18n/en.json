@@ -23,5 +23,22 @@
   "wikieditor-toolbar-edusharing-constrainPropoertions": "Constrain proportions",
   "wikieditor-toolbar-edusharing-version": "Version",
   "wikieditor-toolbar-edusharing-version-latest": "Latest",
-  "wikieditor-toolbar-edusharing-version-current": "Current"
+  "wikieditor-toolbar-edusharing-version-current": "Current",
+
+  "visualeditor-mwedusharingdialog-button": "edu-sharing Media",
+	"visualeditor-mwedusharingdialog-title": "Insert edu-sharing Media",
+	"visualeditor-mwedusharingdialog-help-title": "Help",
+	"visualeditor-mwedusharingdialog-select": "Select object",
+	"visualeditor-mwedusharingdialog-options": "Advanced",
+	"visualeditor-mwedusharingdialog-action": "Action",
+	"visualeditor-mwedusharingdialog-id": "ID",
+	"visualeditor-mwedusharingdialog-caption": "Caption",
+  "visualeditor-mwedusharingdialog-mimetype": "Mimetype",
+	"visualeditor-mwedusharingdialog-version": "Version",
+	"visualeditor-mwedusharingdialog-repotype": "Repotype",
+	"visualeditor-mwedusharingdialog-versionshow": "Which version to display?",
+	"visualeditor-mwedusharingdialog-versionshow-latest": "Always the latest",
+	"visualeditor-mwedusharingdialog-versionshow-current": "The current version",
+	"visualeditor-mwedusharingdialog-size": "Size",
+	"visualeditor-mwedusharingdialog-align": "Alignment"
 }

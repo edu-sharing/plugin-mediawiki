@@ -14,6 +14,17 @@
 
 class EduSharingHooks {
 
+    // Variables used in JS should be defined the new way, but currently it throws an mimetype mismatch error. Variables for JS are defined in line 491ff
+    /**
+     * Adds extra variables to the global config
+     *  @param array &$vars
+     */
+    public static function onResourceLoaderGetConfigVars( array &$vars ) {
+        #$config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
+        #$vars['wgEduSharingUrl'] = $config->get( 'EduSharingUrl' );
+    }
+
+    
    /**
      * Home configuration
      * var array
@@ -485,7 +496,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         $wgOut -> addJsConfigVars(array('eduappid' => self::$hc['appid'] ));
         
         ###
-        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php');
+        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
         $wgOut -> addJsConfigVars(array('edugui' => self::$hc["edu_url"] . 'components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.strtolower($user -> getName())));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_video' => $eduIconMimeVideo));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_audio' => $eduIconMimeAudio));
@@ -507,12 +518,12 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      */
     public static function wfEduSharingRender($input, array $args, Parser $parser, PPFrame $frame) { 
        
-        $loadedJs = false;
+        // $loadedJs = false;
 
-        if (!$loadedJs) {
-            $parser -> getOutput() -> addModules('ext.eduSharing');
-            $loadedJs = true;
-        }
+        // if (!$loadedJs) {
+        //     $parser -> getOutput() -> addModules('ext.eduSharing');
+        //     $loadedJs = true;
+        // }
                 
         /*
          * Set edu-sharing properties, params for proxy request
@@ -557,17 +568,25 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $dataUrl = SpecialPage::getTitleFor('EduRenderProxy')->getLocalUrl() . $param;
 
             switch($edu_sharing -> float) {
-                case 'left': $style = "float: left; display: block; margin: 10px 10px 10px 0;"; break;
-                case 'none': $style = "float: none; display: block; margin: 10px 0;"; break;
-                case 'right': $style = "float: right; display: block; margin: 10px 0 10px 10px;"; break;
+            //     case 'left': $style = "float: left; display: block; margin: 10px 10px 10px 0;"; break;
+            //     case 'none': $style = "float: none; display: block; margin: 10px 0;"; break;
+            //     case 'center': $style = "float: none; display: block; margin: 10px auto; border: 5px solid red"; break;
+            //     case 'right': $style = "float: right; display: block; margin: 10px 0 10px 10px;"; break;
+            //     case 'inline':
+            //     default: $style = 'float: none; display: inline-block; margin: 0';
+
+                case 'left': $classes = "tleft"; break;
+                case 'none': $classes = "tnone center"; break;
+                case 'center': $classes = "tnone center"; break;
+                case 'right': $classes = "tright"; break;
                 case 'inline':
-                default: $style = 'float: none; display: inline-block; margin: 0';
+                default: $classes = "tnone center"; break;
             }
 
             if(isset($args['action']) && ($args['action'] === 'processed')) {
-                $wrapperStyle = 'style="height: ' . $edu_sharing -> height . 'px; width:' . $edu_sharing -> width . 'px; ' . $style . '"';                   
-                $text = '<div '.$wrapperStyle.' class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '"><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div>';
-                
+                $wrapperWidth = 'style="max-width: 100%; width: ' . $edu_sharing -> width . 'px;"';                   
+                //$wrapperStyle = 'style="height: ' . $edu_sharing -> height . 'px; width:' . $edu_sharing -> width . 'px; ' . $style . '"';                   
+                $text = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner">'.$edu_sharing -> mimetype.'<div class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '" ' . $wrapperWidth . '><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div></div></div>';
             } else {    
                 $text = self::getPreview($edu_sharing, $input, $style);
             }
@@ -586,7 +605,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      * Get the wrapped preview of a resource
      * images - image preview
      * audio - standard icon
-     * video - standard ion
+     * video - standard icon
      * links - given title
      * 
      * @param $edu_sharing
@@ -619,7 +638,8 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     $content .= "<p>".$input."</p>";
                 break;
                 case 'video':
-                    $content = "<img src=\"".$eduIconMimeVideo."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
+                    // $content = "<img src=\"".$eduIconMimeVideo."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
+                    $content = "<img src=\"".$session->get("repository_home")["edu_url"]."preview?nodeId=".$edu_sharing -> id."&ticket=".$session->get("repository_ticket")."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\" />";
                     $content .= "<p>".$input."</p>";
                 break;
                 case 'textlike':
@@ -627,9 +647,9 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     $content = "<a href=\"#\">".$input."</a>";
             }
                      
-            $text = "<div class=\"edu_wrapper\" id=\"content_wrapper" . $edu_sharing -> id . "-" . $edu_sharing -> resourceid . "\" ".$wrapperStyle.">";
+            $text = "<div class=\"mw-edusharing-container\"><div class=\"edu_wrapper\" id=\"content_wrapper" . $edu_sharing -> id . "-" . $edu_sharing -> resourceid . "\" ".$wrapperStyle.">";
             $text .= $content;
-            $text .= "</div>";
+            $text .= "</div></div>";
             return $text;
     }
 

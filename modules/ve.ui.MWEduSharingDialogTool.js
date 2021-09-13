@@ -1,5 +1,12 @@
+/*!
+ * VisualEditor MediaWiki UserInterface gallery tool class.
+ *
+ * @copyright 2011-2015 VisualEditor Team and others; see AUTHORS.txt
+ * @license The MIT License (MIT); see LICENSE.txt
+ */
+
 /**
- * MediaWiki UserInterface edusharing tool.
+ * MediaWiki UserInterface gallery tool.
  *
  * @class
  * @extends ve.ui.FragmentWindowTool
@@ -8,32 +15,31 @@
  * @param {Object} [config] Configuration options
  */
 ve.ui.MWEduSharingDialogTool = function VeUiMWEduSharingDialogTool() {
-	ve.ui.MWEduSharingDialogTool.super.apply(this, arguments);
+	ve.ui.MWEduSharingDialogTool.super.apply( this, arguments );
 };
 
 /* Inheritance */
 
-OO.inheritClass(ve.ui.MWEduSharingDialogTool, ve.ui.FragmentWindowTool);
+OO.inheritClass( ve.ui.MWEduSharingDialogTool, ve.ui.FragmentWindowTool );
 
 /* Static properties */
 
-ve.ui.MWEduSharingDialogTool.static.name = 'edusharing';
+ve.ui.MWEduSharingDialogTool.static.name = 'mwEduSharing';
 ve.ui.MWEduSharingDialogTool.static.group = 'object';
 ve.ui.MWEduSharingDialogTool.static.icon = 'edusharing';
-ve.ui.MWEduSharingDialogTool.static.title =
-	OO.ui.deferMsg('edusharing-ve-dialog-button');
-ve.ui.MWEduSharingDialogTool.static.modelClasses = [ve.dm.MWEduSharingNode];
-ve.ui.MWEduSharingDialogTool.static.commandName = 'edusharing';
+ve.ui.MWEduSharingDialogTool.static.title = OO.ui.deferMsg( 'visualeditor-mwedusharingdialog-button' );
+ve.ui.MWEduSharingDialogTool.static.modelClasses = [ ve.dm.MWEduSharingNode ];
+ve.ui.MWEduSharingDialogTool.static.commandName = 'mwEduSharing';
 
 /* Registration */
 
-ve.ui.toolFactory.register(ve.ui.MWEduSharingDialogTool);
+ve.ui.toolFactory.register( ve.ui.MWEduSharingDialogTool );
 
 /* Commands */
 
 ve.ui.commandRegistry.register(
 	new ve.ui.Command(
-		'edusharing', 'window', 'open',
-		{ args: ['edusharing'], size: 'larger', supportedSelections: ['linear'] }
+		'mwEduSharing', 'window', 'open',
+		{ args: [ 'mwEduSharing' ], supportedSelections: [ 'linear' ] }
 	)
 );

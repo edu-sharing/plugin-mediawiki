@@ -5,7 +5,7 @@ var customizeToolbar = function () {
         title: mw.messages.values['wikieditor-toolbar-edusharing-title'],
         id: 'wikieditor-toolbar-edusharing-dialog',
         html: '\
-                        <iframe id="eduframe" src=""></iframe>\
+                        <iframe id="edusharing" src=""></iframe>\
 <div id="wikieditor-toolbar-edu-form"><fieldset>\
                             <input type="hidden" id="origImageRatio" value="0" />\
                             <input type="hidden" id="wikieditor-toolbar-edu-mimetype" value=""/>\
@@ -113,7 +113,7 @@ var customizeToolbar = function () {
                     });
                 }
 
-                $('#eduframe').attr('src', mw.config.get('edugui'));
+                $('#edusharing').attr('src', mw.config.get('edugui'));
 
                 $('input[name="wikieditor-toolbar-edu-float"]').change(function () {
                     updatePreview($(this).val());
@@ -202,15 +202,16 @@ function updatePreview(val) {
 }
 
 window.showEduFrame = function () {
-    $('#eduframe').css('display', 'block');
-    $('#eduframe').attr('src', mw.config.get('edugui'));
+    $('#edusharing').css('display', 'block');
+    $('#edusharing').attr('src', mw.config.get('edugui'));
 }
 
 window.hideEduFrame = function () {
-    $('#eduframe').css('display', 'none');
+    $('#edusharing').css('display', 'none');
 }
 
 window.setData = function (objid, caption, mimetype, width, height, version, repotype) {
+    console.log(objid, caption, mimetype, width, height, version, repotype);
     document.getElementById('wikieditor-toolbar-edu-object').value = objid;
     document.getElementById('wikieditor-toolbar-edu-caption').value = caption;
     document.getElementById('wikieditor-toolbar-edu-mimetype').value = mimetype;

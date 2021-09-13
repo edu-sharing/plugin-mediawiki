@@ -1,520 +1,407 @@
 /*!
  * VisualEditor UserInterface MWEduSharingDialog class.
  *
+ * @copyright 2011-2015 VisualEditor Team and others; see AUTHORS.txt
  * @license The MIT License (MIT); see LICENSE.txt
  */
-
 /**
- * MediaWiki edusharing dialog.
+ * Dialog for editing MW edusharing.
  *
  * @class
  * @extends ve.ui.MWExtensionDialog
  *
  * @constructor
- * @param {Object} [element]
+ * @param {Object} [config] Configuration options
  */
-ve.ui.MWEduSharingDialog = function VeUiMWEduSharingDialog() {
+ ve.ui.MWEduSharingDialog = function VeUiMWEduSharingDialog() {
 	// Parent constructor
-	ve.ui.MWEduSharingDialog.super.apply(this, arguments);
+	ve.ui.MWEduSharingDialog.super.apply( this, arguments );
 
-	// Properties
-	this.edusharingModel = null;
-	this.mode = '';
-	this.cachedRawData = null;
-	this.listeningToInputChanges = true;
+	// this.updateEduSharingContentsDebounced = OO.ui.debounce( this.updateEduSharingContents.bind( this ), 300 );
 };
 
 /* Inheritance */
 
-OO.inheritClass(ve.ui.MWEduSharingDialog, ve.ui.MWExtensionDialog);
+OO.inheritClass( ve.ui.MWEduSharingDialog, ve.ui.MWExtensionDialog );
 
-/* Static properties */
+/* Static Properties */
 
-ve.ui.MWEduSharingDialog.static.name = 'edusharing';
+ve.ui.MWEduSharingDialog.static.name = 'mwEduSharing';
 
-ve.ui.MWEduSharingDialog.static.title = OO.ui.deferMsg('edusharing-ve-dialog-edit-title');
+ve.ui.MWEduSharingDialog.static.title = OO.ui.deferMsg( 'visualeditor-mwedusharingdialog-title' );
 
 ve.ui.MWEduSharingDialog.static.size = 'larger';
 
-ve.ui.MWEduSharingDialog.static.modelClasses = [ve.dm.MWEduSharingNode];
+ve.ui.MWEduSharingDialog.static.allowedEmpty = true;
+
+// ve.ui.MWEduSharingDialog.static.selfCloseEmptyBody = false; // default = false
+
+ve.ui.MWEduSharingDialog.static.modelClasses = [ ve.dm.MWEduSharingNode ];
 
 /* Methods */
 
 /**
  * @inheritdoc
  */
-ve.ui.MWEduSharingDialog.prototype.getBodyHeight = function () {
-	// FIXME: This should depend on the dialog's content.
-	return 500;
-};
-
-/**
- * @inheritdoc
- */
 ve.ui.MWEduSharingDialog.prototype.initialize = function () {
-
-	var eduObject,
-		eduCaption,
-		eduHeight,
-		eduWidth,
-		eduRepotype,
-		eduMimetype,
-		eduFloat,
-		eduVersionShow,
-		eduVersion;
-
-	var selectPage, parameterPage;
-
 	// Parent method
-	ve.ui.MWEduSharingDialog.super.prototype.initialize.call(this);
+	ve.ui.MWEduSharingDialog.super.prototype.initialize.call( this );
 
-	// /* Root layout */
-	this.rootLayout = new OO.ui.IndexLayout({
-		classes: ['ve-ui-mwEduSharingDialog-panel-root']
-	});
+	// this.helpLink = new OO.ui.ButtonWidget( {
+	// 	icon: 'help',
+	// 	classes: [ 've-ui-mwEduSharingDialog-help' ],
+	// 	title: ve.msg( 'visualeditor-mwedusharingdialog-help-title' ),
+	// 	href: '',
+	// 	target: '_blank'
+	// } );
+
+	this.$edusharing = $( '<div>' ).appendTo( this.$edusharingContainer );
+	this.edusharing = null;
+
+	// Panels
+	this.indexLayout = new OO.ui.IndexLayout( {
+		expanded: false,
+		classes: [ 've-ui-mwEduSharingDialog-indexLayout' ]
+	} );
+	this.selectPanel = new OO.ui.TabPanelLayout( 'select', {
+		expanded: false,
+		padded: true,
+		label: ve.msg( 'visualeditor-mwedusharingdialog-select' )
+	} );
+	this.optionsPanel = new OO.ui.TabPanelLayout( 'options', {
+		expanded: false,
+		label: ve.msg( 'visualeditor-mwedusharingdialog-options' )
+	} );
+	
+	// Fields	
+	this.id = new OO.ui.TextInputWidget( {
+	} );
+	this.idField = new OO.ui.FieldLayout( this.id, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-id' )
+	} ).isVisible( false );
+
+	this.caption = new OO.ui.TextInputWidget( {
+	} );
+	this.captionField = new OO.ui.FieldLayout( this.caption, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-caption' )
+	// } ).isVisible( false );
+	} );
+
+	this.mimetype = new OO.ui.TextInputWidget( {
+	} );
+	this.mimetypeField = new OO.ui.FieldLayout( this.mimetype, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-mimetype' )
+	} ).isVisible( false );
+
+	this.version = new OO.ui.TextInputWidget( {
+	} );
+	this.versionField = new OO.ui.FieldLayout( this.version, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-version' )
+	} ).isVisible( false );
+
+	this.repotype = new OO.ui.TextInputWidget( {
+	} );
+	this.repotypeField = new OO.ui.FieldLayout( this.repotype, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-repotype' )
+	} ).isVisible( false );
+
+	this.versionshow = new OO.ui.RadioSelectInputWidget( {
+    options: [
+			{ data: 'latest', label: mw.msg('visualeditor-mwedusharingdialog-versionshow-latest') },
+			{ data: 'current', label: mw.msg('visualeditor-mwedusharingdialog-versionshow-current') }
+    ]
+	} );
+	this.versionshowField = new OO.ui.FieldLayout( this.versionshow, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-versionshow' )
+	} );
+
+	this.dimensions = new ve.ui.DimensionsWidget();
+	this.dimensionsField = new OO.ui.FieldLayout( this.dimensions, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-size' )
+	} );
+
+	this.align = new ve.ui.AlignWidget( {
+		dir: this.getDir()
+	} );
+	this.alignField = new OO.ui.FieldLayout( this.align, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-align' )
+	} );
+
+	this.optionsPanel.$element.append (
+		this.idField.$element,
+		this.captionField.$element,
+		this.mimetypeField.$element,
+		this.versionField.$element,
+		this.repotypeField.$element,
+		this.versionshowField.$element,
+		this.dimensionsField.$element,
+		this.alignField.$element
+	);
+
+	// Initialize
+	this.indexLayout.addTabPanels( [
+		this.selectPanel,
+		// this.contentPanel,
+		this.optionsPanel
+	] );
+
+	this.$body.append(
+		this.$edusharingContainer,
+		this.indexLayout.$element
+		//this.helpLink.$element
+	);
 
 	var iframeSetup = {
-		html: '<iframe width="100%" height="800" id="eduframe" src="' + mw.config.get('edugui') + '"></iframe>',
+		// html: '<iframe width="100%" height="900" id="edusharing" src="' + mw.config.get('edugui') + '"></iframe>'
+		html: '<iframe id="edusharing" style="width: 100%; "></iframe>'
 	}
 
 	var eduIframe = $(iframeSetup.html);
 
-	// this.rootLayout = new OO.ui.TabPanelLayout({
-	// 	classes: ['ve-ui-mwEduSharingDialog-panel-root'],
-	// 	expanded: false,
-	// 	framed: false,
-	// 	padded: false,
-	// 	//		$content: content,
-	// });
-
-	this.selectPage = new OO.ui.TabPanelLayout('select', {
-		label: ve.msg('edusharing-ve-dialog-edit-page-select')
-	});
-	this.parameterPage = new OO.ui.TabPanelLayout('parameter', {
-		label: ve.msg('edusharing-ve-dialog-edit-page-parameter')
-	});
-
-	this.rootLayout.addTabPanels([
-		this.selectPage, this.parameterPage
-	]);
-
-	this.selectPage.$element.append(
+	this.selectPanel.$element.append(
 		eduIframe
 	)
 
+	var eduIframeShow = false;
 
-	this.eduCaption = new OO.ui.TextInputWidget({ value: 'jskjdlks' });
-	var eduCaptionField = new OO.ui.FieldLayout(this.eduCaption, {
-		label: ve.msg('edusharing-ve-dialog-edit-field-caption'),
-		align: 'top'
-	});
-
-	this.eduCaption.connect(this, {
-		change: 'onDataInputChange'
-	});
-
-	this.eduVersionConfig = {
-		options: [
-			{ data: 'current', label: mw.msg('edusharing-ve-dialog-edit-version-current') },
-			{ data: 'latest', label: mw.msg('edusharing-ve-dialog-edit-version-latest') }
-		]
-	};
-
-	// Properties
-	var eduVersion = new OO.ui.RadioSelectInputWidget(this.eduVersionConfig);
-
-
-
-	// Position
-	this.positionSelect = new ve.ui.AlignWidget({
-		dir: this.getDir()
-	});
-	positionSelectField = new OO.ui.FieldLayout(this.positionSelect);
-	this.positionCheckbox = new OO.ui.CheckboxInputWidget();
-	positionCheckboxField = new OO.ui.FieldLayout(this.positionCheckbox, {
-		$overlay: this.$overlay,
-		align: 'inline',
-		label: ve.msg('visualeditor-dialog-media-position-checkbox'),
-		help: ve.msg('visualeditor-dialog-media-position-checkbox-help')
-	});
-	positionFieldset = new OO.ui.FieldsetLayout({
-		$overlay: this.$overlay,
-		label: ve.msg('visualeditor-dialog-media-position-section'),
-		help: ve.msg('visualeditor-dialog-media-position-section-help')
-	});
-	positionFieldset.addItems([
-		positionCheckboxField,
-		positionSelectField
-	]);
-
-	this.parameterPage.$element.append(
-		eduCaptionField.$element,
-		eduVersion.$element,
-		positionFieldset.$element
-	)
-
-	// Initialization
-	this.$body.append(this.rootLayout.$element);
-};
-
-/**
- * @inheritdoc
- */
-ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function (data) {
-	return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call(this, data)
-		.next(function () {
-			var spec, newElement;
-
-			this.getFragment().getSurface().pushStaging();
-
-			// Create new edusharing node if not present (insert mode)
-			if (!this.selectedNode) {
-				newElement = this.getNewElement();
-				this.fragment = this.getFragment().insertContent([
-					newElement,
-					{ type: '/' + newElement.type }
-				]);
-				this.getFragment().select();
-				this.selectedNode = this.getFragment().getSelectedNode();
-			}
-
-			// Set up model
-			spec = ve.copy(this.selectedNode.getSpec());
-
-
-
-			this.edusharingModel = new ve.dm.MWEduSharingModel(spec);
-			this.edusharingModel.connect(this, {
-				specChange: 'onSpecChange'
-			});
-
-			// Set up default values
-			this.setupFormValues();
-
-			// // If parsing fails here, cached raw data can simply remain null
-			// try {
-			// 	this.cachedRawData = JSON.parse(this.jsonTextInput.getValue());
-			// } catch (err) { }
-
-			this.checkChanges();
-		}, this);
-};
-
-/**
- * @inheritdoc
- */
-ve.ui.MWEduSharingDialog.prototype.getTeardownProcess = function (data) {
-	return ve.ui.MWEduSharingDialog.super.prototype.getTeardownProcess.call(this, data)
-		.first(function () {
-			// Kill model
-			this.edusharingModel.disconnect(this);
-
-			this.edusharingModel = null;
-
-			this.rootLayout.resetScroll();
-
-			// Clear data page
-			// this.dataTable.clearWithProperties();
-
-			// Kill staging
-			if (data === undefined) {
-				this.getFragment().getSurface().popStaging();
-				this.getFragment().update(this.getFragment().getSurface().getSelection());
-			}
-		}, this);
-};
-
-/**
- * @inheritdoc
- */
-ve.ui.MWEduSharingDialog.prototype.getActionProcess = function (action) {
-	switch (action) {
-		case 'done':
-			return new OO.ui.Process(function () {
-				// 
-
-				this.edusharingModel.applyChanges(this.selectedNode, this.getFragment().getSurface());
-				this.close({ action: action });
-			}, this);
-
-		default:
-			return ve.ui.MWEduSharingDialog.super.prototype.getActionProcess.call(this, action);
-	}
-};
-
-/**
- * Setup initial values in the dialog
- *
- * @private
- */
-ve.ui.MWEduSharingDialog.prototype.setupFormValues = function () {
-	// var edusharingType = this.edusharingModel.getEduSharingType(),
-	// 	edusharingSize = this.edusharingModel.getSize(),
-	// var eduVersions = this.edusharingModel.getEduVersionObject();
-	var spec = this.edusharingModel.getSpec();
-	console.log(spec)
-	this.eduCaption.setValue(spec.caption)
-
-	// 	readOnly = this.isReadOnly(),
-	// 	options = [
-	// 		{
-	// 			data: 'bar',
-	// 			label: ve.msg('edusharing-ve-dialog-edit-type-bar')
-	// 		},
-	// 		{
-	// 			data: 'area',
-	// 			label: ve.msg('edusharing-ve-dialog-edit-type-area')
-	// 		},
-	// 		{
-	// 			data: 'line',
-	// 			label: ve.msg('edusharing-ve-dialog-edit-type-line')
-	// 		}
-	// 	],
-	// 	unknownEduSharingTypeOption = {
-	// 		data: 'unknown',
-	// 		label: ve.msg('edusharing-ve-dialog-edit-type-unknown')
-	// 	},
-	// 	dataFields = this.edusharingModel.getPipelineFields(0),
-	// 	eduVersion, i;
-
-	// // EduSharing type
-	// if (edusharingType === 'unknown') {
-	// 	options.push(unknownEduSharingTypeOption);
-	// }
-
-	// this.edusharingTypeDropdownInput
-	// 	.setOptions(options)
-	// 	.setValue(edusharingType)
-	// 	.setDisabled(readOnly);
-
-	// // Size
-	// this.sizeWidget.setScalable(new ve.dm.Scalable({
-	// 	currentDimensions: {
-	// 		width: edusharingSize.width,
-	// 		height: edusharingSize.height
-	// 	},
-	// 	minDimensions: ve.dm.MWEduSharingModel.static.minDimensions,
-	// 	fixedRatio: false
-	// }));
-	// this.sizeWidget.setDisabled(readOnly);
-
-	// // EduVersion
-	// this.eduVersionAutoCheckbox.setSelected(this.edusharingModel.isEduVersionAutomatic())
-	// 	.setDisabled(readOnly);
-	// for (eduVersion in eduVersions) {
-	// 	if (Object.prototype.hasOwnProperty.call(eduVersions, eduVersion)) {
-	// 		this.eduVersionInputs[eduVersion].setValue(eduVersions[eduVersion])
-	// 			.setReadOnly(readOnly);
-	// 	}
-	// }
-
-	// // Data
-	// for (i = 0; i < dataFields.length; i++) {
-	// 	this.dataTable.insertColumn(null, null, dataFields[i], dataFields[i]);
-	// }
-
-	// this.dataTable.setDisabled(readOnly);
-
-	// this.updateDataPage();
-
-	// // JSON text input
-	// this.jsonTextInput
-	// 	.setValue(this.edusharingModel.getSpecString())
-	// 	.setReadOnly(readOnly)
-	// 	.clearUndoStack();
-};
-
-/**
- * Update data page widgets based on the current spec
- */
-ve.ui.MWEduSharingDialog.prototype.updateDataPage = function () {
-	var pipeline = this.edusharingModel.getPipeline(0),
-		i, row, field;
-
-	for (i = 0; i < pipeline.values.length; i++) {
-		row = [];
-
-		for (field in pipeline.values[i]) {
-			if (Object.prototype.hasOwnProperty.call(pipeline.values[i], field)) {
-				row.push(pipeline.values[i][field]);
-			}
+	window.showEduFrame = function () {
+			// Calculate iframe height
+			// console.log($('.oo-ui-menuLayout-menu').height()); console.log($('.oo-ui-menuLayout-content').height());
+			$('#edusharing').css('height', 'calc( 100% - ' + $('.oo-ui-menuLayout-menu').height() +  'px - ' + $('.oo-ui-menuLayout-content').height() +  'px )');
+			if ( eduIframeShow === false ) { // Load only if not loaded before
+				$('#edusharing').attr('src', mw.config.get('edugui'));
+			eduIframeShow = true;
 		}
+	}
 
-		// this.dataTable.insertRow(row);
+	window.hideEduFrame = function () {
+		eduIframeShow = false;
 	}
 };
 
 /**
- * Validate raw data input
- *
- * @private
- * @param {string} value The new input value
- * @return {boolean} Data is valid
+ * Handle change events on the dimensions widget
  */
-ve.ui.MWEduSharingDialog.prototype.validateRawData = function (value) {
-	var isValid = !$.isEmptyObject(ve.dm.MWEduSharingNode.static.parseSpecString(value)),
-		label = (isValid) ? '' : ve.msg('edusharing-ve-dialog-edit-json-invalid');
-
-	this.setLabel(label);
-
-	return isValid;
+ve.ui.MWEduSharingDialog.prototype.onDimensionsChange = function () {
+	this.updateActions();
 };
+
+/**
+ * @inheritdoc ve.ui.MWExtensionWindow
+ */
+ve.ui.MWEduSharingDialog.prototype.insertOrUpdateNode = function () {
+	// Parent method
+	ve.ui.MWEduSharingDialog.super.prototype.insertOrUpdateNode.apply( this, arguments );
+
+	// Update scalable
+	this.scalable.setCurrentDimensions(
+			this.dimensions.getDimensions()
+	);
+};
+
+/**
+ * @inheritdoc ve.ui.MWExtensionWindow
+ */
+ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
+
+	this.indexLayout.setTabPanel( 'options' );
+
+	var id, caption, mimetype, version, dimensions, versionshow, repotype;
+	id = this.id.getValue();
+	caption = this.caption.getValue();
+	mimetype = this.mimetype.getValue();
+	dimensions = this.dimensions.getDimensions();
+	version = this.version.getValue();
+	repotype = this.repotype.getValue();
+	versionshow = this.versionshow.getValue();	
+
+
+	// Parent method
+	ve.ui.MWEduSharingDialog.super.prototype.updateMwData.call( this, mwData );
+
+	// Set the edusharing tag attributes
+	mwData.attrs.action = 'new'; // Regardless of whether inserting or updating an edu-sharing media we always need to set action tag attribute to 'new' to get a new resourceid (see below)
+	mwData.body.extsrc = caption;
+	mwData.attrs.id = id.toString();
+	mwData.attrs.mimetype = mimetype.toString();
+	mwData.attrs.version = version.toString();
+	mwData.attrs.repotype = repotype.toString();
+	mwData.attrs.versionshow = versionshow.toString();
+	mwData.attrs.width = dimensions.width.toString();
+	mwData.attrs.height = dimensions.height.toString();
+	mwData.attrs.float = this.align.findSelectedItem().getData(); // The edusharing tag uses float, VE uses align, see also ve.ce.MWEduSharingNode.js
+	// If updating an edu-sharing media we need to delete the resourceid tag attribute to get a new resourceid from edu-sharing, otherwise we get a permission error
+	if ( mwData.attrs.hasOwnProperty('resourceid') ){
+		delete mwData.attrs.resourceid;
+	}
+}
 
 // /**
-//  * Handle spec string input change
-//  *
-//  * @private
-//  * @param {string} value The text input value
+//  * @inheritdoc
 //  */
-// ve.ui.MWEduSharingDialog.prototype.onSpecStringInputChange = function (value) {
-// 	var newRawData;
-
-// 	try {
-// 		// If parsing fails here, nothing more needs to happen
-// 		newRawData = JSON.parse(value);
-
-// 		// Only pass changes to model if there was anything worthwhile to change
-// 		if (!OO.compare(this.cachedRawData, newRawData)) {
-// 			this.cachedRawData = newRawData;
-// 			this.edusharingModel.setSpecFromString(value);
-// 		}
-// 	} catch (err) { }
+// ve.ui.MWEduSharingDialog.prototype.getReadyProcess = function ( data ) {
+// 	return ve.ui.MWEduSharingDialog.super.prototype.getReadyProcess.call( this, data )
+// 		.next( function () {
+// 			this.pushPending();
+// 			this.setupEduSharing()
+// 				.then( this.popPending.bind( this ) );
+// 		}, this );
 // };
 
 /**
- * Handle edusharing type changes
- *
- * @param {string} value The new edusharing type
+ * @inheritdoc
  */
-ve.ui.MWEduSharingDialog.prototype.onEduSharingTypeInputChange = function (value) {
-	this.unknownEduSharingTypeWarningLabel.toggle(value === 'unknown');
+ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
-	if (value !== 'unknown') {
-		this.edusharingModel.switchEduSharingType(value);
-	}
-};
+	this.indexLayout.getTabPanel( 'select' ).getTabItem().setElementId('edusharing-select');
+	this.indexLayout.getTabPanel( 'options' ).getTabItem().setElementId('edusharing-options');
+	showEduFrame();
+	this.indexLayout.setTabPanel( 'select' );
 
-/**
- * Handle data input changes
- *
- * @private
- * @param {number} rowIndex The index of the row that changed
- * @param {string} rowKey The key of the row that changed, or `undefined` if it doesn't exist
- * @param {number} colIndex The index of the column that changed
- * @param {string} colKey The key of the column that changed, or `undefined` if it doesn't exist
- * @param {string} value The new value
- */
-ve.ui.MWEduSharingDialog.prototype.onDataInputChange = function (
-	e
-) {
-	this.edusharingModel.setCaption(e);
-};
+	data = data || {};
+	return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call( this, data )
+		.next( function () {
+			var mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
+			mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
+			isReadOnly = this.isReadOnly();
+			
+			var that = this;
 
+			////////////////////////// from Moodle plugin
 
-/**
- * Handle page set events on the root layout
- *
- * @param {OO.ui.PageLayout} page Set page
- */
-ve.ui.MWEduSharingDialog.prototype.onRootLayoutSet = function (page) {
-	if (page.getName() === 'raw') {
-		//	this.jsonTextInput.adjustSize(true);
-	}
-};
-
-/**
- * Handle size widget changes
- *
- * @param {Object} dimensions New dimensions
- */
-ve.ui.MWEduSharingDialog.prototype.onSizeWidgetChange = function (dimensions) {
-	if (this.sizeWidget.isValid()) {
-		this.edusharingModel.setWidth(dimensions.width);
-		this.edusharingModel.setHeight(dimensions.height);
-	}
-	this.checkChanges();
-};
-
-/**
- * Handle eduVersion changes
- *
- * @param {string} key 'top', 'bottom', 'left' or 'right'
- * @param {string} value The new value
- */
-ve.ui.MWEduSharingDialog.prototype.onEduVersionInputChange = function (key, value) {
-	if (value !== '') {
-		this.edusharingModel.setEduVersion(key, +value);
-	}
-};
-
-/**
- * Handle model spec change events
- *
- * @private
- */
-ve.ui.MWEduSharingDialog.prototype.onSpecChange = function () {
-	var eduVersion,
-		eduVersionAuto = this.edusharingModel.isEduVersionAutomatic(),
-		eduVersionObj = this.edusharingModel.getEduVersionObject();
-
-	if (this.listeningToInputChanges) {
-		this.listeningToInputChanges = false;
-
-		this.jsonTextInput.setValue(this.edusharingModel.getSpecString());
-
-		if (eduVersionAuto) {
-			// Clear eduVersion table if set to automatic
-			for (eduVersion in this.eduVersionInputs) {
-				this.eduVersionInputs[eduVersion].setValue('');
-			}
-		} else {
-			// Fill eduVersion table with model values if set to manual
-			for (eduVersion in eduVersionObj) {
-				if (Object.prototype.hasOwnProperty.call(eduVersionObj, eduVersion)) {
-					this.eduVersionInputs[eduVersion].setValue(eduVersionObj[eduVersion]);
+			window.addEventListener('message', function (event) {
+				console.log('event.data.event: '); console.log(event.data.event);
+				if (event.data.event == 'APPLY_NODE') {
+					alert(event.data.event);
+					var node = event.data.data;
+					console.log('Received data: '); console.log(node);
 				}
+			}, false);
+
+			////////////////////////
+
+			window.setData = function(id, caption, mimetype, width, height, version, repotype) {
+				console.log("window.setData from iframe: ", id, caption, mimetype, width, height, version, repotype);
+				
+				that.indexLayout.setTabPanel( 'options' );
+				hideEduFrame();
+				showEduFrame();
+				$('#edusharing-options').show(); // New object is selected - so let's show the options tab
+
+				that.id.setValue(id);
+				that.caption.setValue(caption);
+				that.mimetype.setValue(mimetype);
+				that.version.setValue(version);
+				that.repotype.setValue(repotype);
+
+			};
+		
+
+			if ( this.selectedNode ) {
+				this.scalable = this.selectedNode.getScalable();
+			} else {
+				this.scalable = ve.dm.MWEduSharingNode.static.createScalable(
+					{ width: 400, height: 300 }
+				);
 			}
-		}
 
-		for (eduVersion in this.eduVersionInputs) {
-			this.eduVersionInputs[eduVersion].setDisabled(eduVersionAuto);
-		}
+			// Events
 
-		this.listeningToInputChanges = true;
+			this.id.setValue( mwAttrs.id ).setDisabled( isReadOnly );
+			
+			this.caption.setValue( mwBody.extsrc ).setDisabled( isReadOnly );
 
-		this.checkChanges();
-	}
+			this.mimetype.setValue( mwAttrs.mimetype ).setDisabled( isReadOnly );
+
+			this.version.setValue( mwAttrs.version ).setDisabled( isReadOnly );
+
+			this.repotype.setValue( mwAttrs.repotype ).setDisabled( isReadOnly );
+
+			this.versionshow.setValue( mwAttrs.versionshow ).setDisabled( isReadOnly );
+
+			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
+
+			// this.align.selectItemByData( mwAttrs.align || 'right' ).setDisabled( isReadOnly );
+			this.align.selectItemByData( mwAttrs.float || 'right' ).setDisabled( isReadOnly ); // The edusharing tag uses float not align
+
+			this.dimensions.connect( this, {
+				widthChange: 'onDimensionsChange',
+				heightChange: 'onDimensionsChange'
+			} );
+
+			this.caption.connect( this, { change: 'updateActions' } );
+
+			this.versionshow.connect( this, { change: 'updateActions' } );
+
+			this.align.connect( this, { choose: 'updateActions' } );
+			
+			if( this.id.value != ''){
+				this.indexLayout.setTabPanel( 'options' ); // If the edusharing object already exists, we start with the options panel
+			} else {
+				// Hack: Hide the options tab to prevent insertion of an empty edusharing tag if no object is selected.
+				// There seems to be no method to disable a tab - see: https://doc.wikimedia.org/VisualEditor/master/js/#!/api/OO.ui.TabPanelLayout-method-setTabItem
+				$('#edusharing-options').hide();
+			}
+		}, this );
 };
 
 /**
- * Check for overall validity and enables/disables action abilities accordingly
- *
- * @private
+ * @inheritdoc
  */
-ve.ui.MWEduSharingDialog.prototype.checkChanges = function () {
+ve.ui.MWEduSharingDialog.prototype.getTeardownProcess = function ( data ) {
+	return ve.ui.MWEduSharingDialog.super.prototype.getTeardownProcess.call( this, data )
+		.first( function () {
+			// Events
+			
+			this.indexLayout.disconnect( this );
 
-	var dialog = this;
-	dialog.actions.setAbilities({ done: true });
+			this.id.disconnect( this );
 
-	// // Synchronous validation
-	// if (!this.sizeWidget.isValid()) {
-	// 	this.actions.setAbilities({ done: false });
-	// 	return;
-	// }
+			this.caption.disconnect( this );
 
-	// // Asynchronous validation
-	// this.jsonTextInput.getValidity().then(
-	// 	function () {
-	// 		dialog.actions.setAbilities({
-	// 			done: (dialog.mode === 'insert') || dialog.edusharingModel.hasBeenChanged()
-	// 		});
-	// 	},
-	// 	function () {
-	// 		dialog.actions.setAbilities({ done: false });
-	// 	}
-	// );
+			this.mimetype.disconnect( this );
+
+			this.repotype.disconnect( this );
+
+			this.version.disconnect( this );
+
+			this.versionshow.disconnect( this );
+
+			this.dimensions.disconnect( this );
+
+			this.align.disconnect( this );
+
+			if ( this.edusharing ) {
+				this.edusharing.remove();
+				this.edusharing = null;
+			}
+		}, this );
 };
+
+// A larger dialog
+/**
+ * @inheritdoc
+ */
+
+ve.ui.MWEduSharingDialog.prototype.getSizeProperties = function () {
+ 		return {
+ 			width: '905',
+ 			height: '1000'
+ 	};
+};
+
+// ve.ui.MWEduSharingDialog.prototype.getBodyHeight = function () {
+//  	return 1000;
+// };
 
 /* Registration */
 
-ve.ui.windowFactory.register(ve.ui.MWEduSharingDialog);
+ve.ui.windowFactory.register( ve.ui.MWEduSharingDialog );

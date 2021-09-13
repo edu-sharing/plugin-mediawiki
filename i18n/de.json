@@ -24,9 +24,21 @@
   "wikieditor-toolbar-edusharing-version": "Version",
   "wikieditor-toolbar-edusharing-version-latest": "Aktuellste",
 	"wikieditor-toolbar-edusharing-version-current": "Diese",
-	
-	"edusharing-ve-dialog-button": "EduSharing Objekt",
-	"edusharing-ve-dialog-edit-page-parameter": "Erweitert",
-	"edusharing-ve-dialog-edit-page-select": "Objekt auswählen",
-	"edusharing-ve-dialog-edit-title": "EduSharing Objekt einfügen"
+
+	"visualeditor-mwedusharingdialog-button": "edu-sharing Medien",
+	"visualeditor-mwedusharingdialog-title": "edu-sharing Medien einfügen",
+	"visualeditor-mwedusharingdialog-help-title": "Hilfe",
+	"visualeditor-mwedusharingdialog-select": "Objekt auswählen",
+	"visualeditor-mwedusharingdialog-options": "Erweitert",
+	"visualeditor-mwedusharingdialog-action": "Action",
+	"visualeditor-mwedusharingdialog-id": "ID",
+	"visualeditor-mwedusharingdialog-caption": "Beschreibung",
+	"visualeditor-mwedusharingdialog-mimetype": "Mimetype",
+	"visualeditor-mwedusharingdialog-version": "Version",
+	"visualeditor-mwedusharingdialog-repotype": "Repotype",
+	"visualeditor-mwedusharingdialog-versionshow": "Welche Version soll angezeigt werden?",
+	"visualeditor-mwedusharingdialog-versionshow-latest": "Immer die aktuellste Version",
+	"visualeditor-mwedusharingdialog-versionshow-current": "Die derzeitige Version",
+	"visualeditor-mwedusharingdialog-size": "Größe",
+	"visualeditor-mwedusharingdialog-align": "Ausrichtung"
 }
