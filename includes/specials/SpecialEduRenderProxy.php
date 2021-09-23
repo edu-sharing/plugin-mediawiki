@@ -39,14 +39,11 @@ class SpecialEduRenderProxy extends SpecialPage {
         $postData->usageId =  $usageid;
 
         $result = $eduSharingService ->getNode($postData);
-        // take over output since we dont't want any stuff around our html
-        $this->getOutput()->disable();
-        // var_dump($result); die();
-        
+
         $html = $result["detailsSnippet"];
         // take over output since we dont't want any stuff around our html
         $this->getOutput()->disable();
-        // print($html);
+
         print($this->display ( str_replace("width:0px;", "",  $html), $edu_sharing ));
     }
 

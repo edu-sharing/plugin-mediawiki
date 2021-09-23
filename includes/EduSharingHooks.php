@@ -10,8 +10,6 @@
  * EduSharing hooks
  */
 
- use MediaWiki\Revision\SlotRecord;
-
 class EduSharingHooks {
 
     // Variables used in JS should be defined the new way, but currently it throws an mimetype mismatch error. Variables for JS are defined in line 491ff
@@ -23,13 +21,6 @@ class EduSharingHooks {
         #$config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
         #$vars['wgEduSharingUrl'] = $config->get( 'EduSharingUrl' );
     }
-
-    
-   /**
-     * Home configuration
-     * var array
-     */
-    private static $hc;
         
     /**
      * Ticket from repository
@@ -76,7 +67,6 @@ class EduSharingHooks {
         );
         
         $eduService = new EduSharingService();
-        $hc = $eduService -> getHomeConfig();
         
         /*
          * Delte usages for edusharing resources 
@@ -87,7 +77,7 @@ class EduSharingHooks {
             $params = array(
             		'eduRef' => $resource -> EDUSHARING_RESOURCE_OBJECT_URL,
             		'user' => strtolower($user -> getName()),
-            		'lmsId' => $hc['appid'],
+            		'lmsId' => $eduService->config->appId,
             		'courseId' => $article -> getId(),
             		'resourceId' => $resource -> EDUSHARING_RESOURCE_ID
             );
@@ -123,7 +113,6 @@ class EduSharingHooks {
         );
         
         $eduService = new EduSharingService();
-        $hc = $eduService -> getHomeConfig();
         
         /*
          * For each resource add usage
@@ -141,11 +130,11 @@ class EduSharingHooks {
             $edu_sharing -> height = $resource -> EDUSHARING_RESOURCE_HEIGHT;
             $edu_sharing -> width = $resource -> EDUSHARING_RESOURCE_WIDTH;
             $edu_sharing -> pageid = $title -> mArticleID;
-            $edu_sharing -> ticket = RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket');
+            $edu_sharing -> ticket = $eduService->getTicket();
             $edu_sharing -> user = strtolower($wgUser -> getName());
             $edu_sharing -> float = $resource -> EDUSHARING_RESOURCE_FLOAT;
             $edu_sharing -> resourceid = $resource -> EDUSHARING_RESOURCE_ID;
-            $edu_sharing -> appid = $hc['appid'];
+            $edu_sharing -> appid = $eduService->config->appId;
 
             $eduService -> addUsage($edu_sharing);
             
@@ -172,7 +161,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
     global $wgUser;
     
     $eduService = new EduSharingService();
-    $hc = $eduService -> getHomeConfig();
     
     /*
      * Get edu-sharing tags from $text 
@@ -211,14 +199,14 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $edu_sharing -> width = $_width;
             $edu_sharing -> mimetype = $_mimetype;
             $edu_sharing -> pageid = $article -> getId();
-            $edu_sharing -> ticket = RequestContext::getMain()->getRequest()->getSession()->get('repository_ticket');
+            $edu_sharing -> ticket = $eduService->getTicket();
             $edu_sharing -> user = strtolower($wgUser -> getName());
             $edu_sharing -> float = $_float;
             $edu_sharing -> version = $_version;
             $edu_sharing -> versionShow = $_versionShow;
            
             $edu_sharing -> resourceid = $_resourceId;
-            $edu_sharing -> appid = $hc['appid'];
+            $edu_sharing -> appid = $eduService->config->appId;
             
             /*
              * UPDATE usage 
@@ -249,8 +237,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         if ( $title->getNamespace() == -1 )
             return true;
         $wikiPage = WikiPage::factory( $title );
-
-        $session= RequestContext::getMain()->getRequest()->getSession();
         
         /*
          * Get db access
@@ -433,7 +419,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $params = array(
             		'eduRef' => $item -> EDUSHARING_RESOURCE_OBJECT_URL,
             		'user' => strtolower($user -> getName()),
-            		'lmsId' => $hc['appid'],
+            		'lmsId' => $eduService->config->appId,
             		'courseId' => $wikiPage -> getId(),
             		'resourceId' => $item -> EDUSHARING_RESOURCE_ID
             );
@@ -458,12 +444,30 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
     /**
      * Adds edu-sharing item to editor toolbar
      * 
-     * @param &$toolbar
+     * @param $editPage
+     * @param $output
      * @return true
      */
-    public static function editPageShowEditFormInitial(&$toolbar) {
-        global $wgOut;
-        $wgOut -> addModules('ext.eduSharing.dialog');
+    public static function editPageShowEditFormInitial( EditPage $editPage, OutputPage $output ) {
+        
+        $eduService = new EduSharingService();
+        $ticket = $eduService -> getTicket();
+
+        global $wgServer, $wgScriptPath;
+
+        $output -> addModules('ext.eduSharing.dialog');
+        $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
+        $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
+        $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
+        
+        ###
+        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
+        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
+        $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
+        $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
+        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->eduUrl . 'preview?' ] );
+        $output -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
+
         return true;
     }
 
@@ -475,33 +479,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      */
     public static function wfEdusharingExtensionInit(Parser $parser) {
 
-        /**
-         * When the parser sees the <edusharing> tag, it executes the render function (see below)
-         */
         $parser -> setHook("edusharing", array( __CLASS__, 'wfEduSharingRender' ));
-
-        $eduService = new EduSharingService();
-
-        $ticket = $eduService -> getTicket();
-        
-        //RequestContext::getMain()->getRequest()->getSession()->set("repository_ticket", $ticket);
-        //RequestContext::getMain()->getRequest()->getSession()->set("repository_home", self::$hc);
-
-        global $wgOut, $wgServer, $wgScriptPath, $eduIconMimeVideo, $eduIconMimeAudio;
-        
-        $wgOut -> addJsConfigVars(array('eduticket' => $ticket));
-        ### added:
-        $wgOut -> addJsConfigVars(array('eduusername' => $eduService->config->username ));
-        $wgOut -> addJsConfigVars(array('eduappid' => $eduService->config->appId ));
-        
-        ###
-        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
-        $wgOut -> addJsConfigVars(array('edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username));
-        $wgOut -> addJsConfigVars(array('edu_preview_icon_video' => $eduIconMimeVideo));
-        $wgOut -> addJsConfigVars(array('edu_preview_icon_audio' => $eduIconMimeAudio));
-        $wgOut -> addJsConfigVars(array('edupreview' => $eduService->config->eduUrl . 'preview?'));
-        $wgOut -> addJsConfigVars(array('eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg'));
-
         return true;
     }
 
@@ -618,9 +596,10 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      * @return string
      */
     public static function getPreview($edu_sharing, $input, $style) {
-        global $eduIconMimeVideo, $eduIconMimeAudio;
 
-        $session = RequestContext::getMain()->getRequest()->getSession();
+        $eduService = new EduSharingService();
+        $ticket = $eduService->getTicket();
+
         $wrapperStyle = "style=\"height:auto; width:auto; " . $style . "\"";
                     
             $mimeSwitchHelper = '';
@@ -634,24 +613,24 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                 $mimeSwitchHelper = 'textlike';
             switch($mimeSwitchHelper) {
                 case 'image':
-                    $content = "<img src=\"".$session->get("repository_home")["edu_url"]."preview?nodeId=".$edu_sharing -> id."&ticket=".$session->get("repository_ticket")."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\" />";
-                    $content .= "<p>".$input."</p>";
+                    $content = "<img src=\"" . $eduService->config->baseUrl . "/preview?nodeId=" . $edu_sharing->id . "&ticket=" . $ticket . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\" />";
+                    $content .= "<p>" . $input . "</p>";
                 break;
                 case 'audio':
-                    $content = "<img src=\"".$eduIconMimeAudio."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
-                    $content .= "<p>".$input."</p>";
+                    $content = "<img src=\"" . $eduService->config->iconMimeAudio . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\"/>";
+                    $content .= "<p>" . $input . "</p>";
                 break;
                 case 'video':
-                    // $content = "<img src=\"".$eduIconMimeVideo."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
-                    $content = "<img src=\"".$session->get("repository_home")["edu_url"]."preview?nodeId=".$edu_sharing -> id."&ticket=".$session->get("repository_ticket")."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\" />";
-                    $content .= "<p>".$input."</p>";
+                    // $content = "<img src=\"".$eduService->config->iconMimeVideo."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
+                    $content = "<img src=\"" . $eduService->config->baseUrl . "/preview?nodeId=" . $edu_sharing->id . "&ticket=" . $ticket . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\" />";
+                    $content .= "<p>" . $input . "</p>";
                 break;
                 case 'textlike':
                 default: 
-                    $content = "<a href=\"#\">".$input."</a>";
+                    $content = "<a href=\"#\">" . $input . "</a>";
             }
                      
-            $text = "<div class=\"mw-edusharing-container\"><div class=\"edu_wrapper\" id=\"content_wrapper" . $edu_sharing -> id . "-" . $edu_sharing -> resourceid . "\" ".$wrapperStyle.">";
+            $text = "<div class=\"mw-edusharing-container\"><div class=\"edu_wrapper\" id=\"content_wrapper" . $edu_sharing->id . "-" . $edu_sharing->resourceid . "\" ".$wrapperStyle.">";
             $text .= $content;
             $text .= "</div></div>";
             return $text;

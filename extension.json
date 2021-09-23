@@ -153,15 +153,27 @@
 			]
 		}
 	},
+	"config": {
+		"EduSharingBaseUrl": {
+			"description": "Defines the URL of the edu-sharing repository",
+			"value": "https://example.com/edu-sharing"
+		},
+		"EduSharingAppId": {
+			"description": "Defines the AppID with which this wiki is registered at the edu-sharing repository",
+			"value": "mediawiki-app-id"
+		},
+		"EduSharingIconMimeAudio": {
+			"description": "Audio Icon",
+			"value": "audio.png"
+		},
+		"EduSharingIconMimeVideo": {
+			"description": "Video Icon",
+			"value": "video.png"
+		}		
+	},
 	"ConfigRegistry": {
 		"edusharing": "GlobalVarConfig::newInstance"
-	},
-	"config": {
-		"EduSharingUrl": {
-			"description": "Defines the URL of the edu-sharing repository",
-			"value": true
-		}
-	},
+	},	
 	"ResourceFileModulePaths": {
 		"localBasePath": "",
 		"remoteExtPath": "EduSharing"

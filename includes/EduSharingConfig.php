@@ -1,4 +1,5 @@
 <?php
+use MediaWiki\MediaWikiServices;
 
 class EduSharingConfig {
 
@@ -16,10 +17,13 @@ class EduSharingConfig {
 
     public function __construct( $user ) {
 
-        $this->appId        = 'is-wiki-dev';
-        $this->baseUrl      = 'https://redaktion-staging.openeduhub.net/edu-sharing';
-        $this->contentUrl   = $this->baseUrl . '/renderingproxy';
-        $this->user         = $user;
+        $config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
+        $this->appId            = $config->get( 'EduSharingAppId' );
+        $this->baseUrl          = $config->get( 'EduSharingBaseUrl' );
+        $this->contentUrl       = $this->baseUrl . '/renderingproxy';
+        $this->user             = $user;
+        $this->iconMimeAudio    = $config->get( 'EduSharingIconMimeAudio' );
+        $this->iconMimeVideo    = $config->get( 'EduSharingIconMimeVideo' );
 
         if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false )
             $this->username = 'mw_guest';
