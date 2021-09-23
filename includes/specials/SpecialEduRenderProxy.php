@@ -1,5 +1,6 @@
 <?php
-require_once (__DIR__ . '/../ESApp.php');
+
+// autoloader: EduSharingService
 
 class SpecialEduRenderProxy extends SpecialPage {
 
@@ -24,26 +25,29 @@ class SpecialEduRenderProxy extends SpecialPage {
         $edu_sharing->printTitle = $request->getVal('printTitle');
         $edu_sharing->language = $request->getVal('language');
         
-        $es = new ESApp ();
-        $es->loadApps ();
-        $conf = $es->getHomeConf ();
-        $edu_sharing->contenturl = $conf->prop_array ['contenturl'];
-        
-        $url = $this->getRedirectUrl ( $edu_sharing, 'inline' );
-        
-        $url .= $this->getSecurityParams ( $conf, $edu_sharing->id , $es);
-        $url .= "&version=0";
-        
-        $html = $this->getRenderHtml ( $url );
-        
-        // DEBUG
-        //$html .= '<code>' . $url . '</code>';
-        //$html .= $e->getRenderHtml ( $url );
-        // DEBUG
-        
+        $usageid = $request->getVal('usageid');
+
+        $eduSharingService = new EduSharingService();     
+        $postData = new stdClass ();
+
+        $edu_sharing->contenturl = $eduSharingService->config->contentUrl;
+
+        $postData->nodeId = str_replace("ccrep://local/","", $request->getVal('oid'));
+        $postData->nodeVersion= null;
+        $postData->containerId =  $request->getVal('pid');
+        $postData->resourceId = $request->getVal('resid');
+        $postData->usageId =  $usageid;
+
+        $result = $eduSharingService ->getNode($postData);
         // take over output since we dont't want any stuff around our html
         $this->getOutput()->disable();
-        print($this->display ( $html, $edu_sharing, $conf ));
+        // var_dump($result); die();
+        
+        $html = $result["detailsSnippet"];
+        // take over output since we dont't want any stuff around our html
+        $this->getOutput()->disable();
+        // print($html);
+        print($this->display ( str_replace("width:0px;", "",  $html), $edu_sharing ));
     }
 
     public function getRedirectUrl($eduobj, $display_mode = 'inline') {
@@ -88,34 +92,8 @@ class SpecialEduRenderProxy extends SpecialPage {
 
         return $url;
     }
-    function getRenderHtml($url) {
-        $inline = "";
-        try {
-            $curl_handle = curl_init ( $url );
-            if (! $curl_handle) {
-                throw new Exception ( 'Error initializing CURL.' );
-            }
 
-            curl_setopt ( $curl_handle, CURLOPT_FOLLOWLOCATION, 1 );
-            curl_setopt ( $curl_handle, CURLOPT_HEADER, 0 );
-            curl_setopt ( $curl_handle, CURLOPT_RETURNTRANSFER, 1 );
-            curl_setopt ( $curl_handle, CURLOPT_USERAGENT, $_SERVER ['HTTP_USER_AGENT'] );
-            curl_setopt ( $curl_handle, CURLOPT_SSL_VERIFYPEER, false );
-            curl_setopt ( $curl_handle, CURLOPT_SSL_VERIFYHOST, false );
-
-            $inline = curl_exec ( $curl_handle );
-            curl_close ( $curl_handle );
-        } catch ( Exception $e ) {
-            error_log ( print_r ( $e, true ) );
-            curl_close ( $curl_handle );
-            return false;
-        }
-
-        return $inline;
-    }
-
-
-    function display($html, $eduobj, $conf) {
+    function display($html, $eduobj) {
 
         global $wgScriptPath;
 
@@ -151,28 +129,5 @@ class SpecialEduRenderProxy extends SpecialPage {
         return $html;
     }
 
-    public function getSecurityParams($conf, $object_id, $es) {
-        $paramString = '';
-
-        $ts = round ( microtime ( true ) * 1000 );
-        $paramString .= '&ts=' . $ts;
-        
-        $userid = trim(strtolower($this->getRequest()->getSession()->get('wsUserName')));
-        if( empty($userid) || filter_var($userid, FILTER_VALIDATE_IP) !== false)
-            $userid = 'mw_guest';
-
-        $paramString .= '&u=' . urlencode ( base64_encode ( $es -> edusharing_encrypt_with_repo_public($userid)));
-
-        $signature = '';
-        $priv_key = $conf->prop_array ['private_key'];
-     
-        $pkeyid = openssl_get_privatekey ( $priv_key );
-        openssl_sign ( $conf->prop_array ['appid'] . $ts . $object_id, $signature, $pkeyid );
-        $signature = base64_encode ( $signature );
-        openssl_free_key ( $pkeyid );
-        $paramString .= '&sig=' . urlencode ( $signature );
-        $paramString .= '&signed=' . urlencode($conf -> prop_array['appid'] . $ts . $object_id);
-
-        return $paramString;
-    }
+    
 }

@@ -18,7 +18,7 @@
 	"SpecialPages": {
 		"EduRenderProxy": "SpecialEduRenderProxy",
 		"EduInlineHelper": "SpecialEduInlineHelper"
-	},	
+	},
 	"MessagesDirs": {
 		"EduSharing": [
 			"i18n"
@@ -26,8 +26,8 @@
 	},
 	"AutoloadClasses": {
 		"EduSharing": "includes/EduSharing.php",
-		"ESApp": "includes/ESApp.php",
-		"EduSharingWS": "includes/EduSharingWS.php",
+		"EduSharingConfig": "includes/EduSharingConfig.php",
+		"EduSharingService": "includes/EduSharingService.php",
 		"EduSharingHooks": "includes/EduSharingHooks.php",
 		"SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
 		"SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
@@ -55,7 +55,8 @@
 			"EduSharingHooks::onBeforePageDisplay"
 		],
 		"LoadExtensionSchemaUpdates": [
-			"EduSharingHooks::fnEdusharingDatabase"
+			"EduSharingHooks::createEdusharingDatabase",
+			"EduSharingHooks::updateEdusharingDatabase"
 		],
 		"ArticleInsertComplete": [
 			"EduSharingHooks::onArticleInsertComplete"
@@ -152,18 +153,15 @@
 			]
 		}
 	},
-
 	"ConfigRegistry": {
 		"edusharing": "GlobalVarConfig::newInstance"
 	},
-
 	"config": {
 		"EduSharingUrl": {
 			"description": "Defines the URL of the edu-sharing repository",
 			"value": true
 		}
 	},
-
 	"ResourceFileModulePaths": {
 		"localBasePath": "",
 		"remoteExtPath": "EduSharing"

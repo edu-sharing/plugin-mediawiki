@@ -75,8 +75,8 @@ class EduSharingHooks {
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
         );
         
-        $eduws = new EduSharingWS();
-        $hc = $eduws -> getHomeConfig();
+        $eduService = new EduSharingService();
+        $hc = $eduService -> getHomeConfig();
         
         /*
          * Delte usages for edusharing resources 
@@ -92,7 +92,7 @@ class EduSharingHooks {
             		'resourceId' => $resource -> EDUSHARING_RESOURCE_ID
             );
             
-            $eduws -> delUsage($params);
+            $eduService -> delUsage($params);
         }        
         return true;
     }
@@ -122,8 +122,8 @@ class EduSharingHooks {
             'Database::select'
         );
         
-        $eduws = new EduSharingWS();
-        $hc = $eduws -> getHomeConfig();
+        $eduService = new EduSharingService();
+        $hc = $eduService -> getHomeConfig();
         
         /*
          * For each resource add usage
@@ -147,7 +147,7 @@ class EduSharingHooks {
             $edu_sharing -> resourceid = $resource -> EDUSHARING_RESOURCE_ID;
             $edu_sharing -> appid = $hc['appid'];
 
-            $eduws -> addUsage($edu_sharing);
+            $eduService -> addUsage($edu_sharing);
             
         }
         return true;
@@ -171,8 +171,8 @@ class EduSharingHooks {
 public static function onArticleInsertComplete( &$article, &$user, $text, $summary, $minoredit, $watchthis, $sectionanchor, &$flags, $revision ) {
     global $wgUser;
     
-    $eduws = new EduSharingWS();
-    $hc = $eduws -> getHomeConfig();
+    $eduService = new EduSharingService();
+    $hc = $eduService -> getHomeConfig();
     
     /*
      * Get edu-sharing tags from $text 
@@ -223,7 +223,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             /*
              * UPDATE usage 
              */
-            $eduws -> addUsage($edu_sharing);
+            $eduService -> addUsage($edu_sharing);
         }
 
     return true;
@@ -261,8 +261,15 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
          * Select all article's resources
          */
 
-        $res = $dbr->select('edusharing_resource', // $table
-            array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_TITLE', 'EDUSHARING_RESOURCE_OBJECT_URL', 'EDUSHARING_RESOURCE_OBJECT_VERSION', 'EDUSHARING_RESOURCE_WIDTH', 'EDUSHARING_RESOURCE_HEIGHT', 'EDUSHARING_RESOURCE_FLOAT'), // $vars (columns of the table)
+        $res = $dbr->select('edusharing_resource', 
+            array(  'EDUSHARING_RESOURCE_ID', 
+                    'EDUSHARING_RESOURCE_PAGE_ID', 
+                    'EDUSHARING_RESOURCE_TITLE', 
+                    'EDUSHARING_RESOURCE_OBJECT_URL', 
+                    'EDUSHARING_RESOURCE_OBJECT_VERSION', 
+                    'EDUSHARING_RESOURCE_WIDTH', 
+                    'EDUSHARING_RESOURCE_HEIGHT', 
+                    'EDUSHARING_RESOURCE_FLOAT'), // $vars (columns of the table)
             'EDUSHARING_RESOURCE_PAGE_ID = ' . $wikiPage -> getId(), // $conds
             'Database::select', // $fname = 'Database::select',
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC') // $options = array()
@@ -273,8 +280,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $old_list[$row -> EDUSHARING_RESOURCE_ID] = $row;
         }
 
-        $eduws = new EduSharingWS();
-        $hc = $eduws -> getHomeConfig();
+        $eduService = new EduSharingService();
 
         /*
          * Get edu-sharing tags from $text 
@@ -291,8 +297,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
              */
             if ($Response['action'] == 'new') {
 
-                $edu_sharing = new stdClass;
-
                 $_id = (string)$Response['id'];
                 $_width = (string)$Response['width'];
                 $_height = (string)$Response['height'];
@@ -301,51 +305,47 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                 $_version = (string)$Response['version'];
                 $_versionShow = (string)$Response['versionShow'];
 
-
-                /*
-                 * Set edu-sharing properties 
-                 */
-                $edu_sharing -> id = $_id;
-                
-                $edu_sharing -> repid = parse_url($_id, PHP_URL_HOST);
-                $edu_sharing -> height = $_height;
-                $edu_sharing -> width = $_width;
-                $edu_sharing -> mimetype = $_mimetype;
-                $edu_sharing -> pageid = $wikiPage -> getId();
-                
-                $edu_sharing -> ticket = $session->get('repository_ticket');
-                $edu_sharing -> user = strtolower($user -> getName());
-                $edu_sharing -> float = $_float;
-                $edu_sharing -> version = $_version;
-                $edu_sharing -> versionShow = $_versionShow;
-
                 /*
                  * Insert record
                  */
                 $dbw = wfGetDB( DB_PRIMARY );
-                $_data = array('EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 'EDUSHARING_RESOURCE_TITLE' => $title, 'EDUSHARING_RESOURCE_WIDTH' => $_width, 'EDUSHARING_RESOURCE_HEIGHT' => $_height, 'EDUSHARING_RESOURCE_FLOAT' => $_float);
+                $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 
+                                'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 
+                                'EDUSHARING_RESOURCE_TITLE' => $title, 
+                                'EDUSHARING_RESOURCE_WIDTH' => $_width, 
+                                'EDUSHARING_RESOURCE_HEIGHT' => $_height, 
+                                'EDUSHARING_RESOURCE_FLOAT' => $_float);
+
                 $dbw -> insert('edusharing_resource', $_data, 'Database::insert');
                 $insert_id = $dbw -> insertId();
-                $edu_sharing -> resourceid = $insert_id;
                 
                 $Response -> addAttribute('resourceid', $insert_id);
-                
-                $Response['action'] = 'processed';
-                $_tag = html_entity_decode(str_replace('<?xml version="1.0"?>', '', $Response -> asXML()));
-
-                /*
-                 * Write properties to text
-                 */
-                $text = str_replace($edutag, $_tag, $text);
-
-                $edu_sharing -> appid = $hc['appid'];
 
                 /*
                  * Add usage to repository resource
                  */
                 $pageId = $wikiPage -> getId();
-                if(!empty($pageId))
-                    $eduws -> addUsage($edu_sharing);
+                if(!empty($pageId)) {
+
+                    $postData = new stdClass ();
+
+                    $postData->ticket       = $eduService->getTicket();
+                    $postData->containerId  = $pageId;
+                    $postData->resourceId   = $insert_id;
+                    $postData->nodeId       = ltrim(parse_url($_id, PHP_URL_PATH),'/');
+
+                    $usage = $eduService -> createUsage( $postData );
+                    $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $insert_id ], 'Database::update' );
+                 
+                    $Response -> addAttribute('usageid', $usage->usageId);
+                }
+
+                /*
+                 * Write properties to text
+                 */
+                $Response['action'] = 'processed';
+                $_tag = html_entity_decode(str_replace('<?xml version="1.0"?>', '', $Response -> asXML()));
+                $text = str_replace($edutag, $_tag, $text);                
                 
             } else if ($Response['action'] == 'processed') {               
                                 
@@ -355,7 +355,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                  */
                 $dbr = wfGetDB( DB_REPLICA );
                 $res = $dbr -> select('edusharing_resource',
-                    array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID'),
+                    array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_USAGE'),
                     array('EDUSHARING_RESOURCE_PAGE_ID = ' . $wikiPage -> getId(), 'EDUSHARING_RESOURCE_ID = ' . $Response['resourceid']));
                 
                 $resCount = 0;
@@ -370,7 +370,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     $_resourceid = (int)$Response['resourceid'];
                     unset($old_list[$_resourceid]);
                 } else {
-                    $edu_sharing = new stdClass;
                     
                     $_id = (string)$Response['id'];
                     $_width = (string)$Response['width'];
@@ -381,38 +380,46 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
                     $_versionShow = (string)$Response['versionShow'];
                     
                     /*
-                     * Set edu-sharing properties 
-                     */
-                    $edu_sharing -> id = $_id;
-                    $edu_sharing -> repid = parse_url($_id, PHP_URL_HOST);
-                    $edu_sharing -> height = $_height;
-                    $edu_sharing -> width = $_width;
-                    $edu_sharing -> mimetype = $_mimetype;
-                    $edu_sharing -> pageid = $wikiPage -> getId();
-                    $edu_sharing -> ticket = $session->get('repository_ticket');
-                    $edu_sharing -> user = strtolower($user -> getName());
-                    $edu_sharing -> float = $_float;
-                    $edu_sharing -> version = $_version;
-                    $edu_sharing -> versionShow = $_versionShow;
-                    
-                    /*
                      * Insert record 
                      */
-                    $dbw = wfGetDB(DB_PRIMARY);
-                    $_data = array('EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage -> getId(), 'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 'EDUSHARING_RESOURCE_TITLE' => $title, 'EDUSHARING_RESOURCE_WIDTH' => $_width, 'EDUSHARING_RESOURCE_HEIGHT' => $_height, 'EDUSHARING_RESOURCE_FLOAT' => $_float);
+                    $dbw = wfGetDB( DB_PRIMARY );
+                    $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 
+                                    'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 
+                                    'EDUSHARING_RESOURCE_TITLE' => $title, 
+                                    'EDUSHARING_RESOURCE_WIDTH' => $_width, 
+                                    'EDUSHARING_RESOURCE_HEIGHT' => $_height, 
+                                    'EDUSHARING_RESOURCE_FLOAT' => $_float);
+    
                     $dbw -> insert('edusharing_resource', $_data, 'Database::insert');
                     $insert_id = $dbw -> insertId();
                     
-                    $edu_sharing -> resourceid = $insert_id;
                     $Response['resourceid'] = $insert_id;
-                    $_tag = str_replace('<?xml version="1.0"?>', '', $Response -> asXML());
-                    $text = str_replace($edutag, $_tag, $text);
-                    $edu_sharing -> appid = $hc['appid'];
-                    
+    
                     /*
-                     * Add usage 
+                     * Add usage to repository resource
                      */
-                    $eduws -> addUsage($edu_sharing);
+                    $pageId = $wikiPage -> getId();
+                    if(!empty($pageId)) {
+    
+                        $postData = new stdClass ();
+    
+                        $postData->ticket       = $eduService->getTicket();
+                        $postData->containerId  = $pageId;
+                        $postData->resourceId   = $insert_id;
+                        $postData->nodeId       = ltrim(parse_url($_id, PHP_URL_PATH),'/');
+    
+                        $usage = $eduService -> createUsage( $postData );
+                        $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $insert_id ], 'Database::update' );
+                        
+                        $Response -> addAttribute('usageid', $usage->usageId);
+                    }
+
+                    /*
+                    * Write properties to text
+                    */
+                    $_tag = html_entity_decode(str_replace('<?xml version="1.0"?>', '', $Response -> asXML()));
+                    $text = str_replace($edutag, $_tag, $text);                         
+    
                 }
             }
         }
@@ -435,7 +442,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
              * Delete usage
              */
             try {
-            	$eduws -> delUsage($params);
+            	$eduService -> delUsage($params);
             } catch(SoapFaul $e) {
 				print_r($e);
             }
@@ -468,22 +475,14 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      */
     public static function wfEdusharingExtensionInit(Parser $parser) {
 
-        global $wgUser;
-
         /**
          * When the parser sees the <edusharing> tag, it executes the render function (see below)
          */
         $parser -> setHook("edusharing", array( __CLASS__, 'wfEduSharingRender' ));
 
-        $user = $wgUser;
+        $eduService = new EduSharingService();
 
-        $eduws = new EduSharingWS();
-
-        self::$hc = $eduws -> getHomeConfig();
-        $configs = $eduws -> getConfigs();
-
-        $ticket = $eduws -> getTicket();
-        self::$ticket = $ticket;
+        $ticket = $eduService -> getTicket();
         
         //RequestContext::getMain()->getRequest()->getSession()->set("repository_ticket", $ticket);
         //RequestContext::getMain()->getRequest()->getSession()->set("repository_home", self::$hc);
@@ -492,15 +491,15 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         
         $wgOut -> addJsConfigVars(array('eduticket' => $ticket));
         ### added:
-        $wgOut -> addJsConfigVars(array('eduusername' => $user -> getName() ));
-        $wgOut -> addJsConfigVars(array('eduappid' => self::$hc['appid'] ));
+        $wgOut -> addJsConfigVars(array('eduusername' => $eduService->config->username ));
+        $wgOut -> addJsConfigVars(array('eduappid' => $eduService->config->appId ));
         
         ###
         $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
-        $wgOut -> addJsConfigVars(array('edugui' => self::$hc["edu_url"] . 'components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.strtolower($user -> getName())));
+        $wgOut -> addJsConfigVars(array('edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_video' => $eduIconMimeVideo));
         $wgOut -> addJsConfigVars(array('edu_preview_icon_audio' => $eduIconMimeAudio));
-        $wgOut -> addJsConfigVars(array('edupreview' => self::$hc["edu_url"] . 'preview?'));
+        $wgOut -> addJsConfigVars(array('edupreview' => $eduService->config->eduUrl . 'preview?'));
         $wgOut -> addJsConfigVars(array('eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg'));
 
         return true;
@@ -534,19 +533,23 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
          */
         if (isset($args['action']) && ($args['action'] === 'processed') || $_GET['action'] == 'submit') {
 
-            global $wgUser, $wgServer, $wgScriptPath;
+            global $wgServer, $wgScriptPath;
+
+            $eduService = new EduSharingService();
+
             $edu_sharing = new stdClass();
 
             $edu_sharing -> id = $args['id'];
             $eduObject = parse_url($edu_sharing -> id);
             $edu_sharing -> id = str_replace('/', '', $eduObject['path']);
-            $edu_sharing -> appid = self::$hc['appid'];
+            $edu_sharing -> appid = $eduService->config->appId;
             $edu_sharing -> repid = $eduObject['host'];           
             $edu_sharing -> resourceid = $args['resourceid'];
             $edu_sharing -> height = $args['height'];
             $edu_sharing -> width = $args['width'];
             $edu_sharing -> mimetype = $args['mimetype'];
             $edu_sharing -> page = $parser->mTitle->mArticleID;
+            $edu_sharing -> usageid = $args['usageid'];
 
             if(!empty($args['float'])){
             	 $edu_sharing -> float = $args['float'];
@@ -556,6 +559,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
 
             $param = '&oid=' . $edu_sharing -> id;
             $param .= '&resid=' . $edu_sharing -> resourceid;
+            $param .= '&usageid=' .  $edu_sharing -> usageid;
             $param .= '&height=' . $edu_sharing -> height;
             $param .= '&width=' . $edu_sharing -> width;
             $param .= '&mime=' . $edu_sharing -> mimetype;
@@ -563,7 +567,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $param .= '&appid=' . $edu_sharing -> appid;
             $param .= '&repid=' . $edu_sharing -> repid;
             $param .= '&printTitle=' . addslashes($input);
-            $param .= '&language=' . $wgUser -> mOptions['language'];
+            $param .= '&language=' . $eduService->config->user->mOptions['language'];
 
             $dataUrl = SpecialPage::getTitleFor('EduRenderProxy')->getLocalUrl() . $param;
 
@@ -674,22 +678,23 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
      * @return true
      * 
      */
-    public static function fnEdusharingDatabase(DatabaseUpdater $updater) {
-        $updater -> addExtensionTable('edusharing_resource', dirname(__FILE__) . '/edu-resource.sql', true);
+    public static function createEdusharingDatabase( DatabaseUpdater $updater ) {
+        $updater -> addExtensionTable('edusharing_resource', __DIR__ . '/../sql/EduSharing.sql', true);
+        return true;
+    }
+
+    /**
+     * Adds field "usageid to existing "table 'edusharing_resource' when updating
+     * @param $updater
+     * @return true
+     * 
+     */
+    public static function updateEdusharingDatabase( DatabaseUpdater $updater ) {
+        $updater -> addExtensionField('edusharing_resource', 'EDUSHARING_RESOURCE_USAGE', __DIR__ . '/../sql/EduSharingAddUsageField.sql', true);
+        $updater -> addExtensionIndex('edusharing_resource', 'id_usage', __DIR__ . '/../sql/EduSharingAddUsageIndex.sql', true);
         return true;
     }
 
 
-  // public static function onBeforePageDisplay(OutputPage &$out, Skin &$skin) {
-              
-  //     $dom = new DOMdocument();
-  //     @$dom->loadHTML($out->getHTML()); #@ keeps loadHTMl silent
-  //     $dom = $dom->getElementById('wpTextbox1');
-  //     if($dom !== null){
-  //         $out->addModuleStyles('ext.eduSharing.dialog');
-  //         $out->addModules('ext.eduSharing.dialog');
-  //     }   
-  //     return true;
-  // }
 }
 ?>

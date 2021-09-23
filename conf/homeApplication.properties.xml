@@ -9,7 +9,7 @@
 	<entry key="contenturl">https://redaktion-staging.openeduhub.net/edu-sharing/renderingproxy</entry>
 	
 	<entry key="appcaption">OEH Redaktion</entry>
-	<entry key="appid">is-wiki</entry>
+	<entry key="appid">is-wiki-dev</entry>
 	<entry key="repid">redaktion-staging.openeduhub.net</entry>
 
 	<entry key="edu-webservice">https://redaktion-staging.openeduhub.net/edu-sharing/services</entry>
@@ -20,7 +20,7 @@
 		redaktion-staging.openeduhub.net
 		141.5.100.17
 	-->
-  <entry key="edu_url">https://redaktion-staging.openeduhub.net/edu-sharing/</entry>
+    <entry key="edu_url">https://redaktion-staging.openeduhub.net/edu-sharing/</entry>
 
 	<entry key="alf_authentication_path">/authentication?wsdl</entry>
 	<entry key="cc_gui_url">https://redaktion-staging.openeduhub.net/edu-sharing/index.html</entry>
