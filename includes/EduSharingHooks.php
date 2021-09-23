@@ -21,7 +21,35 @@ class EduSharingHooks {
         #$config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
         #$vars['wgEduSharingUrl'] = $config->get( 'EduSharingUrl' );
     }
+
+    /**
+     * Adds edu-sharing item to editor toolbar
+     * 
+     * @param $editPage
+     * @param $output
+     * @return true
+     */
+    public static function onMakeGlobalVariablesScript( array &$vars, OutputPage $output ) {
         
+        $eduService = new EduSharingService();
+        $ticket = $eduService -> getTicket();
+
+        global $wgServer, $wgScriptPath;
+
+        $output -> addModules('ext.eduSharing.dialog');
+        $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
+        $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
+        $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
+        
+        ###
+        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
+        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
+        $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
+        $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
+        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->eduUrl . 'preview?' ] );
+        $output -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
+    }
+
     /**
      * Ticket from repository
      * var string
@@ -441,35 +469,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         return true;
     }
 
-    /**
-     * Adds edu-sharing item to editor toolbar
-     * 
-     * @param $editPage
-     * @param $output
-     * @return true
-     */
-    public static function editPageShowEditFormInitial( EditPage $editPage, OutputPage $output ) {
-        
-        $eduService = new EduSharingService();
-        $ticket = $eduService -> getTicket();
-
-        global $wgServer, $wgScriptPath;
-
-        $output -> addModules('ext.eduSharing.dialog');
-        $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
-        $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
-        $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
-        
-        ###
-        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
-        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
-        $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
-        $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
-        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->eduUrl . 'preview?' ] );
-        $output -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
-
-        return true;
-    }
 
     /**
      * Adds hook to parser that handles edu-sharing tags

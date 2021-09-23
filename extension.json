@@ -36,8 +36,8 @@
 		"ResourceLoaderGetConfigVars": [
 			"EduSharingHooks::onResourceLoaderGetConfigVars"
 		],
-		"EditPage::showEditForm:initial": [
-			"EduSharingHooks::editPageShowEditFormInitial"
+		"MakeGlobalVariablesScript": [
+			"EduSharingHooks::onMakeGlobalVariablesScript"
 		],
 		"ParserFirstCallInit": [
 			"EduSharingHooks::wfEdusharingExtensionInit"
