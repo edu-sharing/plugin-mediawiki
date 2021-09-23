@@ -527,7 +527,7 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
             $edu_sharing -> width = $args['width'];
             $edu_sharing -> mimetype = $args['mimetype'];
             $edu_sharing -> page = $parser->mTitle->mArticleID;
-            $edu_sharing -> usageid = $args['usageid'];
+            $edu_sharing -> usageid = array_key_exists( 'usageid', $args) ? $args['usageid'] : "";
 
             if(!empty($args['float'])){
             	 $edu_sharing -> float = $args['float'];
