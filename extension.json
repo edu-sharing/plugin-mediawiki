@@ -48,9 +48,6 @@
 		"ArticleDelete": [
 			"EduSharingHooks::onArticleDelete"
 		],
-		"ArticleUndelete": [
-			"EduSharingHooks::onArticleUndelete"
-		],
 		"BeforePageDisplay": [
 			"EduSharingHooks::onBeforePageDisplay"
 		],

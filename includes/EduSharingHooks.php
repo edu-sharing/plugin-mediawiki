@@ -10,6 +10,8 @@
  * EduSharing hooks
  */
 
+use MediaWiki\Revision\SlotRecord;
+
 class EduSharingHooks {
 
     // Variables used in JS should be defined the new way, but currently it throws an mimetype mismatch error. Variables for JS are defined in line 491ff
@@ -111,7 +113,6 @@ class EduSharingHooks {
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
         );
         
-        
         /*
          * Delete usages for edusharing resources 
          */
@@ -122,62 +123,7 @@ class EduSharingHooks {
         return true;
     }
     
-    /**
-     * Adds usages for edu-sharing resources on article undelete
-     * @param &$title
-     * @param &$create
-     * @return true
-     */
-    public static function onArticleUndelete($title, $create) {
-        
-        global $wgUser;
-        
-        /*
-         * Get db access 
-         */
-        $dbr = wfGetDB(DB_REPLICA);
-        
-        /*
-         * Select all edu-sharing resources of this article.
-         * Select condition is article text, because article gets a new id and the old one is not available anymore
-         */
-        $res = $dbr -> select('edusharing_resource',
-            array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_TITLE', 'EDUSHARING_RESOURCE_OBJECT_URL', 'EDUSHARING_RESOURCE_OBJECT_VERSION', 'EDUSHARING_RESOURCE_WIDTH', 'EDUSHARING_RESOURCE_HEIGHT', 'EDUSHARING_RESOURCE_FLOAT'), // $vars (columns of the table)
-            'EDUSHARING_RESOURCE_TITLE = "' . $title->mTextform.'"',
-            'Database::select'
-        );
-        
-        $eduService = new EduSharingService();
-        
-        /*
-         * For each resource add usage
-         */
-        foreach($res as $resource) {
-            $dbr = wfGetDB(DB_PRIMARY);
-            $dbr -> update('edusharing_resource',
-            array('EDUSHARING_RESOURCE_PAGE_ID' => $title -> mArticleID),
-            array('EDUSHARING_RESOURCE_TITLE = "' . $title -> mTextform.'"'),
-            'Database::update'
-            );
-            
-            $edu_sharing -> id = $resource -> EDUSHARING_RESOURCE_OBJECT_URL;
-            $edu_sharing -> repid = parse_url($resource -> EDUSHARING_RESOURCE_OBJECT_URL, PHP_URL_HOST);
-            $edu_sharing -> height = $resource -> EDUSHARING_RESOURCE_HEIGHT;
-            $edu_sharing -> width = $resource -> EDUSHARING_RESOURCE_WIDTH;
-            $edu_sharing -> pageid = $title -> mArticleID;
-            $edu_sharing -> ticket = $eduService->getTicket();
-            $edu_sharing -> user = strtolower($wgUser -> getName());
-            $edu_sharing -> float = $resource -> EDUSHARING_RESOURCE_FLOAT;
-            $edu_sharing -> resourceid = $resource -> EDUSHARING_RESOURCE_ID;
-            $edu_sharing -> appid = $eduService->config->appId;
-
-            $eduService -> addUsage($edu_sharing);
-            
-        }
-        return true;
-    }
-
-
+    
     /**
      * Adds/removes resources and usages when article is saved
      * 
@@ -194,7 +140,8 @@ class EduSharingHooks {
         // to prevent exception when running in visual editor context
         if ( $title->getNamespace() == -1 )
             return true;
-        $wikiPage = WikiPage::factory( $title );
+        $wikiPage   = WikiPage::factory( $title );
+        $pageId     = $wikiPage -> getId();
         
         /*
          * Get db access
@@ -215,7 +162,7 @@ class EduSharingHooks {
                     'EDUSHARING_RESOURCE_WIDTH', 
                     'EDUSHARING_RESOURCE_HEIGHT', 
                     'EDUSHARING_RESOURCE_FLOAT'), // $vars (columns of the table)
-            'EDUSHARING_RESOURCE_PAGE_ID = ' . $wikiPage -> getId(), // $conds
+            'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, // $conds
             'Database::select', // $fname = 'Database::select',
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC') // $options = array()
         );
@@ -236,7 +183,8 @@ class EduSharingHooks {
          * For each resource found in text 
          */
         foreach ($matches as $edutag) {            
-            $Response = simplexml_load_string($edutag);
+            $Response   = simplexml_load_string($edutag);
+
             /*
              * For new resources insert db record and set usage, mark as processed
              */
@@ -254,7 +202,7 @@ class EduSharingHooks {
                  * Insert record
                  */
                 $dbw = wfGetDB( DB_PRIMARY );
-                $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 
+                $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $pageId, 
                                 'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 
                                 'EDUSHARING_RESOURCE_TITLE' => $title, 
                                 'EDUSHARING_RESOURCE_WIDTH' => $_width, 
@@ -266,23 +214,9 @@ class EduSharingHooks {
                 
                 $Response -> addAttribute('resourceid', $insert_id);
 
-                /*
-                 * Add usage to repository resource
-                 */
-                $pageId = $wikiPage -> getId();
                 if(!empty($pageId)) {
-
-                    $postData = new stdClass ();
-
-                    $postData->ticket       = $eduService->getTicket();
-                    $postData->containerId  = $pageId;
-                    $postData->resourceId   = $insert_id;
-                    $postData->nodeId       = ltrim(parse_url($_id, PHP_URL_PATH),'/');
-
-                    $usage = $eduService -> createUsage( $postData );
-                    $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $insert_id ], 'Database::update' );
-                 
-                    $Response -> addAttribute('usageid', $usage->usageId);
+                    $usageId = self::addUsageToResource( $pageId, $insert_id, ltrim(parse_url($_id, PHP_URL_PATH),'/') );                     
+                    $Response -> addAttribute('usageid', $usageId);
                 }
 
                 /*
@@ -317,19 +251,22 @@ class EduSharingHooks {
                 } else {
                     
                     $_id = (string)$Response['id'];
+                    $_usageid = (string)$Response['usageid'];
                     $_width = (string)$Response['width'];
                     $_height = (string)$Response['height'];
                     $_mimetype = (string)$Response['mimetype'];
                     $_float = (string)$Response['float'];
                     $_version = (string)$Response['version'];
                     $_versionShow = (string)$Response['versionShow'];
+                    $_resourceid = (string)$Response['resourceid'];
                     
                     /*
                      * Insert record 
                      */
                     $dbw = wfGetDB( DB_PRIMARY );
-                    $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $wikiPage->getId(), 
+                    $_data = array( 'EDUSHARING_RESOURCE_PAGE_ID' => $pageId, 
                                     'EDUSHARING_RESOURCE_OBJECT_URL' => $_id, 
+                                    'EDUSHARING_RESOURCE_USAGE' => $_usageid,
                                     'EDUSHARING_RESOURCE_TITLE' => $title, 
                                     'EDUSHARING_RESOURCE_WIDTH' => $_width, 
                                     'EDUSHARING_RESOURCE_HEIGHT' => $_height, 
@@ -340,23 +277,9 @@ class EduSharingHooks {
                     
                     $Response['resourceid'] = $insert_id;
     
-                    /*
-                     * Add usage to repository resource
-                     */
-                    $pageId = $wikiPage -> getId();
                     if(!empty($pageId)) {
-    
-                        $postData = new stdClass ();
-    
-                        $postData->ticket       = $eduService->getTicket();
-                        $postData->containerId  = $pageId;
-                        $postData->resourceId   = $insert_id;
-                        $postData->nodeId       = ltrim(parse_url($_id, PHP_URL_PATH),'/');
-    
-                        $usage = $eduService -> createUsage( $postData );
-                        $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $insert_id ], 'Database::update' );
-                        
-                        $Response -> addAttribute('usageid', $usage->usageId);
+                        $usageId = self::addUsageToResource( $pageId, $insert_id, ltrim(parse_url($_id, PHP_URL_PATH),'/') );                     
+                        $Response -> addAttribute('usageid', $usageId);
                     }
 
                     /*
@@ -380,6 +303,24 @@ class EduSharingHooks {
         }
 
         return true;
+    }
+
+
+    private static function addUsageToResource( $pageId, $resourceId, $nodeId ) {
+            
+        $dbw        = wfGetDB( DB_PRIMARY );
+        $eduService = new EduSharingService();
+        $postData   = new stdClass ();
+
+        $postData->ticket       = $eduService->getTicket();
+        $postData->containerId  = $pageId;
+        $postData->resourceId   = $resourceId;
+        $postData->nodeId       = $nodeId;
+
+        $usage = $eduService -> createUsage( $postData );
+        $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $resourceId ], 'Database::update' );
+
+        return $usage->usageId;
     }
 
 
