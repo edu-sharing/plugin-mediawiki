@@ -76,7 +76,12 @@ class EduSharingService {
 
     public function getTicket() {
         $authHelper = new EduSharingAuthHelper($this->helperBase);
-        $ticket = $authHelper->getTicketForUser($this->config->username);
+        $ticket = '';
+        try {
+            $ticket = $authHelper->getTicketForUser($this->config->username);
+        } catch (Exception $e) {
+            error_log( "Couldn't get ticket from Edusharing repository ($e)" );
+        }
         return $ticket;
     }
 
