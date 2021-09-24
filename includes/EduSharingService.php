@@ -20,31 +20,6 @@ class EduSharingService {
     }
 
    
-    // --- ---
-    public function getAuthentication() {
-
-        $cUrl = $this -> getEduWebservice();
-        $cPath = $this -> getAuthentication_wsdl();
-
-        return new edusharingWebService($cUrl . $cPath, array());
-    }// eof getCCAuthentication
-
-    public function getUsage() {
-
-        $cUrl = $this -> getEduWebservice();
-        $cPath = $this -> getUsage_wsdl();
-
-        return new edusharingWebService($cUrl . $cPath, array());
-    }// eof getCCAuthentication
-
-    public function getAlfrescoService($ticket) {
-
-        $cUrl = $this -> getEduWebservice();
-        $cPath = $this -> getAlfresco_wsdl();
-
-        return new edusharingWebService($cUrl . $cPath, array(), $ticket);
-    }// eof getCCAuthentication
-
     public function createUsage( $postData)  {
 
         $nodeHelper = new EduSharingNodeHelper( $this->helperBase );
@@ -58,8 +33,12 @@ class EduSharingService {
 
     }
 
-    public function delUsage($params) {
-
+    public function deleteUsage( $usageId ) {
+        $nodeHelper = new EduSharingNodeHelper($this->helperBase);
+        $result = $nodeHelper->deleteUsageById(
+                $usageId
+        );    
+        return $result;
     }
 
     public function getNode($postData) {

@@ -137,4 +137,21 @@ class EduSharingNodeHelper extends EduSharingHelperAbstract  {
                 $info["http_code"] . ': ' . $data['error'] . ' ' . $data['message']);
         }
     }
+
+
+    /**
+     * Removes an edu-sharing usage refered by a usage id
+     * @param Usage $usageId
+     * The usage id, as previously returned by @createUsage
+     * @return mixed
+     * Returns true or an error message
+     */    
+    public function deleteUsageById(
+        string $usageId
+    )
+    {
+        return true;
+    }
+
+
 }

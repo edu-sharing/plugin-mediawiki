@@ -71,6 +71,21 @@ class EduSharingHooks {
         return $matches[0];
     }
 
+
+    private static function deleteResourceAndUsage( $resource ) {
+
+        /*
+        * Delete record in db
+        */
+        $dbw = wfGetDB( DB_PRIMARY );
+        $dbw -> delete('edusharing_resource', array( 'EDUSHARING_RESOURCE_ID = ' . $resource->EDUSHARING_RESOURCE_ID ), $fname = 'Database::delete');
+
+        // delete usage from repo
+        $eduService = new EduSharingService();
+        $eduService -> deleteUsage( $resource->EDUSHARING_RESOURCE_USAGE );
+    }
+
+
     /**
      * Deletes usages for edu-sharing resources on article delete
      * @param &$article
@@ -90,30 +105,20 @@ class EduSharingHooks {
          * Select edu-sharing resources of the article that will be deleted
          */
         $res = $dbr -> select('edusharing_resource',
-            array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_TITLE', 'EDUSHARING_RESOURCE_OBJECT_URL', 'EDUSHARING_RESOURCE_OBJECT_VERSION', 'EDUSHARING_RESOURCE_WIDTH', 'EDUSHARING_RESOURCE_HEIGHT', 'EDUSHARING_RESOURCE_FLOAT'), // $vars (columns of the table)
+            array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE' ), // $vars (columns of the table)
             'EDUSHARING_RESOURCE_PAGE_ID = ' . $article -> getId(),
             'Database::select',
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
         );
         
-        $eduService = new EduSharingService();
         
         /*
-         * Delte usages for edusharing resources 
+         * Delete usages for edusharing resources 
          */
-        foreach($res as $resource) {
-          
-            //usage2
-            $params = array(
-            		'eduRef' => $resource -> EDUSHARING_RESOURCE_OBJECT_URL,
-            		'user' => strtolower($user -> getName()),
-            		'lmsId' => $eduService->config->appId,
-            		'courseId' => $article -> getId(),
-            		'resourceId' => $resource -> EDUSHARING_RESOURCE_ID
-            );
-            
-            $eduService -> delUsage($params);
-        }        
+        foreach($res as $resource) {    
+            self::deleteResourceAndUsage( $resource );
+        }
+
         return true;
     }
     
@@ -279,7 +284,8 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
 
         $res = $dbr->select('edusharing_resource', 
             array(  'EDUSHARING_RESOURCE_ID', 
-                    'EDUSHARING_RESOURCE_PAGE_ID', 
+                    'EDUSHARING_RESOURCE_PAGE_ID',
+                    'EDUSHARING_RESOURCE_USAGE',
                     'EDUSHARING_RESOURCE_TITLE', 
                     'EDUSHARING_RESOURCE_OBJECT_URL', 
                     'EDUSHARING_RESOURCE_OBJECT_VERSION', 
@@ -443,31 +449,13 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         /*
          * Delete resources that have been removed from article
          */
-        foreach ($old_list as $item) {
-           
-            //usage2
-            $params = array(
-            		'eduRef' => $item -> EDUSHARING_RESOURCE_OBJECT_URL,
-            		'user' => strtolower($user -> getName()),
-            		'lmsId' => $eduService->config->appId,
-            		'courseId' => $wikiPage -> getId(),
-            		'resourceId' => $item -> EDUSHARING_RESOURCE_ID
-            );
-
+        foreach ($old_list as $item) {           
             /*
              * Delete usage
              */
-            try {
-            	$eduService -> delUsage($params);
-            } catch(SoapFaul $e) {
-				print_r($e);
-            }
-            /*
-             * Delete record in db
-             */
-            $dbr = wfGetDB( DB_PRIMARY );
-            $dbr -> delete('edusharing_resource', array('EDUSHARING_RESOURCE_ID = ' . $item -> EDUSHARING_RESOURCE_ID), $fname = 'Database::delete');
+           	self::deleteResourceAndUsage( $item );
         }
+
         return true;
     }
 
@@ -513,7 +501,6 @@ public static function onArticleInsertComplete( &$article, &$user, $text, $summa
         if (isset($args['action']) && ($args['action'] === 'processed') || $_GET['action'] == 'submit') {
 
             global $wgServer, $wgScriptPath;
-
             $eduService = new EduSharingService();
 
             $edu_sharing = new stdClass();
