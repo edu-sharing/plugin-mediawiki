@@ -41,9 +41,11 @@ class EduSharingHooks {
         $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
         $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
         
-        ###
-        $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
-        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
+        ### deprecated
+        ## $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
+        ## $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
+        
+        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=IFRAME' ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
         $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
@@ -477,7 +479,7 @@ class EduSharingHooks {
             if(isset($args['action']) && ($args['action'] === 'processed')) {
                 $wrapperWidth = 'style="max-width: 100%; width: ' . $edu_sharing -> width . 'px;"';                   
                 //$wrapperStyle = 'style="height: ' . $edu_sharing -> height . 'px; width:' . $edu_sharing -> width . 'px; ' . $style . '"';                   
-                $text = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner">'.$edu_sharing -> mimetype.'<div class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '" ' . $wrapperWidth . '><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div></div></div>';
+                $text = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner"><div class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '" ' . $wrapperWidth . '><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div></div></div>';
             } else {    
                 $text = self::getPreview($edu_sharing, $input, $style);
             }
