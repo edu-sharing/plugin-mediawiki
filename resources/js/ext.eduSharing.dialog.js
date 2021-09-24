@@ -210,52 +210,59 @@ window.hideEduFrame = function () {
     $('#edusharing').css('display', 'none');
 }
 
-window.setData = function (objid, caption, mimetype, width, height, version, repotype) {
-    console.log(objid, caption, mimetype, width, height, version, repotype);
-    document.getElementById('wikieditor-toolbar-edu-object').value = objid;
-    document.getElementById('wikieditor-toolbar-edu-caption').value = caption;
-    document.getElementById('wikieditor-toolbar-edu-mimetype').value = mimetype;
-    document.getElementById('wikieditor-toolbar-edu-repotype').value = repotype;
-    $('#wikieditor-toolbar-edu-version').val(version);
-    document.getElementById('wikieditor-toolbar-edu-width').value = width;
-    document.getElementById('wikieditor-toolbar-edu-height').value = height;
-    $('#origImageRatio').val(width / height);
+// window.setData = function (objid, caption, mimetype, width, height, version, repotype) {
+//     console.log(objid, caption, mimetype, width, height, version, repotype);
 
-    mimeSwitchHelper = '';
-    if (mimetype.indexOf('image') !== -1)
-        mimeSwitchHelper = 'image';
-    else if (mimetype.indexOf('audio') !== -1)
-        mimeSwitchHelper = 'audio';
-    else if (mimetype.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
-        mimeSwitchHelper = 'video';
-    else
-        mimeSwitchHelper = 'textlike';
-    switch (mimeSwitchHelper) {
-        case 'image':
-            $('#wikieditor-toolbar-edu-measurements-height').show();
-            $('#wikieditor-toolbar-edu-measurements-proportions').show();
-            $('#wikieditor-toolbar-edu-measurements').slideDown();
-            append = '<img src="' + mw.config.get('edupreview') + 'nodeId=' + objid.substr(objid.lastIndexOf('/') + 1) + '&ticket=' + mw.config.get('eduticket') + '" width="80"/>';
-            break;
-        case 'audio':
-            $('#wikieditor-toolbar-edu-measurements').slideUp();
-            append = '<img src="' + mw.config.get('edu_preview_icon_audio') + '" height="10px"/>';
-            break;
-        case 'video':
-            $('#wikieditor-toolbar-edu-measurements-height').hide();
-            $('#wikieditor-toolbar-edu-measurements-proportions').hide();
-            $('#wikieditor-toolbar-edu-measurements').slideDown();
-            append = '<img src="' + mw.config.get('edu_preview_icon_video') + '" width="80"/>';
-            break;
-        case 'textlike':
-        default:
-            $('#wikieditor-toolbar-edu-measurements').slideUp();
-            append = '<span style="color: #00f">' + getPreviewText('short') + '</span>';
+// Receive data from iframe
+window.addEventListener('message', receiveMessage, false);
+function receiveMessage(event){
+    if(event.data.event == 'APPLY_NODE'){
+        var node = event.data.data;
+        document.getElementById('wikieditor-toolbar-edu-object').value = node.objectUrl;
+        document.getElementById('wikieditor-toolbar-edu-caption').value = node.title;
+        document.getElementById('wikieditor-toolbar-edu-mimetype').value = node.mimetype;
+        document.getElementById('wikieditor-toolbar-edu-repotype').value = node.repositoryType;
+        $('#wikieditor-toolbar-edu-version').val(node.content.version);
+        document.getElementById('wikieditor-toolbar-edu-width').value = node.preview.width;
+        document.getElementById('wikieditor-toolbar-edu-height').value = node.preview.height;
+        $('#origImageRatio').val(node.preview.width / node.preview.height);
 
+        mimeSwitchHelper = '';
+        if (mimetype.indexOf('image') !== -1)
+            mimeSwitchHelper = 'image';
+        else if (mimetype.indexOf('audio') !== -1)
+            mimeSwitchHelper = 'audio';
+        else if (mimetype.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+            mimeSwitchHelper = 'video';
+        else
+            mimeSwitchHelper = 'textlike';
+        switch (mimeSwitchHelper) {
+            case 'image':
+                $('#wikieditor-toolbar-edu-measurements-height').show();
+                $('#wikieditor-toolbar-edu-measurements-proportions').show();
+                $('#wikieditor-toolbar-edu-measurements').slideDown();
+                append = '<img src="' + mw.config.get('edupreview') + 'nodeId=' + objid.substr(objid.lastIndexOf('/') + 1) + '&ticket=' + mw.config.get('eduticket') + '" width="80"/>';
+                break;
+            case 'audio':
+                $('#wikieditor-toolbar-edu-measurements').slideUp();
+                append = '<img src="' + mw.config.get('edu_preview_icon_audio') + '" height="10px"/>';
+                break;
+            case 'video':
+                $('#wikieditor-toolbar-edu-measurements-height').hide();
+                $('#wikieditor-toolbar-edu-measurements-proportions').hide();
+                $('#wikieditor-toolbar-edu-measurements').slideDown();
+                append = '<img src="' + mw.config.get('edu_preview_icon_video') + '" width="80"/>';
+                break;
+            case 'textlike':
+            default:
+                $('#wikieditor-toolbar-edu-measurements').slideUp();
+                append = '<span style="color: #00f">' + getPreviewText('short') + '</span>';
+
+        }
+
+
+        $('#wikieditor-toolbar-edu-preview-res').html('').append(append);
     }
-
-
-    $('#wikieditor-toolbar-edu-preview-res').html('').append(append);
 }
 
 function getPreviewText(short) {
