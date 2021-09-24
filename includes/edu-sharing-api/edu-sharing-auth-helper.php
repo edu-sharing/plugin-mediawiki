@@ -56,6 +56,8 @@ class EduSharingAuthHelper extends EduSharingHelperAbstract  {
         if ($err === 0 && $info["http_code"] === 200 && $data['userId'] === $username) {
             return $data['ticket'];
         } else {
+            if ( is_null( $data ) )
+                $data = [ 'error' => 'No answer from repository. Possibly a timeout while trying to connect' ];
             throw new Exception('edu-sharing ticket could not be retrieved: HTTP-Code ' .
                 $info["http_code"] . ': ' . $data['error']);
         }
