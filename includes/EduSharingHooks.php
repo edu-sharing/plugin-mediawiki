@@ -46,7 +46,7 @@ class EduSharingHooks {
         $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
-        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->eduUrl . 'preview?' ] );
+        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
         $output -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
     }
 
