@@ -45,7 +45,9 @@ class EduSharingAuthHelper extends EduSharingHelperAbstract  {
             CURLOPT_POST => 1,
             CURLOPT_FAILONERROR => false,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_HTTPHEADER => $this->getSignatureHeaders($username)
+            CURLOPT_HTTPHEADER => $this->getSignatureHeaders($username),
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 5
         ]);
         $data = json_decode(curl_exec($curl), true);
         $err     = curl_errno( $curl );
