@@ -59,7 +59,7 @@ class EduSharingService {
         $ticket = '';
 
         // try and get ticket from cache
-        $ticket = RequestContext::getMain()->getRequest()->getSession()->get('EduSharingRepoTicket');
+        $ticket = RequestContext::getMain()->getRequest()->getSession()->get('EduSharingRepoTicket_' . $this->config->username);
         if ( !is_null( $ticket ) ) {
             // check if ticket is still valid
             try {
@@ -90,7 +90,7 @@ class EduSharingService {
 
         // cache ticket if ok and return
         if ( ! is_null ( $ticket ) ) {
-            RequestContext::getMain()->getRequest()->getSession()->set("EduSharingRepoTicket", $ticket);
+            RequestContext::getMain()->getRequest()->getSession()->set('EduSharingRepoTicket_' . $this->config->username, $ticket);
         }
 
         return $ticket;
