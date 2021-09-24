@@ -161,7 +161,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 
 	var iframeSetup = {
 		// html: '<iframe width="100%" height="900" id="edusharing" src="' + mw.config.get('edugui') + '"></iframe>'
-		html: '<iframe id="edusharing" style="width: 100%; "></iframe>'
+		html: '<iframe id="edusharing"></iframe>'
 	}
 
 	var eduIframe = $(iframeSetup.html);
@@ -174,8 +174,10 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 
 	window.showEduFrame = function () {
 			// Calculate iframe height
-			// console.log($('.oo-ui-menuLayout-menu').height()); console.log($('.oo-ui-menuLayout-content').height());
-			$('#edusharing').css('height', 'calc( 100% - ' + $('.oo-ui-menuLayout-menu').height() +  'px - ' + $('.oo-ui-menuLayout-content').height() +  'px )');
+			var fontSize =  Number(window.getComputedStyle(document.getElementById('edusharing')).getPropertyValue('font-size').match(/\d+/)[0]);
+			//var topSpace = $('.oo-ui-menuLayout-menu').height() +  'px - ' + $('.oo-ui-menuLayout-content').height() +  'px';
+			var topSpace = (fontSize * 5.5) + 'px'; // We need this hack since we don't know the final height of .oo-ui-menuLayout-menu at this moment, but we know the approx. ratio between font-size and final menu height
+			$('#edusharing').css({'height': 'calc( 100% - ' + topSpace + ')', 'top': topSpace});
 			if ( eduIframeShow === false ) { // Load only if not loaded before
 				$('#edusharing').attr('src', mw.config.get('edugui'));
 			eduIframeShow = true;
@@ -277,19 +279,29 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			////////////////////////// from Moodle plugin
 
-			window.addEventListener('message', function (event) {
-				console.log('event.data.event: '); console.log(event.data.event);
-				if (event.data.event == 'APPLY_NODE') {
-					alert(event.data.event);
-					var node = event.data.data;
-					console.log('Received data: '); console.log(node);
-				}
-			}, false);
+			// window.addEventListener('message', function (event) {
+			// 	console.log('event.data.event: '); console.log(event.data.event);
+			// 	if (event.data.event == 'APPLY_NODE') {
+			// 		alert(event.data.event);
+			// 		var node = event.data.data;
+			// 		console.log('Received-data: '); console.log(node);
+			// 	}
+			// }, false);
+
+			window.addEventListener('message', receiveMessage, false);
+			function receiveMessage(event){
+				// if (event.data.event != 'CONTENT_HEIGHT' && event.data.event != 'SESSION_TIMEOUT'){alert(event.data.event)};
+					if(event.data.event == 'APPLY_NODE'){ // Event Name hier festlegen
+						alert('received');
+						console.log('Received-data: '); console.log(event.data.data);
+					}
+			}
+
 
 			////////////////////////
 
-			window.setData = function(id, caption, mimetype, width, height, version, repotype) {
-				console.log("window.setData from iframe: ", id, caption, mimetype, width, height, version, repotype);
+			window.setData = function(id, caption, mimetype, width, height, version, mediatyp, repotype, mediatyp) {
+				console.log("window.setData from iframe: ", id, caption, mimetype, width, height, version, repotype, mediatyp);
 				
 				that.indexLayout.setTabPanel( 'options' );
 				hideEduFrame();

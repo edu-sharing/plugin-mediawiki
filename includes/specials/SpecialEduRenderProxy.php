@@ -21,6 +21,7 @@ class SpecialEduRenderProxy extends SpecialPage {
         $edu_sharing->height = $request->getVal('height');
         $edu_sharing->width = $request->getVal('width');
         $edu_sharing->mimetype = $request->getVal('mime');
+        $edu_sharing->mediatype = $request->getVal('mediatype');
         $edu_sharing->pageid = $request->getVal('pid');
         $edu_sharing->printTitle = $request->getVal('printTitle');
         $edu_sharing->language = $request->getVal('language');
@@ -41,6 +42,7 @@ class SpecialEduRenderProxy extends SpecialPage {
         $result = $eduSharingService ->getNode($postData);
 
         $html = $result["detailsSnippet"];
+        #var_dump($result);
         // take over output since we dont't want any stuff around our html
         $this->getOutput()->disable();
 

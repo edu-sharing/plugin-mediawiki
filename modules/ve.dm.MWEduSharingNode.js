@@ -56,6 +56,8 @@ ve.dm.MWEduSharingNode.static.toDataElement = function () {
 	mwId = dataElement.attributes.mw.attrs.id.substr(14),
 	previewUrl = mw.config.get( 'edupreview' );
 
+	// console.log('previewUrl: '); console.log(previewUrl);
+
 	return previewUrl + 'nodeId=' + mwId;
 		// mwBody + ',' +
 		// mwAttrs.width + ',' +
