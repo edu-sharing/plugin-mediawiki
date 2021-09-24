@@ -277,46 +277,25 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			
 			var that = this;
 
-			////////////////////////// from Moodle plugin
-
-			// window.addEventListener('message', function (event) {
-			// 	console.log('event.data.event: '); console.log(event.data.event);
-			// 	if (event.data.event == 'APPLY_NODE') {
-			// 		alert(event.data.event);
-			// 		var node = event.data.data;
-			// 		console.log('Received-data: '); console.log(node);
-			// 	}
-			// }, false);
-
+			// Receive data from iframe
 			window.addEventListener('message', receiveMessage, false);
 			function receiveMessage(event){
-				// if (event.data.event != 'CONTENT_HEIGHT' && event.data.event != 'SESSION_TIMEOUT'){alert(event.data.event)};
-					if(event.data.event == 'APPLY_NODE'){ // Event Name hier festlegen
-						alert('received');
-						console.log('Received-data: '); console.log(event.data.data);
-					}
-			}
-
-
-			////////////////////////
-
-			window.setData = function(id, caption, mimetype, width, height, version, mediatyp, repotype, mediatyp) {
-				console.log("window.setData from iframe: ", id, caption, mimetype, width, height, version, repotype, mediatyp);
+				if(event.data.event == 'APPLY_NODE'){
+					var node = event.data.data;
 				
-				that.indexLayout.setTabPanel( 'options' );
-				hideEduFrame();
-				showEduFrame();
-				$('#edusharing-options').show(); // New object is selected - so let's show the options tab
+					that.indexLayout.setTabPanel( 'options' );
+					hideEduFrame();
+					showEduFrame();
+					$('#edusharing-options').show(); // New object is selected - so let's show the options tab
 
-				that.id.setValue(id);
-				that.caption.setValue(caption);
-				that.mimetype.setValue(mimetype);
-				that.version.setValue(version);
-				that.repotype.setValue(repotype);
-
+					that.id.setValue(node.objectUrl);
+					that.caption.setValue(node.title);
+					that.mimetype.setValue(node.mimetype);
+					that.version.setValue(node.content.version);
+					that.repotype.setValue(node.repositoryType);
+				}
 			};
 		
-
 			if ( this.selectedNode ) {
 				this.scalable = this.selectedNode.getScalable();
 			} else {
