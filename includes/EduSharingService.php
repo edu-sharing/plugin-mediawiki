@@ -9,12 +9,14 @@ class EduSharingService {
 
     public $config;
     public $helperBase;
+    private $authHelper;
 
     public function __construct() {
         global $wgUser;
-        $config = new EduSharingConfig($wgUser);
+        $config = new EduSharingConfig( $wgUser );
         $this -> config = $config;
-        $this -> helperBase = new EduSharingHelperBase($config->baseUrl, $config->privateKey, $config->appId);        
+        $this -> helperBase = new EduSharingHelperBase( $config->baseUrl, $config->privateKey, $config->appId );
+        $this -> authHelper = new EduSharingAuthHelper( $this->helperBase ); 
     }
 
    
@@ -75,15 +77,46 @@ class EduSharingService {
     }
 
     public function getTicket() {
-        $authHelper = new EduSharingAuthHelper($this->helperBase);
         $ticket = '';
+
+        // try and get ticket from cache
+        $ticket = RequestContext::getMain()->getRequest()->getSession()->get('EduSharingRepoTicket');
+        if ( !is_null( $ticket ) ) {
+            // check if ticket is still valid
+            try {
+                $ticketInfo = $this->authHelper->getTicketAuthenticationInfo( $ticket );
+            } catch ( Exception $e ) {
+                // something went wrong, e.g. cached ticket is not valid, so get a new one
+            }
+
+            if ( isset( $ticketInfo ) && $ticketInfo['statusCode'] == 'OK' ) {
+                return $ticket;
+            }
+        } 
+
+        // if we don't have a valid ticket or no ticket at all, we should get a new one
+        $ticket = $this->doGetTicketAndCacheIt();
+        return $ticket;
+    }
+
+    private function doGetTicketAndCacheIt() {
+
+        $ticket = null;
+
         try {
-            $ticket = $authHelper->getTicketForUser($this->config->username);
+            $ticket = $this->authHelper->getTicketForUser($this->config->username);
         } catch (Exception $e) {
             error_log( "Couldn't get ticket from Edusharing repository ($e)" );
         }
+
+        // cache ticket if ok and return
+        if ( ! is_null ( $ticket ) ) {
+            RequestContext::getMain()->getRequest()->getSession()->set("EduSharingRepoTicket", $ticket);
+        }
+
         return $ticket;
     }
+
 
     public function encryptWithRepoKey( $data ) {
         
