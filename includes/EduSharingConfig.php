@@ -16,10 +16,9 @@ class EduSharingConfig {
 
     private $publicKey;
     private $repoPublicKey;
-
-    private $privateKeyFile = __DIR__ . '/../conf/private.key';
-    private $publicKeyFile = __DIR__ . '/../conf/public.key';
-    private $repoPublicKeyFile = __DIR__ . '/../conf/repopublic.key';
+    private $privateKeyFile;
+    private $publicKeyFile;
+    private $repoPublicKeyFile;
 
     public function __construct( $user ) {
 
@@ -32,6 +31,9 @@ class EduSharingConfig {
         $this->user             = $user;
         $this->iconMimeAudio    = $config->get( 'EduSharingIconMimeAudio' );
         $this->iconMimeVideo    = $config->get( 'EduSharingIconMimeVideo' );
+        $this->privateKeyFile   = $config->get( 'EduSharingPrivateKeyFile' );
+        $this->publicKeyFile    = $config->get( 'EduSharingPublicKeyFile' );
+        $this->repoPublicKeyFile= $config->get( 'EduSharingRepoPublicKeyFile' );
 
         if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false )
             $this->username = 'mw_guest';
@@ -50,7 +52,7 @@ class EduSharingConfig {
 
     public function getRepoPublicKey() {
         if ( !$this->repoPublicKey ) 
-            $this->loadRepoPublicKey();
+            $this->loadRepoPublicKeyFromFile();
         
         return $this->repoPublicKey;
     }
@@ -62,23 +64,11 @@ class EduSharingConfig {
             error_log( "no private key" );    
     }
 
-    private function loadRepoPublicKey() {
+    private function loadRepoPublicKeyFromFile() {
 
         $this->repoPublicKey = @file_get_contents( $this->repoPublicKeyFile );
-        $url = $this->baseUrl . "/metadata?format=lms";
-        $xml = @simpleXML_load_file( $url,"SimpleXMLElement" );
-
-        if ( $xml === false )
-            error_log( "couldn't retrieve configuration data from repository" );
-
-        $result = $xml->xpath('/properties/entry[@key="public_key"]');
-
-        if ( $result ) {
-            $this->repoPublicKey = $result[0];
-        } else {
-            error_log( "couldn't load repository public key from repository metadata url" );
-        }
-
+        if ( !$this->repoPublicKey )
+            error_log( "no repository public key" );
     }
 
     private function loadPublicKeyFromFile() {

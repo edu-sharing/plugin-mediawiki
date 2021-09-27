@@ -176,7 +176,19 @@
 		"EduSharingIconMimeVideo": {
 			"description": "Video Icon",
 			"value": "video.png"
-		}
+		},
+		"EduSharingPrivateKeyFile": {
+			"description": "Path to file containing the private key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/private.key"
+		},
+		"EduSharingPublicKeyFile": {
+			"description": "Path to file containing the public key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/public.key"
+		},
+		"EduSharingRepoPublicKeyFile": {
+			"description": "Path to file containing the repository's public key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/repopublic.key"
+		}				
 	},
 	"ConfigRegistry": {
 		"edusharing": "GlobalVarConfig::newInstance"
