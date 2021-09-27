@@ -9,13 +9,13 @@ class EduSharingConfig {
     public $privateKey;
     public $contentUrl;
     public $eduUrl;
-    public $repoPublicKey;
     public $user;
     public $appType = 'LMS';
     public $appDomain;
     public $appHost;
 
     private $publicKey;
+    private $repoPublicKey;
 
     private $privateKeyFile = __DIR__ . '/../conf/private.key';
     private $publicKeyFile = __DIR__ . '/../conf/public.key';
@@ -39,33 +39,53 @@ class EduSharingConfig {
             $this->username = trim( strtolower( $user->getName() ) );
 
         $this->loadPrivateKeyFromFile();
-        $this->loadRepoPublicKeyFromFile();
     }
     
     public function getPublicKey() {
-        $this->loadPublicKeyFromFile();
+        if ( !$this->publicKey ) 
+            $this->loadPublicKeyFromFile();
+        
         return $this->publicKey;
+    }
+
+    public function getRepoPublicKey() {
+        if ( !$this->repoPublicKey ) 
+            $this->loadRepoPublicKey();
+        
+        return $this->repoPublicKey;
     }
 
     private function loadPrivateKeyFromFile() {
 
         $this->privateKey = @file_get_contents( $this->privateKeyFile );
         if ( !$this->privateKey )
-            die('no private key');   
+            error_log( "no private key" );    
     }
 
-    private function loadRepoPublicKeyFromFile() {
+    private function loadRepoPublicKey() {
 
         $this->repoPublicKey = @file_get_contents( $this->repoPublicKeyFile );
-        if ( !$this->repoPublicKey )
-            die('no public repo key');   
+        $url = $this->baseUrl . "/metadata?format=lms";
+        $xml = @simpleXML_load_file( $url,"SimpleXMLElement" );
+
+        if ( $xml === false )
+            error_log( "couldn't retrieve configuration data from repository" );
+
+        $result = $xml->xpath('/properties/entry[@key="public_key"]');
+
+        if ( $result ) {
+            $this->repoPublicKey = $result[0];
+        } else {
+            error_log( "couldn't load repository public key from repository metadata url" );
+        }
+
     }
-  
+
     private function loadPublicKeyFromFile() {
 
         $this->publicKey = @file_get_contents( $this->publicKeyFile );
         if ( !$this->publicKey )
-            die('no public key');   
+        error_log( "no public key" );
     }
 
 }

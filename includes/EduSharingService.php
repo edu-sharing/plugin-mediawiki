@@ -100,8 +100,9 @@ class EduSharingService {
     public function encryptWithRepoKey( $data ) {
         
         $dataEncrypted = '';
+        $key = $this->config->getRepoPublicKey();
 
-        $repoPublicKey      = openssl_get_publickey( $this->config->repoPublicKey );
+        $repoPublicKey      = openssl_get_publickey( $key );
         $encryption_status  = openssl_public_encrypt( $data ,$dataEncrypted, $repoPublicKey );
         
         if( $encryption_status === false || $dataEncrypted === false ) {
