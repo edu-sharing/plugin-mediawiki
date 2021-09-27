@@ -11,14 +11,22 @@ class EduSharingConfig {
     public $eduUrl;
     public $repoPublicKey;
     public $user;
-    
+    public $appType = 'LMS';
+    public $appDomain;
+    public $appHost;
+
+    private $publicKey;
+
     private $privateKeyFile = __DIR__ . '/../conf/private.key';
+    private $publicKeyFile = __DIR__ . '/../conf/public.key';
     private $repoPublicKeyFile = __DIR__ . '/../conf/repopublic.key';
 
     public function __construct( $user ) {
 
         $config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
         $this->appId            = $config->get( 'EduSharingAppId' );
+        $this->appDomain        = $config->get( 'EduSharingAppDomain' );
+        $this->appHost          = $config->get( 'EduSharingAppHost' );
         $this->baseUrl          = $config->get( 'EduSharingBaseUrl' );
         $this->contentUrl       = $this->baseUrl . '/renderingproxy';
         $this->user             = $user;
@@ -34,6 +42,10 @@ class EduSharingConfig {
         $this->loadRepoPublicKeyFromFile();
     }
     
+    public function getPublicKey() {
+        $this->loadPublicKeyFromFile();
+        return $this->publicKey;
+    }
 
     private function loadPrivateKeyFromFile() {
 
@@ -47,6 +59,13 @@ class EduSharingConfig {
         $this->repoPublicKey = @file_get_contents( $this->repoPublicKeyFile );
         if ( !$this->repoPublicKey )
             die('no public repo key');   
+    }
+  
+    private function loadPublicKeyFromFile() {
+
+        $this->publicKey = @file_get_contents( $this->publicKeyFile );
+        if ( !$this->publicKey )
+            die('no public key');   
     }
 
 }
