@@ -1,9 +1,9 @@
 <?php
 
-require_once "edu-sharing-api/edu-sharing-helper.php";
-require_once "edu-sharing-api/edu-sharing-helper-base.php";
-require_once "edu-sharing-api/edu-sharing-auth-helper.php";
-require_once "edu-sharing-api/edu-sharing-node-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper-base.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-auth-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-node-helper.php";
 
 class EduSharingService {
 

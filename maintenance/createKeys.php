@@ -8,6 +8,7 @@
  *   [--regenerate-key-pair] regenerates the keys even if there are exisitng ones
  *   [--get-repo-key-only] skips the key generation and only retrieves the repository's public key
  *
+ * File location is configurable via LocalSettings.php, default is extensions/EduSharing/conf/.
  *
  * @file
  * @ingroup Maintenance

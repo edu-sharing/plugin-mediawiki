@@ -1,0 +1,3 @@
+[submodule "includes/EduSharingApiClient"]
+	path = includes/EduSharingApiClient
+	url = https://github.com/edu-sharing/php-auth-plugin.git
