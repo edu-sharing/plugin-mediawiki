@@ -33,10 +33,11 @@ class EduSharingService {
 
     }
 
-    public function deleteUsage( $usageId ) {
+    public function deleteUsage( $postData ) {
         $nodeHelper = new EduSharingNodeHelper($this->helperBase);
-        $result = $nodeHelper->deleteUsageById(
-                $usageId
+        $result = $nodeHelper->deleteUsage(
+            $postData->nodeId,
+            $postData->usageId
         );    
         return $result;
     }
