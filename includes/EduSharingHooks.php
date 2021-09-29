@@ -75,16 +75,20 @@ class EduSharingHooks {
 
 
     private static function deleteResourceAndUsage( $resource ) {
-
+        
         /*
         * Delete record in db
         */
         $dbw = wfGetDB( DB_PRIMARY );
         $dbw -> delete('edusharing_resource', array( 'EDUSHARING_RESOURCE_ID = ' . $resource->EDUSHARING_RESOURCE_ID ), $fname = 'Database::delete');
 
+        $postData           = new stdClass ();
+        $postData->nodeId   = str_replace("ccrep://local/","",$resource->EDUSHARING_RESOURCE_OBJECT_URL);
+        $postData->usageId  = $resource->EDUSHARING_RESOURCE_USAGE;
+
         // delete usage from repo
         $eduService = new EduSharingService();
-        $eduService -> deleteUsage( $resource->EDUSHARING_RESOURCE_USAGE );
+        $eduService -> deleteUsage( $postData );
     }
 
 
@@ -107,7 +111,7 @@ class EduSharingHooks {
          * Select edu-sharing resources of the article that will be deleted
          */
         $res = $dbr -> select('edusharing_resource',
-            array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE' ), // $vars (columns of the table)
+            array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
             'EDUSHARING_RESOURCE_PAGE_ID = ' . $article -> getId(),
             'Database::select',
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')

@@ -1,9 +1,9 @@
 <?php
 
-require_once "edu-sharing-api/edu-sharing-helper.php";
-require_once "edu-sharing-api/edu-sharing-helper-base.php";
-require_once "edu-sharing-api/edu-sharing-auth-helper.php";
-require_once "edu-sharing-api/edu-sharing-node-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper-base.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-auth-helper.php";
+require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-node-helper.php";
 
 class EduSharingService {
 
@@ -33,10 +33,11 @@ class EduSharingService {
 
     }
 
-    public function deleteUsage( $usageId ) {
+    public function deleteUsage( $postData ) {
         $nodeHelper = new EduSharingNodeHelper($this->helperBase);
-        $result = $nodeHelper->deleteUsageById(
-                $usageId
+        $result = $nodeHelper->deleteUsage(
+            $postData->nodeId,
+            $postData->usageId
         );    
         return $result;
     }
@@ -100,8 +101,9 @@ class EduSharingService {
     public function encryptWithRepoKey( $data ) {
         
         $dataEncrypted = '';
+        $key = $this->config->getRepoPublicKey();
 
-        $repoPublicKey      = openssl_get_publickey( $this->config->repoPublicKey );
+        $repoPublicKey      = openssl_get_publickey( $key );
         $encryption_status  = openssl_public_encrypt( $data ,$dataEncrypted, $repoPublicKey );
         
         if( $encryption_status === false || $dataEncrypted === false ) {

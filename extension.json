@@ -16,6 +16,7 @@
 	"license-name": "MIT",
 	"type": "",
 	"SpecialPages": {
+		"EduSharingRegister": "SpecialEduSharingRegister",
 		"EduRenderProxy": "SpecialEduRenderProxy",
 		"EduInlineHelper": "SpecialEduInlineHelper"
 	},
@@ -29,6 +30,7 @@
 		"EduSharingConfig": "includes/EduSharingConfig.php",
 		"EduSharingService": "includes/EduSharingService.php",
 		"EduSharingHooks": "includes/EduSharingHooks.php",
+		"SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
 		"SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
 		"SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
@@ -159,6 +161,14 @@
 			"description": "Defines the AppID with which this wiki is registered at the edu-sharing repository",
 			"value": "mediawiki-app-id"
 		},
+		"EduSharingAppDomain": {
+			"description": "Defines the fqdn under which the wiki is running",
+			"value": "wiki.example.com"
+		},
+		"EduSharingAppHost": {
+			"description": "The public ip address of the wiki host",
+			"value": "192.168.0.1"
+		},
 		"EduSharingIconMimeAudio": {
 			"description": "Audio Icon",
 			"value": "audio.png"
@@ -166,11 +176,23 @@
 		"EduSharingIconMimeVideo": {
 			"description": "Video Icon",
 			"value": "video.png"
-		}		
+		},
+		"EduSharingPrivateKeyFile": {
+			"description": "Path to file containing the private key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/private.key"
+		},
+		"EduSharingPublicKeyFile": {
+			"description": "Path to file containing the public key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/public.key"
+		},
+		"EduSharingRepoPublicKeyFile": {
+			"description": "Path to file containing the repository's public key, relative to MW install dir",
+			"value": "extensions/EduSharing/conf/repopublic.key"
+		}				
 	},
 	"ConfigRegistry": {
 		"edusharing": "GlobalVarConfig::newInstance"
-	},	
+	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "",
 		"remoteExtPath": "EduSharing"
