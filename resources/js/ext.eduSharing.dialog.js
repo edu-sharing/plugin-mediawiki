@@ -226,7 +226,7 @@ function receiveMessage(event){
         document.getElementById('wikieditor-toolbar-edu-width').value = node.preview.width;
         document.getElementById('wikieditor-toolbar-edu-height').value = node.preview.height;
         $('#origImageRatio').val(node.preview.width / node.preview.height);
-
+        window.hideEduFrame();
         mimeSwitchHelper = '';
         if (mimetype.indexOf('image') !== -1)
             mimeSwitchHelper = 'image';

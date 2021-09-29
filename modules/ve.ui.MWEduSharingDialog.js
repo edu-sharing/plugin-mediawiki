@@ -16,8 +16,6 @@
  ve.ui.MWEduSharingDialog = function VeUiMWEduSharingDialog() {
 	// Parent constructor
 	ve.ui.MWEduSharingDialog.super.apply( this, arguments );
-
-	// this.updateEduSharingContentsDebounced = OO.ui.debounce( this.updateEduSharingContents.bind( this ), 300 );
 };
 
 /* Inheritance */
@@ -86,8 +84,14 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	this.captionField = new OO.ui.FieldLayout( this.caption, {
 		align: 'left',
 		label: ve.msg( 'visualeditor-mwedusharingdialog-caption' )
-	// } ).isVisible( false );
 	} );
+
+	this.mediatype = new OO.ui.TextInputWidget( {
+	} );
+	this.mediatypeField = new OO.ui.FieldLayout( this.mediatype, {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-mediatype' )
+	} ).isVisible( false );
 
 	this.mimetype = new OO.ui.TextInputWidget( {
 	} );
@@ -123,6 +127,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 
 	this.dimensions = new ve.ui.DimensionsWidget();
 	this.dimensionsField = new OO.ui.FieldLayout( this.dimensions, {
+		id: 'field-dimensions',
 		align: 'left',
 		label: ve.msg( 'visualeditor-mwedusharingdialog-size' )
 	} );
@@ -138,6 +143,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	this.optionsPanel.$element.append (
 		this.idField.$element,
 		this.captionField.$element,
+		this.mediatypeField.$element,
 		this.mimetypeField.$element,
 		this.versionField.$element,
 		this.repotypeField.$element,
@@ -160,7 +166,6 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	);
 
 	var iframeSetup = {
-		// html: '<iframe width="100%" height="900" id="edusharing" src="' + mw.config.get('edugui') + '"></iframe>'
 		html: '<iframe id="edusharing"></iframe>'
 	}
 
@@ -216,9 +221,10 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 
 	this.indexLayout.setTabPanel( 'options' );
 
-	var id, caption, mimetype, version, dimensions, versionshow, repotype;
+	var id, caption, mediatype, mimetype, version, dimensions, versionshow, repotype;
 	id = this.id.getValue();
 	caption = this.caption.getValue();
+	mediatype = this.mediatype.getValue();
 	mimetype = this.mimetype.getValue();
 	dimensions = this.dimensions.getDimensions();
 	version = this.version.getValue();
@@ -233,6 +239,7 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	mwData.attrs.action = 'new'; // Regardless of whether inserting or updating an edu-sharing media we always need to set action tag attribute to 'new' to get a new resourceid (see below)
 	mwData.body.extsrc = caption;
 	mwData.attrs.id = id.toString();
+	mwData.attrs.mediatype = mediatype.toString();
 	mwData.attrs.mimetype = mimetype.toString();
 	mwData.attrs.version = version.toString();
 	mwData.attrs.repotype = repotype.toString();
@@ -245,18 +252,6 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 		delete mwData.attrs.resourceid;
 	}
 }
-
-// /**
-//  * @inheritdoc
-//  */
-// ve.ui.MWEduSharingDialog.prototype.getReadyProcess = function ( data ) {
-// 	return ve.ui.MWEduSharingDialog.super.prototype.getReadyProcess.call( this, data )
-// 		.next( function () {
-// 			this.pushPending();
-// 			this.setupEduSharing()
-// 				.then( this.popPending.bind( this ) );
-// 		}, this );
-// };
 
 /**
  * @inheritdoc
@@ -275,6 +270,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
 			isReadOnly = this.isReadOnly();
 			
+			
+
 			var that = this;
 
 			// Receive data from iframe
@@ -282,6 +279,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			function receiveMessage(event){
 				if(event.data.event == 'APPLY_NODE'){
 					var node = event.data.data;
+					// console.log('event.data.data: '); console.log(event.data.data);
 				
 					that.indexLayout.setTabPanel( 'options' );
 					hideEduFrame();
@@ -290,12 +288,13 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 					that.id.setValue(node.objectUrl);
 					that.caption.setValue(node.title);
+					that.mediatype.setValue(node.mediatype);
 					that.mimetype.setValue(node.mimetype);
 					that.version.setValue(node.content.version);
 					that.repotype.setValue(node.repositoryType);
 				}
 			};
-		
+
 			if ( this.selectedNode ) {
 				this.scalable = this.selectedNode.getScalable();
 			} else {
@@ -310,6 +309,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			
 			this.caption.setValue( mwBody.extsrc ).setDisabled( isReadOnly );
 
+			this.mediatype.setValue( mwAttrs.mediatype ).setDisabled( isReadOnly );
+
 			this.mimetype.setValue( mwAttrs.mimetype ).setDisabled( isReadOnly );
 
 			this.version.setValue( mwAttrs.version ).setDisabled( isReadOnly );
@@ -319,6 +320,28 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			this.versionshow.setValue( mwAttrs.versionshow ).setDisabled( isReadOnly );
 
 			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
+
+			var type;
+			if ( mwAttrs.mediatype != '' )
+				type = mwAttrs.mediatype;
+			else
+				type = mwAttrs.mimetype;
+
+			var repotype = mwAttrs.repotype;
+			typeSwitchHelper = '';
+			if (type.indexOf('image') !== -1)
+				typeSwitchHelper = 'image';
+			else if (type.indexOf('audio') !== -1)
+				typeSwitchHelper = 'audio';
+			else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+				typeSwitchHelper = 'video';
+			else
+				typeSwitchHelper = 'textlike';
+
+			if ( typeSwitchHelper === 'textlike' )
+				$('#field-dimensions').hide();
+			else
+				$('#field-dimensions').show();
 
 			// this.align.selectItemByData( mwAttrs.align || 'right' ).setDisabled( isReadOnly );
 			this.align.selectItemByData( mwAttrs.float || 'right' ).setDisabled( isReadOnly ); // The edusharing tag uses float not align
@@ -358,6 +381,8 @@ ve.ui.MWEduSharingDialog.prototype.getTeardownProcess = function ( data ) {
 
 			this.caption.disconnect( this );
 
+			this.mediatype.disconnect( this );
+
 			this.mimetype.disconnect( this );
 
 			this.repotype.disconnect( this );
@@ -388,10 +413,6 @@ ve.ui.MWEduSharingDialog.prototype.getSizeProperties = function () {
  			height: '1000'
  	};
 };
-
-// ve.ui.MWEduSharingDialog.prototype.getBodyHeight = function () {
-//  	return 1000;
-// };
 
 /* Registration */
 

@@ -15,29 +15,28 @@
  * @param {Object} [config] Configuration options
  */
  ve.ce.MWEduSharingNode = function VeCeMWEduSharing( model, config ) {
-	var store, contents, $caption;
-
 	config = config || {};
-
-	this.$edusharing = $( '<div>' ).addClass( 'mw-edusharing-preview' );
+	
 	this.$thumbinner = $( '<div>' ).addClass( 'thumbinner' );
+	this.$edusharing = $( '<div>' ).addClass( 'mw-edusharing-preview' );
+	this.$caption = $( '<div>' ).addClass( 'mw-edusharing-caption' );
 
 	// Parent constructor
 	ve.ce.MWEduSharingNode.super.apply( this, arguments );
 
 	// Mixin constructors
-	ve.ce.ResizableNode.call( this, this.$edusharing, config );
+	if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
+		ve.ce.ResizableNode.call( this, this.$edusharing, config );
+	}
 
 	this.$imageLoader = null;
-	this.edusharingData = {};
+	// this.edusharingData = {};
 
 	// Events
+	
 	this.model.connect( this, { attributeChange: 'onAttributeChange' } );
 
-	// HACK: Copy caption from originalDomElements
-	store = this.model.doc.getStore();
-	contents = store.value( store.hashOfValue( null, OO.getHash( [ this.model.getHashObjectForRendering(), null ] ) ) );
-	$caption = $( contents ).find( '.thumbcaption' ).clone();
+	this.$caption.html( this.requiresInteractive() );
 
 	// DOM changes
 	this.$element
@@ -45,9 +44,10 @@
 		.addClass( 've-ce-mwEduSharingNode mw-edusharing-container thumb' )
 		.append(
 			this.$thumbinner.append(
-				this.$edusharing, $caption
+				this.$edusharing, this.$caption
 			)
 		);
+
 };
 
 /* Inheritance */
@@ -64,16 +64,14 @@ ve.ce.MWEduSharingNode.static.tagName = 'div';
 
 ve.ce.MWEduSharingNode.static.primaryCommandName = 'mwEduSharing';
 
-// /* Methods */
+/* Methods */
 
 /**
   * @return {boolean} EduSharing requires interactive rendering
  */
 ve.ce.MWEduSharingNode.prototype.requiresInteractive = function () {
 	var mwData = this.model.getAttribute( 'mw' );
-
-	// return ( mwData.body && mwData.body.extsrc ) || isNaN( mwData.attrs.latitude ) || isNaN( mwData.attrs.zoom );
-	return ( mwData.body );
+	return ( mwData.body && mwData.body.extsrc );
 };
 
 /**
@@ -102,7 +100,6 @@ ve.ce.MWEduSharingNode.prototype.onSetup = function () {
  */
 ve.ce.MWEduSharingNode.prototype.update = function () {
 	var requiresInteractive = this.requiresInteractive(),
-		// align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'align' ) ||
 		align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
 			( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
 		alignClasses = {
@@ -145,7 +142,7 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
  * Update the static rendering
  */
 ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
-	var url, node = this;
+	var url, node = this, typeSwitchHelper;
 	if ( !this.model.getCurrentDimensions().width ) {
 		return;
 	}
@@ -156,10 +153,27 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 	}
 
 	url = this.model.getUrl();
+	typeSwitchHelper = this.model.getTypeSwitchHelper();
+	// console.log('typeSwitchHelper: ');	console.log(typeSwitchHelper);
 	
-	this.$imageLoader = $( '<img>' ).on( 'load', function () {
-		node.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
-	} ).attr( 'src', url );
+
+	if ( typeSwitchHelper !== 'textlike'){
+		this.$imageLoader = $( '<img>' ).on( 'load', function () {
+			node.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
+		} ).attr( 'src', url );
+	} else {
+		node.$edusharing.html('');
+	}
+
+	$caption = this.requiresInteractive();
+	node.$caption.html( $caption );
+
+
+	// // Mixin constructors
+	// if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
+	// 	ve.ce.ResizableNode.call( this, this.$edusharing, null );
+	// }
+
 };
 
 /**

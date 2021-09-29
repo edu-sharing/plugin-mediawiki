@@ -11,7 +11,6 @@ class SpecialEduRenderProxy extends SpecialPage {
     public function execute( $par ) {
 
         $request = $this->getRequest();
-
         $edu_sharing = new stdClass ();
 
         $edu_sharing->id = $request->getVal('oid');
@@ -21,14 +20,13 @@ class SpecialEduRenderProxy extends SpecialPage {
         $edu_sharing->height = $request->getVal('height');
         $edu_sharing->width = $request->getVal('width');
         $edu_sharing->mimetype = $request->getVal('mime');
-        $edu_sharing->mediatype = $request->getVal('mediatype');
         $edu_sharing->pageid = $request->getVal('pid');
         $edu_sharing->printTitle = $request->getVal('printTitle');
         $edu_sharing->language = $request->getVal('language');
         
         $usageid = $request->getVal('usageid');
 
-        $eduSharingService = new EduSharingService();     
+        $eduSharingService = new EduSharingService();
         $postData = new stdClass ();
 
         $edu_sharing->contenturl = $eduSharingService->config->contentUrl;
@@ -42,7 +40,7 @@ class SpecialEduRenderProxy extends SpecialPage {
         $result = $eduSharingService ->getNode($postData);
 
         $html = $result["detailsSnippet"];
-        #var_dump($result);
+        $edu_sharing->mediatype = $result['node']['mediatype'];
         // take over output since we dont't want any stuff around our html
         $this->getOutput()->disable();
 
@@ -105,13 +103,17 @@ class SpecialEduRenderProxy extends SpecialPage {
 
         /*
          * replaces {{{LMS_INLINE_HELPER_SCRIPT}}}
+         * 
          */
+
+        #var_dump($html);
         $html = str_replace("{{{LMS_INLINE_HELPER_SCRIPT}}}", SpecialPage::getTitleFor('EduInlineHelper')->getLocalUrl() . "&reUrl=".urlencode($this -> getRedirectUrl ($eduobj, 'window')), $html);
 
         /*
          * replaces <es:title ...>...</es:title>
          */
-        $html = preg_replace ( "/<es:title[^>]*>.*<\/es:title>/Uims", $eduobj->printTitle, $html );
+	$html = preg_replace ( "/<es:title[^>]*>.*<\/es:title>/Uims", $eduobj->printTitle, $html );
+	$html = preg_replace ( '/(<a.* class="edu_sharing_filename".*>)(.*)(<\/a>)/Uims', "$1" . $eduobj->printTitle . "$3", $html );
         /*
          * For images, audio and video show a capture underneath object
          */
@@ -124,6 +126,8 @@ class SpecialEduRenderProxy extends SpecialPage {
             if (strpos ( $eduobj->mimetype, $mimetype ) !== false)
                 $html .= '<p class="caption">' . $eduobj->printTitle . '</p>';
         }
+
+        $html .= $eduobj->mediatype;
 
         return $html;
     }

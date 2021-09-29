@@ -117,8 +117,8 @@
 				"modules/ve.ui.MWEduSharingDialogTool.js"
 			],
 			"styles": [
-				"modules/ve.ui.MWEduSharing.css",
-				"modules/ve.ui.MWEduSharingIcons.css"
+				"modules/ve.ui.MWEduSharing.less",
+				"modules/ve.ui.MWEduSharingIcons.less"
 			],
 			"dependencies": [
 				"oojs-ui.styles.icons-editing-advanced",

@@ -51,17 +51,11 @@ ve.dm.MWEduSharingNode.static.toDataElement = function () {
 };
 
 // ve.dm.MWEduSharingNode.static.getUrl = function ( dataElement, width, height ) {
-	ve.dm.MWEduSharingNode.static.getUrl = function ( dataElement ) {
-	var mwAttrs = dataElement.attributes.mw.attrs,
-	mwId = dataElement.attributes.mw.attrs.id.substr(14),
+ve.dm.MWEduSharingNode.static.getUrl = function ( dataElement ) {
+	var mwId = dataElement.attributes.mw.attrs.id.substr(14),
 	previewUrl = mw.config.get( 'edupreview' );
 
-	// console.log('previewUrl: '); console.log(previewUrl);
-
 	return previewUrl + 'nodeId=' + mwId;
-		// mwBody + ',' +
-		// mwAttrs.width + ',' +
-		// mwAttrs.height;
 };
 
 
@@ -98,6 +92,33 @@ ve.dm.MWEduSharingNode.prototype.getUrl = function ( width, height ) {
 	return this.constructor.static.getUrl( this.element, width, height );
 };
 
+ve.dm.MWEduSharingNode.prototype.getMediaType = function () {
+	var mwData = this.getAttribute( 'mw' );
+	return ( mwData.attrs.mediatype || mwData.attrs.mimetype ); // Return mediatype attribute if exists otherwise return mimetype attribute
+};
+
+ve.dm.MWEduSharingNode.prototype.getRepoType = function () {
+	var mwData = this.getAttribute( 'mw' );
+	return ( mwData.attrs.repotype );
+};
+
+ve.dm.MWEduSharingNode.prototype.getTypeSwitchHelper = function () {
+	var type = this.getMediaType();
+	// console.log('type: ');	console.log(type);
+	var repotype = this.getRepoType();
+	// console.log('repotype: '); console.log(repotype);
+	typeSwitchHelper = '';
+		if (type.indexOf('image') !== -1)
+			typeSwitchHelper = 'image';
+		else if (type.indexOf('audio') !== -1)
+			typeSwitchHelper = 'audio';
+		else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+			typeSwitchHelper = 'video';
+		else
+			typeSwitchHelper = 'textlike';
+	return typeSwitchHelper;
+};
+
 /**
  * @inheritdoc
  */
@@ -112,7 +133,8 @@ ve.dm.MWEduSharingNode.prototype.createScalable = function () {
  */
 ve.dm.MWEduSharingNode.prototype.usesEduSharingData = function () {
 	var mwData = this.getAttribute( 'mw' );
-	return !!( mwData.body && mwData.body.extsrc );
+	// return !!( mwData.body && mwData.body.extsrc );
+	return ( mwData.body && mwData.body.extsrc );
 };
 
 /* Registration */
