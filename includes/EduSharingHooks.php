@@ -440,59 +440,6 @@ class EduSharingHooks {
     }
 
     /**
-     * Get the wrapped preview of a resource
-     * images - image preview
-     * audio - standard icon
-     * video - standard icon
-     * links - given title
-     * 
-     * @param $edu_sharing
-     * @param $input
-     * @param $style
-     * @return string
-     */
-    public static function getPreview($edu_sharing, $input, $style) {
-
-        $eduService = new EduSharingService();
-        $ticket = $eduService->getTicket();
-
-        $wrapperStyle = "style=\"height:auto; width:auto; " . $style . "\"";
-                    
-            $mimeSwitchHelper = '';
-            if(strpos($edu_sharing -> mimetype, 'image') !== false)
-               $mimeSwitchHelper = 'image';
-            else if(strpos($edu_sharing -> mimetype, 'audio') !== false)
-               $mimeSwitchHelper = 'audio';
-            else if(strpos($edu_sharing -> mimetype, 'video') !== false)
-                $mimeSwitchHelper = 'video';
-            else
-                $mimeSwitchHelper = 'textlike';
-            switch($mimeSwitchHelper) {
-                case 'image':
-                    $content = "<img src=\"" . $eduService->config->baseUrl . "/preview?nodeId=" . $edu_sharing->id . "&ticket=" . $ticket . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\" />";
-                    $content .= "<p>" . $input . "</p>";
-                break;
-                case 'audio':
-                    $content = "<img src=\"" . $eduService->config->iconMimeAudio . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\"/>";
-                    $content .= "<p>" . $input . "</p>";
-                break;
-                case 'video':
-                    // $content = "<img src=\"".$eduService->config->iconMimeVideo."\" width=\"".$edu_sharing -> width."\" height=\"".$edu_sharing -> height."\"/>";
-                    $content = "<img src=\"" . $eduService->config->baseUrl . "/preview?nodeId=" . $edu_sharing->id . "&ticket=" . $ticket . "\" width=\"" . $edu_sharing->width . "\" height=\"" . $edu_sharing->height . "\" />";
-                    $content .= "<p>" . $input . "</p>";
-                break;
-                case 'textlike':
-                default: 
-                    $content = "<a href=\"#\">" . $input . "</a>";
-            }
-                     
-            $text = "<div class=\"mw-edusharing-container\"><div class=\"edu_wrapper\" id=\"content_wrapper" . $edu_sharing->id . "-" . $edu_sharing->resourceid . "\" ".$wrapperStyle.">";
-            $text .= $content;
-            $text .= "</div></div>";
-            return $text;
-    }
-
-    /**
      * Add module 'ext.eduSharing.display' providing js loadScript function
      * @param &$out
      * @param &$skin

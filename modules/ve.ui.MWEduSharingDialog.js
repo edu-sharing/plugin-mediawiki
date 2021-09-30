@@ -253,6 +253,34 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	}
 }
 
+ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper = function ( data ) {
+	var type = '', repotype = '', typeSwitchHelper = '';
+	if ( data.mediatype !== '' )
+	 	type = data.mediatype;
+	else if ( data.mimetype !== '' )
+	 	type = data.mimetype;
+	else
+	 	type = '';
+
+	// console.log('mediatype: '); console.log(data.mediatype);
+	// console.log('mimetype: '); console.log(data.mimetype);
+	// console.log('type: '); console.log(type);
+	if ( type !== '' ){
+		var repotype = data.repotype;
+		typeSwitchHelper = '';
+		if (type.indexOf('image') !== -1)
+			typeSwitchHelper = 'image';
+		else if (type.indexOf('audio') !== -1)
+			typeSwitchHelper = 'audio';
+		else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+			typeSwitchHelper = 'video';
+		else
+			typeSwitchHelper = 'textlike';
+	}
+
+	return typeSwitchHelper;
+}
+
 /**
  * @inheritdoc
  */
@@ -269,11 +297,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			var mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
 			mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
 			isReadOnly = this.isReadOnly();
-			
-			
 
 			var that = this;
-
 			// Receive data from iframe
 			window.addEventListener('message', receiveMessage, false);
 			function receiveMessage(event){
@@ -321,28 +346,14 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
 
-			var type;
-			if ( mwAttrs.mediatype != '' )
-				type = mwAttrs.mediatype;
-			else
-				type = mwAttrs.mimetype;
-
-			var repotype = mwAttrs.repotype;
-			typeSwitchHelper = '';
-			if (type.indexOf('image') !== -1)
-				typeSwitchHelper = 'image';
-			else if (type.indexOf('audio') !== -1)
-				typeSwitchHelper = 'audio';
-			else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
-				typeSwitchHelper = 'video';
-			else
-				typeSwitchHelper = 'textlike';
-
-			if ( typeSwitchHelper === 'textlike' )
-				$('#field-dimensions').hide();
-			else
-				$('#field-dimensions').show();
-
+			if ( this.selectedNode ) {
+				typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs);
+				if ( typeSwitchHelper === 'textlike' )
+					$('#field-dimensions').hide();
+				else
+					$('#field-dimensions').show();
+			}
+			
 			// this.align.selectItemByData( mwAttrs.align || 'right' ).setDisabled( isReadOnly );
 			this.align.selectItemByData( mwAttrs.float || 'right' ).setDisabled( isReadOnly ); // The edusharing tag uses float not align
 
@@ -357,7 +368,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			this.align.connect( this, { choose: 'updateActions' } );
 			
-			if( this.id.value != ''){
+			//if ( this.id.value != ''){
+			if ( this.selectedNode ) {
 				this.indexLayout.setTabPanel( 'options' ); // If the edusharing object already exists, we start with the options panel
 			} else {
 				// Hack: Hide the options tab to prevent insertion of an empty edusharing tag if no object is selected.
@@ -415,5 +427,4 @@ ve.ui.MWEduSharingDialog.prototype.getSizeProperties = function () {
 };
 
 /* Registration */
-
 ve.ui.windowFactory.register( ve.ui.MWEduSharingDialog );

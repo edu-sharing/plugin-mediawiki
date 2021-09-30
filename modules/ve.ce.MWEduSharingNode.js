@@ -25,12 +25,12 @@
 	ve.ce.MWEduSharingNode.super.apply( this, arguments );
 
 	// Mixin constructors
+	// console.log('typeSwitchHelper: '); console.log(typeSwitchHelper);
 	if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
 		ve.ce.ResizableNode.call( this, this.$edusharing, config );
 	}
 
 	this.$imageLoader = null;
-	// this.edusharingData = {};
 
 	// Events
 	
@@ -41,7 +41,7 @@
 	// DOM changes
 	this.$element
 		.empty()
-		.addClass( 've-ce-mwEduSharingNode mw-edusharing-container thumb' )
+		.addClass( 've-ce-mwEduSharingNode mw-edusharing-container mw-edusharing-' + typeSwitchHelper + ' thumb' )
 		.append(
 			this.$thumbinner.append(
 				this.$edusharing, this.$caption
@@ -103,9 +103,9 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 		align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
 			( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
 		alignClasses = {
-			left: 'floatleft',
-			center: 'center',
-			right: 'floatright'
+			left: 'tleft',
+			center: 'tnone center',
+			right: 'tright'
 		};
 
 		
@@ -126,7 +126,7 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 
 	// Classes documented in removeClass
 	this.$element
-		.removeClass( 'floatleft center floatright' )
+		.removeClass( 'tleft tnone center tright' )
 		.addClass( alignClasses[ align ] );
 	this.$edusharing
 		.css( this.model.getCurrentDimensions() );
@@ -171,7 +171,7 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 
 	// // Mixin constructors
 	// if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
-	// 	ve.ce.ResizableNode.call( this, this.$edusharing, null );
+	// 	ve.ce.ResizableNode.call( this, this.$edusharing, null ); // the resize handles (arrows)
 	// }
 
 };
