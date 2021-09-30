@@ -21,8 +21,7 @@ if ( getenv( 'MW_INSTALL_PATH' ) ) {
 }
 
 require_once "$IP/maintenance/Maintenance.php";
-require_once __DIR__ . "/../includes/edu-sharing-api/edu-sharing-helper.php";
-
+require_once "../includes/EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper.php";
 
 class createEduSharingKeys extends Maintenance {
 
