@@ -113,7 +113,7 @@ class SpecialEduRenderProxy extends SpecialPage {
          * replaces <es:title ...>...</es:title>
          */
         $html = preg_replace ( "/<es:title[^>]*>.*<\/es:title>/Uims", $eduobj->printTitle, $html );
-        $html = preg_replace ( '/(<a.* class="edu_sharing_filename".*>)(.*)(<\/a>)/Uims', "$1" . $eduobj->printTitle . "$3", $html );
+        $html = preg_replace ( '/(<a.* class="edu_sharing_filename".*>)(.*)(<\/a>)/Uims', '${1}' . $eduobj->printTitle . '${3}', $html );
         /*
          * For images, audio and video show a capture underneath object
          */
