@@ -6,9 +6,6 @@ This extension adds a selection dialogue to the VisualEditor and WikiEditor exte
 This extension is for mediawiki 1.35 or higher versions.
 More information about edu-sharing can be found on the [edu-sharing homepage](http://www.edu-sharing.com).
 
-[Demo](http://stable.demo.edu-sharing.net/mwiki/)
---------------------------------------
-
 Installation
 ------------
 - Clone the git repositry into your Mediawiki extension folder ([MEDIAWIKI_INSTALL_DIR]/extensions/EduSharing/)
