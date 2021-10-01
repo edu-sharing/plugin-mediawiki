@@ -103,19 +103,18 @@ ve.dm.MWEduSharingNode.prototype.getRepoType = function () {
 };
 
 ve.dm.MWEduSharingNode.prototype.getTypeSwitchHelper = function () {
-	var type = this.getMediaType();
-	// console.log('type: ');	console.log(type);
-	var repotype = this.getRepoType();
-	// console.log('repotype: '); console.log(repotype);
+	var elementtype = this.getMediaType(), repotype = this.getRepoType(), typeSwitchHelper;
+	
 	typeSwitchHelper = '';
-		if (type.indexOf('image') !== -1)
+		if (elementtype.indexOf('image') !== -1)
 			typeSwitchHelper = 'image';
-		else if (type.indexOf('audio') !== -1)
+		else if (elementtype.indexOf('audio') !== -1)
 			typeSwitchHelper = 'audio';
-		else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+		else if (elementtype.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
 			typeSwitchHelper = 'video';
 		else
 			typeSwitchHelper = 'textlike';
+			
 	return typeSwitchHelper;
 };
 

@@ -16,6 +16,7 @@
  */
  ve.ce.MWEduSharingNode = function VeCeMWEduSharing( model, config ) {
 	config = config || {};
+	var typeSwitchHelper;
 	
 	this.$thumbinner = $( '<div>' ).addClass( 'thumbinner' );
 	this.$edusharing = $( '<div>' ).addClass( 'mw-edusharing-preview' );
@@ -25,7 +26,7 @@
 	ve.ce.MWEduSharingNode.super.apply( this, arguments );
 
 	// Mixin constructors
-	// console.log('typeSwitchHelper: '); console.log(typeSwitchHelper);
+	typeSwitchHelper = this.model.getTypeSwitchHelper();
 	if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
 		ve.ce.ResizableNode.call( this, this.$edusharing, config );
 	}
@@ -169,7 +170,7 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 	node.$caption.html( $caption );
 
 
-	// // Mixin constructors
+	// Mixin constructors
 	// if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
 	// 	ve.ce.ResizableNode.call( this, this.$edusharing, null ); // the resize handles (arrows)
 	// }

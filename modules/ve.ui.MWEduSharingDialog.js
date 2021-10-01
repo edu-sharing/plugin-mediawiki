@@ -254,29 +254,27 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 }
 
 ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper = function ( data ) {
-	var type = '', repotype = '', typeSwitchHelper = '';
-	if ( data.mediatype !== '' )
-	 	type = data.mediatype;
-	else if ( data.mimetype !== '' )
-	 	type = data.mimetype;
+	var elementtype, repotype, typeSwitchHelper;
+	if ( data.mediatype !== undefined && data.mediatype !== '' )
+		elementtype = data.mediatype;
+	else if ( data.mimetype !== undefined && data.mediatype !== '' ) // For backward compatibility
+		elementtype = data.mimetype;
 	else
-	 	type = '';
+		elementtype = '';
 
-	// console.log('mediatype: '); console.log(data.mediatype);
-	// console.log('mimetype: '); console.log(data.mimetype);
-	// console.log('type: '); console.log(type);
-	if ( type !== '' ){
-		var repotype = data.repotype;
-		typeSwitchHelper = '';
-		if (type.indexOf('image') !== -1)
-			typeSwitchHelper = 'image';
-		else if (type.indexOf('audio') !== -1)
-			typeSwitchHelper = 'audio';
-		else if (type.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
-			typeSwitchHelper = 'video';
-		else
-			typeSwitchHelper = 'textlike';
-	}
+	if ( data.repotype !== undefined && data.repotype !== '' ) // Existing object
+		repotype = data.repotype;
+	if ( data.repositoryType !== undefined && data.repositoryType !== '' ) // Object received from iframe
+		repotype = data.repositoryType;
+
+	if (elementtype.indexOf('image') !== -1)
+		typeSwitchHelper = 'image';
+	else if (elementtype.indexOf('audio') !== -1)
+		typeSwitchHelper = 'audio';
+	else if (elementtype.indexOf('video') !== -1 || repotype.indexOf('YOUTUBE') !== -1)
+		typeSwitchHelper = 'video';
+	else
+		typeSwitchHelper = 'textlike';
 
 	return typeSwitchHelper;
 }
@@ -298,12 +296,12 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
 			isReadOnly = this.isReadOnly();
 
-			var that = this;
+			var that = this, node;
 			// Receive data from iframe
 			window.addEventListener('message', receiveMessage, false);
 			function receiveMessage(event){
 				if(event.data.event == 'APPLY_NODE'){
-					var node = event.data.data;
+					node = event.data.data;
 					// console.log('event.data.data: '); console.log(event.data.data);
 				
 					that.indexLayout.setTabPanel( 'options' );
@@ -317,6 +315,12 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 					that.mimetype.setValue(node.mimetype);
 					that.version.setValue(node.content.version);
 					that.repotype.setValue(node.repositoryType);
+
+					var typeSwitchHelper = ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper( node );
+					if ( typeSwitchHelper === 'textlike' )
+						$('#field-dimensions').hide();
+					else
+						$('#field-dimensions').show();
 				}
 			};
 
@@ -347,7 +351,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
 
 			if ( this.selectedNode ) {
-				typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs);
+				var typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
 				if ( typeSwitchHelper === 'textlike' )
 					$('#field-dimensions').hide();
 				else
