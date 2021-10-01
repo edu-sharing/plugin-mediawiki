@@ -70,6 +70,13 @@ var customizeToolbar = function () {
                     edu_versionShow = $('[name="wikieditor-toolbar-edu-versionShow"]:checked').val();
                     edu_version = $('#wikieditor-toolbar-edu-version').val();
 
+                    if (edu_width === '' || edu_width === '0')
+                        edu_width = '400';
+                    
+                    if (edu_height === '' || edu_height === '0')
+                        edu_height = 'auto';
+                    
+
                     $(this).dialog('close');
                     $.wikiEditor.modules.toolbar.fn.doAction(
                         $(this).data('context'),
