@@ -3,7 +3,9 @@ EduSharing mediawiki extension
 
 This extension adds a selection dialogue to the VisualEditor and WikiEditor extensions to select resources from an edu-sharing repository for use on your wiki.
 
-This extension is for mediawiki 1.35 or higher versions.
+You should have installed either the [VisualEditor](https://www.mediawiki.org/wiki/Extension:VisualEditor) or the [WikiEditor](https://www.mediawiki.org/wiki/Extension:WikiEditor) (or both) to make use of this functionality.
+
+This extension works with Mediawiki 1.35 or higher versions.
 More information about edu-sharing can be found on the [edu-sharing homepage](http://www.edu-sharing.com).
 
 Installation
