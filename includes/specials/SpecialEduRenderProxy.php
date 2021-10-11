@@ -106,7 +106,6 @@ class SpecialEduRenderProxy extends SpecialPage {
          * 
          */
 
-        #var_dump($html);
         $html = str_replace("{{{LMS_INLINE_HELPER_SCRIPT}}}", SpecialPage::getTitleFor('EduInlineHelper')->getLocalUrl() . "&reUrl=".urlencode($this -> getRedirectUrl ($eduobj, 'window')), $html);
 
         /*

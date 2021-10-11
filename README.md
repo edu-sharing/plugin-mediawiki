@@ -39,6 +39,22 @@ https://yourwiki.domain.tld/index.php?title=Special:EduSharingRegister
 
 
 
+Extension configuration
+-----------------------
+You can configure the extension to use anonymous access to the edu-sharing repository. By default this is used if the wiki user is not logged in but this behaviour can be enforced by adding
+
+$wgEduSharingForceGuestUser = true;
+
+to your LocalSettings.php file.
+
+The default username to be used with the repository for anonymous access is "esguest". It can be configured setting
+
+$wgEduSharingGuestUserName = 'YourGuestUserName';
+
+to the appropriate value.
+
+
+
 Contributing
 ------------
 If you plan to contribute on a regular basis, please visit our [community site](http://edu-sharing-network.org/?lang=en).

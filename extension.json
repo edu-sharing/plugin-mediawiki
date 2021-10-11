@@ -2,8 +2,8 @@
 	"name": "EduSharing",
 	"version": "2.0",
 	"author": [
-		"http://edu-sharing.net",
-		"http://idea-sketch.com"
+		"https://edu-sharing.net",
+		"https://idea-sketch.com"
 	],
 	"url": "https://www.mediawiki.org/wiki/Extension:EduSharing",
 	"descriptionmsg": "edusharing-desc",
@@ -191,7 +191,15 @@
 		"EduSharingRepoPublicKeyFile": {
 			"description": "Path to file containing the repository's public key, relative to MW install dir",
 			"value": "extensions/EduSharing/conf/repopublic.key"
-		}				
+		},
+		"EduSharingGuestUserName": {
+			"description": "Username to use for anonymous repository access",
+			"value": "esguest"
+		},
+		"EduSharingForceGuestUser": {
+			"description": "Always use anonymous repository access",
+			"value": false
+		}
 	},
 	"ConfigRegistry": {
 		"edusharing": "GlobalVarConfig::newInstance"
