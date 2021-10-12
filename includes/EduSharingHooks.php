@@ -40,8 +40,8 @@ class EduSharingHooks {
         $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
         $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
         $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
-        
-        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=IFRAME' ] );
+        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=WINDOW' ] );
+
         $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
         $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );

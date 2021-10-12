@@ -13,7 +13,7 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
- ve.ui.MWEduSharingDialog = function VeUiMWEduSharingDialog() {
+ve.ui.MWEduSharingDialog = function VeUiMWEduSharingDialog() {
 	// Parent constructor
 	ve.ui.MWEduSharingDialog.super.apply( this, arguments );
 };
@@ -28,13 +28,15 @@ ve.ui.MWEduSharingDialog.static.name = 'mwEduSharing';
 
 ve.ui.MWEduSharingDialog.static.title = OO.ui.deferMsg( 'visualeditor-mwedusharingdialog-title' );
 
-ve.ui.MWEduSharingDialog.static.size = 'larger';
+ve.ui.MWEduSharingDialog.static.size = 'large';
 
 ve.ui.MWEduSharingDialog.static.allowedEmpty = true;
 
 // ve.ui.MWEduSharingDialog.static.selfCloseEmptyBody = false; // default = false
 
 ve.ui.MWEduSharingDialog.static.modelClasses = [ ve.dm.MWEduSharingNode ];
+
+var previewUrl = mw.config.get( 'edupreview' );
 
 /* Methods */
 
@@ -53,25 +55,32 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	// 	target: '_blank'
 	// } );
 
-	this.$edusharing = $( '<div>' ).appendTo( this.$edusharingContainer );
+	// Preview
+	this.$previewContainer = $( '<div>' ).addClass( 've-ui-mwEduSharingDialog-preview' );
+	this.$edusharing = $( '<div>' ).appendTo( this.$previewContainer );
 	this.edusharing = null;
 
-	// Panels
+	// Panel
 	this.indexLayout = new OO.ui.IndexLayout( {
 		expanded: false,
 		classes: [ 've-ui-mwEduSharingDialog-indexLayout' ]
 	} );
-	this.selectPanel = new OO.ui.TabPanelLayout( 'select', {
+	this.panel = new OO.ui.PanelLayout( {
 		expanded: false,
-		padded: true,
-		label: ve.msg( 'visualeditor-mwedusharingdialog-select' )
-	} );
-	this.optionsPanel = new OO.ui.TabPanelLayout( 'options', {
-		expanded: false,
-		label: ve.msg( 'visualeditor-mwedusharingdialog-options' )
+		padded: true
 	} );
 	
-	// Fields	
+	// Buttons & Fields	
+
+	this.repoButton = new OO.ui.ButtonWidget( {
+		id: 'repo-button',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-select' ),
+		flags: [
+			'primary',
+			'progressive'
+		]
+	} );
+
 	this.id = new OO.ui.TextInputWidget( {
 	} );
 	this.idField = new OO.ui.FieldLayout( this.id, {
@@ -140,7 +149,9 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 		label: ve.msg( 'visualeditor-mwedusharingdialog-align' )
 	} );
 
-	this.optionsPanel.$element.append (
+	this.panel.$element.append (
+		this.$previewContainer,
+		this.repoButton.$element,
 		this.idField.$element,
 		this.captionField.$element,
 		this.mediatypeField.$element,
@@ -153,46 +164,24 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	);
 
 	// Initialize
-	this.indexLayout.addTabPanels( [
-		this.selectPanel,
-		// this.contentPanel,
-		this.optionsPanel
-	] );
+	this.indexLayout.$element.append(
+		this.panel.$element
+	);
 
 	this.$body.append(
-		this.$edusharingContainer,
 		this.indexLayout.$element
 		//this.helpLink.$element
 	);
 
-	var iframeSetup = {
-		html: '<iframe id="edusharing"></iframe>'
-	}
-
-	var eduIframe = $(iframeSetup.html);
-
-	this.selectPanel.$element.append(
-		eduIframe
-	)
-
-	var eduIframeShow = false;
-
-	window.showEduFrame = function () {
-			// Calculate iframe height
-			var fontSize =  Number(window.getComputedStyle(document.getElementById('edusharing')).getPropertyValue('font-size').match(/\d+/)[0]);
-			//var topSpace = $('.oo-ui-menuLayout-menu').height() +  'px - ' + $('.oo-ui-menuLayout-content').height() +  'px';
-			var topSpace = (fontSize * 5.5) + 'px'; // We need this hack since we don't know the final height of .oo-ui-menuLayout-menu at this moment, but we know the approx. ratio between font-size and final menu height
-			$('#edusharing').css({'height': 'calc( 100% - ' + topSpace + ')', 'top': topSpace});
-			if ( eduIframeShow === false ) { // Load only if not loaded before
-				$('#edusharing').attr('src', mw.config.get('edugui'));
-			eduIframeShow = true;
-		}
-	}
-
-	window.hideEduFrame = function () {
-		eduIframeShow = false;
-	}
+	this.repoButton.$element.click ( function(){
+		openRepo();
+	} );
 };
+
+// Open new window and load the edu-sharing repo
+function openRepo(){
+	window.win = window.open( mw.config.get('edugui') );
+}
 
 /**
  * Handle change events on the dimensions widget
@@ -288,11 +277,6 @@ ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper = function ( data ) {
  */
 ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
-	this.indexLayout.getTabPanel( 'select' ).getTabItem().setElementId('edusharing-select');
-	this.indexLayout.getTabPanel( 'options' ).getTabItem().setElementId('edusharing-options');
-	showEduFrame();
-	this.indexLayout.setTabPanel( 'select' );
-
 	data = data || {};
 	return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call( this, data )
 		.next( function () {
@@ -302,16 +286,13 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			var that = this, node;
 			// Receive data from iframe
-			window.addEventListener('message', receiveMessage, false);
-			function receiveMessage(event){
+			window.addEventListener('message', handleRepo, false);
+			function handleRepo( event ){
 				if(event.data.event == 'APPLY_NODE'){
 					node = event.data.data;
 					// console.log('event.data.data: '); console.log(event.data.data);
-				
-					that.indexLayout.setTabPanel( 'options' );
-					hideEduFrame();
-					showEduFrame();
-					$('#edusharing-options').show(); // New object is selected - so let's show the options tab
+
+					window.win.close();
 
 					that.id.setValue(node.objectUrl);
 					that.caption.setValue(node.title);
@@ -321,12 +302,20 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 					that.repotype.setValue(node.repositoryType);
 
 					var typeSwitchHelper = ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper( node );
-					if ( typeSwitchHelper === 'textlike' )
+					if ( typeSwitchHelper === 'textlike' ){
 						$('#field-dimensions').hide();
-					else
+						that.$edusharing.html( '' );
+					} else {
 						$('#field-dimensions').show();
+						var mwId = node.objectUrl.substr(14),
+						url = previewUrl + 'nodeId=' + mwId;
+						that.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
+					}
+					
+					window.removeEventListener('message', handleRepo, false );
 				}
 			};
+
 
 			if ( this.selectedNode ) {
 				this.scalable = this.selectedNode.getScalable();
@@ -355,11 +344,21 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
 
 			if ( this.selectedNode ) {
+				// alert(this.indexLayout.getElementId('repo-button'));
+				this.repoButton.setLabel( ve.msg('visualeditor-mwedusharingdialog-change') );
 				var typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
-				if ( typeSwitchHelper === 'textlike' )
+				if ( typeSwitchHelper === 'textlike' ){
 					$('#field-dimensions').hide();
-				else
+					this.$edusharing.html( '' );
+				} else {
 					$('#field-dimensions').show();
+					var mwId = mwAttrs.id.substr(14),
+					url = previewUrl + 'nodeId=' + mwId;
+					this.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
+				}
+			} else {
+				this.repoButton.setLabel( ve.msg('visualeditor-mwedusharingdialog-select') );
+				this.$edusharing.html( '' );
 			}
 			
 			// this.align.selectItemByData( mwAttrs.align || 'right' ).setDisabled( isReadOnly );
@@ -376,14 +375,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			this.align.connect( this, { choose: 'updateActions' } );
 			
-			//if ( this.id.value != ''){
-			if ( this.selectedNode ) {
-				this.indexLayout.setTabPanel( 'options' ); // If the edusharing object already exists, we start with the options panel
-			} else {
-				// Hack: Hide the options tab to prevent insertion of an empty edusharing tag if no object is selected.
-				// There seems to be no method to disable a tab - see: https://doc.wikimedia.org/VisualEditor/master/js/#!/api/OO.ui.TabPanelLayout-method-setTabItem
-				$('#edusharing-options').hide();
-			}
 		}, this );
 };
 
@@ -423,15 +414,23 @@ ve.ui.MWEduSharingDialog.prototype.getTeardownProcess = function ( data ) {
 };
 
 // A larger dialog
+
+// /**
+//  * @inheritdoc
+//  */
+
+// ve.ui.MWEduSharingDialog.prototype.getSizeProperties = function () {
+//  		return {
+//  			width: '905',
+//  			height: '700'
+//  	};
+// };
+
 /**
  * @inheritdoc
  */
-
-ve.ui.MWEduSharingDialog.prototype.getSizeProperties = function () {
- 		return {
- 			width: '905',
- 			height: '1000'
- 	};
+ ve.ui.MWEduSharingDialog.prototype.getBodyHeight = function () {
+	return 700;
 };
 
 /* Registration */
