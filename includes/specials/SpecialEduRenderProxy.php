@@ -99,7 +99,6 @@ class SpecialEduRenderProxy extends SpecialPage {
             "\r",
             "\n"
         ), '', $html );
-        //$html = str_replace ( '\'', '\\\'', $html );
 
         /*
          * replaces {{{LMS_INLINE_HELPER_SCRIPT}}}
@@ -113,21 +112,6 @@ class SpecialEduRenderProxy extends SpecialPage {
          */
         $html = preg_replace ( "/<es:title[^>]*>.*<\/es:title>/Uims", $eduobj->printTitle, $html );
         $html = preg_replace ( '/(<a.* class="edu_sharing_filename".*>)(.*)(<\/a>)/Uims', '${1}' . $eduobj->printTitle . '${3}', $html );
-        /*
-         * For images, audio and video show a capture underneath object
-         */
-        
-        // $mediatypes = array (
-        //     'file-image',
-        //     'file-video',
-        //     'file-audio'
-        // );
-        // foreach ( $mediatypes as $mediatype ) {
-        //     if (strpos ( $eduobj->mediatype, $mediatype ) !== false)
-        //         $html .= '<div class="mw-edusharing-caption">' . $eduobj->printTitle . '</div>';
-        // }
-
-        // $html .= $eduobj->mediatype;
 
         return $html;
     }

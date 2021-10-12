@@ -14,14 +14,12 @@ use MediaWiki\Revision\SlotRecord;
 
 class EduSharingHooks {
 
-    // Variables used in JS should be defined the new way, but currently it throws an mimetype mismatch error. Variables for JS are defined in line 491ff
     /**
      * Adds extra variables to the global config
      *  @param array &$vars
      */
     public static function onResourceLoaderGetConfigVars( array &$vars ) {
-        #$config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
-        #$vars['wgEduSharingUrl'] = $config->get( 'EduSharingUrl' );
+        #TODO: move static js config here from self::onMakeGlobalVariablesScript()
     }
 
     /**
@@ -42,10 +40,6 @@ class EduSharingHooks {
         $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
         $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
         $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
-        
-        ### deprecated
-        ## $reurl = urlencode($wgServer . $wgScriptPath . '/extensions/EduSharing/populate.php'); 
-        ## $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=' . $reurl.'&user='.$eduService->config->username ] );
         
         $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=IFRAME' ] );
         $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
@@ -327,13 +321,6 @@ class EduSharingHooks {
      * @return string
      */
     public static function wfEduSharingRender($input, array $args, Parser $parser, PPFrame $frame) { 
-       
-        // $loadedJs = false;
-
-        // if (!$loadedJs) {
-        //     $parser -> getOutput() -> addModules('ext.eduSharing');
-        //     $loadedJs = true;
-        // }
                 
         /*
          * Set edu-sharing properties, params for proxy request
