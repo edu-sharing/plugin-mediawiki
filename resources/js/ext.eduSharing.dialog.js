@@ -5,45 +5,45 @@ var customizeToolbar = function () {
         title: mw.messages.values['wikieditor-toolbar-edusharing-title'],
         id: 'wikieditor-toolbar-edusharing-dialog',
         html: '\
-                        <iframe id="edusharing" src=""></iframe>\
-<div id="wikieditor-toolbar-edu-form"><fieldset>\
-                            <input type="hidden" id="origImageRatio" value="0" />\
-                            <input type="hidden" id="wikieditor-toolbar-edu-mimetype" value=""/>\
-<input type="hidden" id="wikieditor-toolbar-edu-repotype" value=""/>\
-<input type="hidden" id="wikieditor-toolbar-edu-version" value=""/>\
-<div class="wikieditor-toolbar-field-wrapper">\
-                                <label class="edusharing-dialog" for="wikieditor-toolbar-edu-object">'+ mw.messages.values['wikieditor-toolbar-edusharing-object'] + '</label>\
-                                <input type="text" id="wikieditor-toolbar-edu-object" disabled="disabled"/>\
-                                <button onclick="showEduFrame()">'+ mw.messages.values['wikieditor-toolbar-edusharing-search'] + '</button>\
-                            </div>\
-                            <div class="wikieditor-toolbar-field-wrapper">\
-                                <label class="edusharing-dialog" for="wikieditor-toolbar-edu-caption">'+ mw.messages.values['wikieditor-toolbar-edusharing-caption'] + '</label>\
-                                <input type="text" id="wikieditor-toolbar-edu-caption"/>\
-                            </div>\
-                            <div class="wikieditor-toolbar-edu-options">\
-                                        <div class="wikieditor-toolbar-field-wrapper">\
-                                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-versionShow">'+ mw.messages.values['wikieditor-toolbar-edusharing-version'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-versionShow" value="latest" checked="checked"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-version-latest'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-versionShow" value="current"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-version-current'] + '</label>\
-                                        </div>\
-                                        <div class="wikieditor-toolbar-field-wrapper">\
-                                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-float">'+ mw.messages.values['wikieditor-toolbar-edusharing-float'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="left"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-left'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="none" checked="checked"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-none'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="right"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-right'] + '</label>\
-                                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="inline"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-inline'] + '</label>\
-                                        </div>\
-                                        <div class="wikieditor-toolbar-field-wrapper" id="wikieditor-toolbar-edu-measurements" style="display: none">\
-                                            <div id="wikieditor-toolbar-edu-measurements-height"><label class="edusharing-dialog" for="wikieditor-toolbar-edu-height">'+ mw.messages.values['wikieditor-toolbar-edusharing-height'] + '</label>\
-                                            <input type="text" id="wikieditor-toolbar-edu-height" onkeyup="setWidth()"/>&nbsp;'+ mw.messages.values['wikieditor-toolbar-edusharing-px'] + '</div>\
-                                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-width">'+ mw.messages.values['wikieditor-toolbar-edusharing-width'] + '</label>\
-                                            <input type="text" id="wikieditor-toolbar-edu-width" onkeyup="setHeight()"/>&nbsp;'+ mw.messages.values['wikieditor-toolbar-edusharing-px'] + '\
-                                            <div id="wikieditor-toolbar-edu-measurements-proportions"><input type="checkbox" id="wikieditor-toolbar-edu-constrainProportions" value="1" checked="checked"/>&nbsp;' + mw.messages.values['wikieditor-toolbar-edusharing-constrainPropoertions'] + '</div>\
-                                        </div>\
-                                </div>\
-                            </div>\
-                        </fieldset></div>\
-                        <div id="wikieditor-toolbar-edu-preview">'
+        <div id="wikieditor-toolbar-edu-form"><fieldset>\
+            <input type="hidden" id="origImageRatio" value="0" />\
+            <input type="hidden" id="wikieditor-toolbar-edu-mediatype" value=""/>\
+            <input type="hidden" id="wikieditor-toolbar-edu-mimetype" value=""/>\
+            <input type="hidden" id="wikieditor-toolbar-edu-repotype" value=""/>\
+            <input type="hidden" id="wikieditor-toolbar-edu-version" value=""/>\
+            <div class="wikieditor-toolbar-field-wrapper">\
+                <label class="edusharing-dialog" for="wikieditor-toolbar-edu-object">'+ mw.messages.values['wikieditor-toolbar-edusharing-object'] + '</label>\
+                <input type="text" id="wikieditor-toolbar-edu-object" disabled="disabled"/>\
+                <button onclick="openRepo()">'+ mw.messages.values['wikieditor-toolbar-edusharing-search'] + '</button>\
+            </div>\
+            <div class="wikieditor-toolbar-field-wrapper">\
+                <label class="edusharing-dialog" for="wikieditor-toolbar-edu-caption">'+ mw.messages.values['wikieditor-toolbar-edusharing-caption'] + '</label>\
+                <input type="text" id="wikieditor-toolbar-edu-caption"/>\
+            </div>\
+            <div class="wikieditor-toolbar-edu-options">\
+                        <div class="wikieditor-toolbar-field-wrapper">\
+                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-versionShow">'+ mw.messages.values['wikieditor-toolbar-edusharing-version'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-versionShow" value="latest" checked="checked"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-version-latest'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-versionShow" value="current"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-version-current'] + '</label>\
+                        </div>\
+                        <div class="wikieditor-toolbar-field-wrapper">\
+                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-float">'+ mw.messages.values['wikieditor-toolbar-edusharing-float'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="left"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-left'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="none" checked="checked"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-none'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="right"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-right'] + '</label>\
+                            <input type="radio" class="edusharing-dialog" name="wikieditor-toolbar-edu-float" value="inline"><label class="edusharing-dialog radio">'+ mw.messages.values['wikieditor-toolbar-edusharing-float-inline'] + '</label>\
+                        </div>\
+                        <div class="wikieditor-toolbar-field-wrapper" id="wikieditor-toolbar-edu-measurements" style="display: none">\
+                            <div id="wikieditor-toolbar-edu-measurements-height"><label class="edusharing-dialog" for="wikieditor-toolbar-edu-height">'+ mw.messages.values['wikieditor-toolbar-edusharing-height'] + '</label>\
+                            <input type="text" id="wikieditor-toolbar-edu-height" onkeyup="setWidth()"/>&nbsp;'+ mw.messages.values['wikieditor-toolbar-edusharing-px'] + '</div>\
+                            <label class="edusharing-dialog" for="wikieditor-toolbar-edu-width">'+ mw.messages.values['wikieditor-toolbar-edusharing-width'] + '</label>\
+                            <input type="text" id="wikieditor-toolbar-edu-width" onkeyup="setHeight()"/>&nbsp;'+ mw.messages.values['wikieditor-toolbar-edusharing-px'] + '\
+                            <div id="wikieditor-toolbar-edu-measurements-proportions"><input type="checkbox" id="wikieditor-toolbar-edu-constrainProportions" value="1" checked="checked"/>&nbsp;' + mw.messages.values['wikieditor-toolbar-edusharing-constrainPropoertions'] + '</div>\
+                        </div>\
+                </div>\
+            </div>\
+        </fieldset></div>\
+        <div id="wikieditor-toolbar-edu-preview">'
             + getPreviewText() +
             '<div id="wikieditor-toolbar-edu-preview-res"></div>'
             + getPreviewText() +
@@ -58,13 +58,14 @@ var customizeToolbar = function () {
             height: 400,
             buttons: {
                 'wikieditor-toolbar-edusharing-insert': function () {
-                    var edu_object, edu_caption, edu_height, edu_width, edu_mimetype, edu_repotype;
+                    var edu_object, edu_caption, edu_height, edu_width, edu_mediatype, edu_mimetype, edu_repotype;
 
                     edu_object = $('#wikieditor-toolbar-edu-object').val();
                     edu_caption = $('#wikieditor-toolbar-edu-caption').val();
                     edu_height = $('#wikieditor-toolbar-edu-height').val();
                     edu_width = $('#wikieditor-toolbar-edu-width').val();
                     edu_repotype = $('#wikieditor-toolbar-edu-repotype').val();
+                    edu_mediatype = $('#wikieditor-toolbar-edu-mediatype').val();
                     edu_mimetype = $('#wikieditor-toolbar-edu-mimetype').val();
                     edu_float = $('[name="wikieditor-toolbar-edu-float"]:checked').val();
                     edu_versionShow = $('[name="wikieditor-toolbar-edu-versionShow"]:checked').val();
@@ -76,6 +77,8 @@ var customizeToolbar = function () {
                     if (edu_height === '' || edu_height === '0')
                         edu_height = 'auto';
                     
+                    window.win.close();
+                    window.removeEventListener('message', handleRepo, false );
 
                     $(this).dialog('close');
                     $.wikiEditor.modules.toolbar.fn.doAction(
@@ -83,7 +86,7 @@ var customizeToolbar = function () {
                         {
                             type: 'replace',
                             options: {
-                                pre: '<edusharing action="new" id="' + edu_object + '" width="' + edu_width + '" height="' + edu_height + '" mimetype="' + edu_mimetype + '" repotype="' + edu_repotype + '"  float="' + edu_float + '" version="' + edu_version + '" versionShow="' + edu_versionShow + '">',
+                                pre: '<edusharing action="new" id="' + edu_object + '" mediatype="' + edu_mediatype + '" mimetype="' + edu_mimetype + '" version="' + edu_version + '" repotype="' + edu_repotype + '"  versionShow="' + edu_versionShow + '" width="' + edu_width + '" height="' + edu_height + '" float="' + edu_float + '">',
                                 peri: edu_caption,
                                 post: '</edusharing>',
                                 ownline: true
@@ -91,6 +94,8 @@ var customizeToolbar = function () {
                         },
                         $(this)
                     );
+                    window.win.close();
+                    window.removeEventListener('message', handleRepo, false );
                     resetForm();
                 },
                 'wikieditor-toolbar-edusharing-cancel': function () {
@@ -171,6 +176,7 @@ function resetForm() {
         '#wikieditor-toolbar-edu-caption',
         '#wikieditor-toolbar-edu-height',
         '#wikieditor-toolbar-edu-width',
+        '#wikieditor-toolbar-edu-mediatype',
         '#wikieditor-toolbar-edu-mimetype',
         '#wikieditor-toolbar-edu-repotype'].join(',')
     ).val('');
@@ -179,7 +185,6 @@ function resetForm() {
     $('[name="wikieditor-toolbar-edu-versionShow"][value="latest"]').prop('checked', 'checked');
     $('#wikieditor-toolbar-edu-preview-res').html('');
     updatePreview('none');
-    showEduFrame();
 }
 
 window.setHeight = function () {
@@ -208,32 +213,40 @@ function updatePreview(val) {
     }
 }
 
-window.showEduFrame = function () {
-    $('#edusharing').css('display', 'block');
-    $('#edusharing').attr('src', mw.config.get('edugui'));
+// Open new window and load the edu-sharing repo
+window.openRepo = function(){
+	window.win = window.open( mw.config.get('edugui') );
 }
 
-window.hideEduFrame = function () {
-    $('#edusharing').css('display', 'none');
-}
+// window.showEduFrame = function () {
+//     $('#edusharing').css('display', 'block');
+//     $('#edusharing').attr('src', mw.config.get('edugui'));
+// }
+
+// window.hideEduFrame = function () {
+//     $('#edusharing').css('display', 'none');
+// }
 
 // window.setData = function (objid, caption, mimetype, width, height, version, repotype) {
 //     console.log(objid, caption, mimetype, width, height, version, repotype);
 
 // Receive data from iframe
-window.addEventListener('message', receiveMessage, false);
-function receiveMessage(event){
+window.addEventListener('message', handleRepo, false);
+function handleRepo(event){
     if(event.data.event == 'APPLY_NODE'){
-        var node = event.data.data;
+        var node = event.data.data, mimetype = node.mimetype, repotype = node.repositoryType;
+        console.log(node);
         document.getElementById('wikieditor-toolbar-edu-object').value = node.objectUrl;
         document.getElementById('wikieditor-toolbar-edu-caption').value = node.title;
+        document.getElementById('wikieditor-toolbar-edu-mediatype').value = node.mediatype;
         document.getElementById('wikieditor-toolbar-edu-mimetype').value = node.mimetype;
         document.getElementById('wikieditor-toolbar-edu-repotype').value = node.repositoryType;
         $('#wikieditor-toolbar-edu-version').val(node.content.version);
         document.getElementById('wikieditor-toolbar-edu-width').value = node.preview.width;
         document.getElementById('wikieditor-toolbar-edu-height').value = node.preview.height;
         $('#origImageRatio').val(node.preview.width / node.preview.height);
-        window.hideEduFrame();
+
+        window.win.close();
         mimeSwitchHelper = '';
         if (mimetype.indexOf('image') !== -1)
             mimeSwitchHelper = 'image';
@@ -266,9 +279,9 @@ function receiveMessage(event){
                 append = '<span style="color: #00f">' + getPreviewText('short') + '</span>';
 
         }
-
-
         $('#wikieditor-toolbar-edu-preview-res').html('').append(append);
+        
+        window.removeEventListener('message', handleRepo, false );
     }
 }
 
