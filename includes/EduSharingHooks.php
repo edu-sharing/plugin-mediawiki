@@ -83,7 +83,7 @@ class EduSharingHooks {
 
     private static function addResourceAndUsage( $resourceData, bool $isRestore = false ) {
         
-        // if we don'T restore a previously deleted resource, we don'T want to re-use an existing id
+        // if we don't restore a previously deleted resource, we don't want to re-use an existing id
         if ( $isRestore !== true ) {
             unset( $resourceData[ 'EDUSHARING_RESOURCE_ID' ] );
         }

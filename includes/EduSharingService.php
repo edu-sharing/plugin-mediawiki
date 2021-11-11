@@ -35,25 +35,45 @@ class EduSharingService {
 
     public function deleteUsage( $postData ) {
         $nodeHelper = new EduSharingNodeHelper($this->helperBase);
-        $result = $nodeHelper->deleteUsage(
-            $postData->nodeId,
-            $postData->usageId
-        );    
-        return $result;
+        try {
+            $result = $nodeHelper->deleteUsage(
+                $postData->nodeId,
+                $postData->usageId
+            );    
+            return $result;
+
+        } catch ( Exception $e ) {
+            if ( $e instanceof UsageDeletedException ) {
+                error_log( 'noted, deleting locally: ' . $e->getMessage() ); 
+            } else {
+                throw $e;
+            }            
+        }
     }
 
     public function getNode($postData) {
         $nodeHelper = new EduSharingNodeHelper($this->helperBase);
-        $result = $nodeHelper->getNodeByUsage(
-            new Usage(
-                $postData->nodeId,
-                $postData->nodeVersion,
-                $postData->containerId,
-                $postData->resourceId,
-                $postData->usageId
-            )
-        );    
-        return $result;
+        try {
+            $result = $nodeHelper->getNodeByUsage(
+                new Usage(
+                    $postData->nodeId,
+                    $postData->nodeVersion,
+                    $postData->containerId,
+                    $postData->resourceId,
+                    $postData->usageId
+                )
+            );
+            return $result;
+
+        } catch ( Exception $e ) {
+            if ( $e instanceof UsageDeletedException || $e instanceof NodeDeletedException ) {
+                error_log( $e->getMessage() ); 
+                return $this->getFakeNodeWithPreview( $postData->nodeId );
+            } else {
+                throw $e;
+            }
+        }
+        
     }
 
     public function getTicket() {
@@ -111,6 +131,16 @@ class EduSharingService {
             exit();
         }
         return $dataEncrypted;
+    }
+
+
+    private function getFakeNodeWithPreview( $nodeId ) {
+        $node = [ 
+            "node" => [ "mediatype" => "image" ],
+            "detailsSnippet" => "<img src='{$this->config->baseUrl}/preview?nodeId={$nodeId}' />"
+         ];
+
+         return $node;
     }
 
 }
