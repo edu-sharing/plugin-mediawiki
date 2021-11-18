@@ -109,7 +109,6 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 			right: 'tright'
 		};
 
-		
 		if ( !this.model ) {
 			return;
 		}
@@ -162,6 +161,7 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 		this.$imageLoader = $( '<img>' ).on( 'load', function () {
 			node.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
 		} ).attr( 'src', url );
+		console.log ('node.$edusharing.html'); console.log (node.$edusharing.html);
 	} else {
 		node.$edusharing.html('');
 	}

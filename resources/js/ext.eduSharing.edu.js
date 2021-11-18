@@ -37,9 +37,9 @@ function eduSharingScripts() {
 		});
 	});
 
-    $("body").click(function(e) {
+    $("body").unbind('click').click(function(e) {
         if ($(e.target).closest(".edusharing_metadata").length) {
-            //clicked inside ".edusharing_metadata" - do nothing
+            // clicked inside ".edusharing_metadata" - do nothing
         } else {
             $(".edusharing_metadata_toggle_button").text($(".edusharing_metadata_toggle_button").data('textopen'));
             $(".edusharing_metadata").hide();
@@ -48,13 +48,13 @@ function eduSharingScripts() {
                 $(".edusharing_metadata").hide();
                 toggle_button = $(e.target);
                 metadata = toggle_button.parent().find(".edusharing_metadata");
-                if(metadata.hasClass('open')) {
-                    metadata.toggleClass('open');
+                if (metadata.hasClass('open')) {
+                    metadata.removeClass('open');
                     metadata.hide();
                     toggle_button.text(toggle_button.data('textopen'));
                 } else {
                     $(".edusharing_metadata").removeClass('open');
-                    metadata.toggleClass('open');
+                    metadata.addClass('open');
                     metadata.show();
                     toggle_button.text(toggle_button.data('textclose'));
                 }
@@ -70,4 +70,4 @@ $(document).ready(function() {
 });
   
 // Reload script when closing VisualEditor
-mw.hook( "ve.deactivate" ).add( eduSharingScripts );
+mw.hook( "ve.deactivationComplete" ).add( eduSharingScripts );
