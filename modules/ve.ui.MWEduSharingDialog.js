@@ -238,7 +238,6 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 		mwData.attrs.height = 'auto';	
 	else
 		mwData.attrs.height = dimensions.height.toString();
-	console.log('dimensions.height: ');	console.log(dimensions.height);
 	mwData.attrs.float = this.align.findSelectedItem().getData(); // The edusharing tag uses float, VE uses align, see also ve.ce.MWEduSharingNode.js
 	// If updating an edu-sharing media we need to delete the resourceid tag attribute to get a new resourceid from edu-sharing, otherwise we get a permission error
 	if ( mwData.attrs.hasOwnProperty('resourceid') ){
@@ -290,7 +289,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			function handleRepo( event ){
 				if(event.data.event == 'APPLY_NODE'){
 					node = event.data.data;
-					// console.log('event.data.data: '); console.log(event.data.data);
 
 					window.win.close();
 

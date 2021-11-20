@@ -218,24 +218,11 @@ window.openRepo = function(){
 	window.win = window.open( mw.config.get('edugui') );
 }
 
-// window.showEduFrame = function () {
-//     $('#edusharing').css('display', 'block');
-//     $('#edusharing').attr('src', mw.config.get('edugui'));
-// }
-
-// window.hideEduFrame = function () {
-//     $('#edusharing').css('display', 'none');
-// }
-
-// window.setData = function (objid, caption, mimetype, width, height, version, repotype) {
-//     console.log(objid, caption, mimetype, width, height, version, repotype);
-
 // Receive data from iframe
 window.addEventListener('message', handleRepo, false);
 function handleRepo(event){
     if(event.data.event == 'APPLY_NODE'){
         var node = event.data.data, mimetype = node.mimetype, repotype = node.repositoryType;
-        console.log(node);
         document.getElementById('wikieditor-toolbar-edu-object').value = node.objectUrl;
         document.getElementById('wikieditor-toolbar-edu-caption').value = node.title;
         document.getElementById('wikieditor-toolbar-edu-mediatype').value = node.mediatype;

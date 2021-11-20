@@ -154,26 +154,17 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 
 	url = this.model.getUrl();
 	typeSwitchHelper = this.model.getTypeSwitchHelper();
-	// console.log('typeSwitchHelper: ');	console.log(typeSwitchHelper);
-	
 
 	if ( typeSwitchHelper !== 'textlike'){
 		this.$imageLoader = $( '<img>' ).on( 'load', function () {
 			node.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
 		} ).attr( 'src', url );
-		console.log ('node.$edusharing.html'); console.log (node.$edusharing.html);
 	} else {
 		node.$edusharing.html('');
 	}
 
 	$caption = this.requiresInteractive();
 	node.$caption.html( $caption );
-
-
-	// Mixin constructors
-	// if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
-	// 	ve.ce.ResizableNode.call( this, this.$edusharing, null ); // the resize handles (arrows)
-	// }
 
 };
 
