@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use EduSharingApiClient\EduSharingHelperBase, EduSharingApiClient\EduSharingAuthHelper, EduSharingApiClient\EduSharingNodeHelper, EduSharingApiClient\EduSharingNodeHelperConfig, EduSharingApiClient\UrlHandling;
+use EduSharingApiClient\EduSharingHelperBase, EduSharingApiClient\EduSharingAuthHelper, EduSharingApiClient\EduSharingNodeHelper, EduSharingApiClient\EduSharingNodeHelperConfig, EduSharingApiClient\UrlHandling, EduSharingApiClient\Usage;
 
 class EduSharingService {
 
