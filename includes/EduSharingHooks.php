@@ -416,7 +416,7 @@ class EduSharingHooks {
             $param .= '&appid=' . $edu_sharing -> appid;
             $param .= '&repid=' . $edu_sharing -> repid;
             $param .= '&printTitle=' . addslashes($input);
-            $param .= '&language=' . $eduService->config->user->mOptions['language'];
+            $param .= '&language=' . MediaWikiServices::getInstance()->getUserOptionsLookup()->getOption( $eduService->config->user, 'language' );
 
             $dataUrl = SpecialPage::getTitleFor('EduRenderProxy')->getLocalUrl() . $param;
 
