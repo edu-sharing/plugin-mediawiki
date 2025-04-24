@@ -284,6 +284,30 @@ class EduSharingHooks {
 
     }
 
+    /**
+    * Retrieves the next autoincrement value vor page.page_id field from mysql
+    *
+    * @return Integer
+    */        
+    public static function getNextPageId() {
+        $dbProvider = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
+        $dbr = $dbProvider->getReplicaDatabase();
+        
+        $res = $dbr->newSelectQueryBuilder()
+            ->select( 'Auto_increment' )
+            ->from( 'information_schema.tables' )
+            ->where( [
+                'table_schema' => $dbr->getDBname(),
+                'table_name' => trim( $dbr->tableName( 'page' ), ' ` ' ),
+            ])
+            ->caller( __METHOD__ )->fetchField();
+
+        if ($res)
+            return $res;
+        else 
+            return 0;
+    }
+
     
     /**
      * Adds/removes resources and usages when article is saved
@@ -302,6 +326,11 @@ class EduSharingHooks {
         if ( $title->getNamespace() == -1 )
             return true;
         $pageId     = $title->getArticleID();
+
+        // for a new page we do not have an id at this point, so we try and get it via database autoincrement value
+        if ( $pageId == 0 ) {
+            $pageId = self::getNextPageId();
+        }
 
         $text = self::syncArticleResources( $title, $pageId, $text, false );
 
