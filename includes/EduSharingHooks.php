@@ -68,7 +68,9 @@ class EduSharingHooks {
         /*
         * Delete record in db
         */
-        $dbw = wfGetDB( DB_PRIMARY );
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbw = $dbProvider->getPrimaryDatabase();
+
         $dbw -> delete('edusharing_resource', array( 'EDUSHARING_RESOURCE_ID = ' . $resource->EDUSHARING_RESOURCE_ID ), $fname = 'Database::delete');
 
         $postData           = new stdClass ();
@@ -88,7 +90,9 @@ class EduSharingHooks {
             unset( $resourceData[ 'EDUSHARING_RESOURCE_ID' ] );
         }
 
-        $dbw = wfGetDB( DB_PRIMARY );
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbw = $dbProvider->getPrimaryDatabase();
+        
         $dbw -> insert('edusharing_resource', $resourceData, 'Database::insert');
         $resourceId = $dbw -> insertId();
 
@@ -123,7 +127,9 @@ class EduSharingHooks {
         /*
          * Select edu-sharing resources of the article that will be deleted
          */
-        $dbr = wfGetDB( DB_REPLICA );
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbr = $dbProvider->getReplicaDatabase();
+        
         $res = $dbr -> select('edusharing_resource',
             array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
             'EDUSHARING_RESOURCE_PAGE_ID = ' . $article -> getId(),
@@ -175,7 +181,9 @@ class EduSharingHooks {
         /*
          * Select all article's resources
          */
-        $dbr = wfGetDB( DB_REPLICA );
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbr = $dbProvider->getReplicaDatabase();
+
         $res = $dbr->select('edusharing_resource', 
             array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
             'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, // $conds
@@ -225,7 +233,10 @@ class EduSharingHooks {
                  * Try to get record for this resource with select conditions article id and resource id.
                  * If no record can be found this resource must be copied from another page. So add new record and add usage.
                  */
-                $dbr = wfGetDB( DB_REPLICA );
+                
+                $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+                $dbr = $dbProvider->getReplicaDatabase();
+
                 $res = $dbr -> select('edusharing_resource',
                     array('EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_USAGE'),
                     array('EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, 'EDUSHARING_RESOURCE_ID = ' . $Response['resourceid']));
@@ -332,7 +343,9 @@ class EduSharingHooks {
         if (isset($args['action']) && ($args['action'] === 'processed') || $_GET['action'] == 'submit') {
 
             // get usageId from database
-            $dbr = wfGetDB( DB_REPLICA );
+            $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+            $dbr = $dbProvider->getReplicaDatabase();
+
             $res = $dbr -> selectRow('edusharing_resource',
                 array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
                 'EDUSHARING_RESOURCE_ID = ' . $args['resourceid'],
