@@ -301,9 +301,8 @@ class EduSharingHooks {
         // to prevent exception when running in visual editor context
         if ( $title->getNamespace() == -1 )
             return true;
-        $wikiPage   = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $title );
-        $pageId     = $wikiPage -> getId();
-        
+        $pageId     = $title->getArticleID();
+
         $text = self::syncArticleResources( $title, $pageId, $text, false );
 
         return true;
@@ -369,7 +368,7 @@ class EduSharingHooks {
             $edu_sharing -> height = $args['height'];
             $edu_sharing -> width = $args['width'];
             $edu_sharing -> mimetype = $args['mimetype'];
-            $edu_sharing -> page = $parser->mTitle->mArticleID;
+            $edu_sharing -> page = $parser->getTitle()->getArticleID();
             $edu_sharing -> usageid = ( $usageId !== null ) ? $usageId : "";
 
             if(!empty($args['float'])){
