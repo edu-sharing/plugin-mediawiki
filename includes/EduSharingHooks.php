@@ -10,7 +10,7 @@
  * EduSharing hooks
  */
 
-use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Revision\SlotRecord, Mediawiki\MediaWikiServices;
 
 class EduSharingHooks {
 
@@ -155,7 +155,7 @@ class EduSharingHooks {
     public static function onArticleUndelete( Title $title, $create, $comment, $oldPageId, $restoredPages ) {
         
         // get article content, we have to parse the wikitext since we have probably deleted the resource registration before
-        $wikiPage = WikiPage::factory( $title );
+        $wikiPage = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $title );
         $text = $wikiPage->getRevisionRecord()->getContent( SlotRecord::MAIN )->getText();
 
         self::syncArticleResources( $title, $oldPageId, $text, true );
@@ -283,14 +283,14 @@ class EduSharingHooks {
      */
 
      public static function onParserPreSaveTransformComplete( $parser, &$text ) {
-        $user = $parser->getUser();
+        $user = $parser->getUserIdentity();
         $title = $parser->getTitle();
 
         // check if called from the "right" context, i.e. while saving a normal wikipage
         // to prevent exception when running in visual editor context
         if ( $title->getNamespace() == -1 )
             return true;
-        $wikiPage   = WikiPage::factory( $title );
+        $wikiPage   = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $title );
         $pageId     = $wikiPage -> getId();
         
         $text = self::syncArticleResources( $title, $pageId, $text, false );

@@ -1,9 +1,7 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
 
-require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper.php";
-require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-helper-base.php";
-require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-auth-helper.php";
-require_once "EduSharingApiClient/edu-sharing-plugin/edu-sharing-node-helper.php";
+use EduSharingApiClient\EduSharingHelperBase, EduSharingApiClient\EduSharingAuthHelper, EduSharingApiClient\EduSharingNodeHelper, EduSharingApiClient\EduSharingNodeHelperConfig, EduSharingApiClient\UrlHandling;
 
 class EduSharingService {
 
@@ -12,8 +10,9 @@ class EduSharingService {
     private $authHelper;
 
     public function __construct() {
-        global $wgUser;
-        $config = new EduSharingConfig( $wgUser );
+
+        $user = RequestContext::getMain()->getUser();
+        $config = new EduSharingConfig( $user );
         $this -> config = $config;
         $this -> helperBase = new EduSharingHelperBase( $config->baseUrl, $config->privateKey, $config->appId );
         $this -> authHelper = new EduSharingAuthHelper( $this->helperBase ); 
@@ -22,7 +21,7 @@ class EduSharingService {
    
     public function createUsage( $postData)  {
 
-        $nodeHelper = new EduSharingNodeHelper( $this->helperBase );
+        $nodeHelper = new EduSharingNodeHelper( $this->helperBase, new EduSharingNodeHelperConfig( new UrlHandling( false ) ) );
         $result = $nodeHelper->createUsage(
             $postData->ticket,
             $postData->containerId,
@@ -34,7 +33,7 @@ class EduSharingService {
     }
 
     public function deleteUsage( $postData ) {
-        $nodeHelper = new EduSharingNodeHelper($this->helperBase);
+        $nodeHelper = new EduSharingNodeHelper($this->helperBase, new EduSharingNodeHelperConfig(new UrlHandling(false)) );
         try {
             $result = $nodeHelper->deleteUsage(
                 $postData->nodeId,
@@ -52,7 +51,7 @@ class EduSharingService {
     }
 
     public function getNode($postData) {
-        $nodeHelper = new EduSharingNodeHelper($this->helperBase);
+        $nodeHelper = new EduSharingNodeHelper($this->helperBase, new EduSharingNodeHelperConfig(new UrlHandling(false)) );
         try {
             $result = $nodeHelper->getNodeByUsage(
                 new Usage(

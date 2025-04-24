@@ -4,16 +4,19 @@ use MediaWiki\MediaWikiServices;
 class EduSharingConfig {
 
     public $appId;
-    public $baseUrl;
-    public $username;
-    public $privateKey;
-    public $contentUrl;
-    public $eduUrl;
-    public $user;
-    public $appType = 'LMS';
     public $appDomain;
-    public $appHost;
+    public $appHost;    
+    public $baseUrl;
+    public $contentUrl;
+    public $user;
+    public $iconMimeAudio;
+    public $iconMimeVideo;
+    
+    public $username;
+    public $eduUrl;
+    public $appType = 'LMS';
 
+    public $privateKey;
     private $publicKey;
     private $repoPublicKey;
     private $privateKeyFile;
