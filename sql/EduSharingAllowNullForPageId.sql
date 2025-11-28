@@ -1,0 +1,1 @@
+ALTER TABLE /*_*/edusharing_resource MODIFY EDUSHARING_RESOURCE_PAGE_ID bigint(10) unsigned NULL DEFAULT NULL;

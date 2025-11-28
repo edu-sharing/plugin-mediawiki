@@ -1,5 +1,8 @@
 <?php
-use MediaWiki\MediaWikiServices;
+namespace MediaWiki\Extension\EduSharing;
+
+use MediaWiki\Config\Config;
+use MediaWiki\User\User; 
 
 class EduSharingConfig {
 
@@ -25,9 +28,8 @@ class EduSharingConfig {
     private $repoGuestUserName;
     private $repoForceGuestUser;
 
-    public function __construct( $user ) {
+    public function __construct( User $user, Config $config ) {
 
-        $config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'edusharing' );
         $this->appId                = $config->get( 'EduSharingAppId' );
         $this->appDomain            = $config->get( 'EduSharingAppDomain' );
         $this->appHost              = $config->get( 'EduSharingAppHost' );

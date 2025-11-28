@@ -8,60 +8,54 @@
 	"url": "https://www.mediawiki.org/wiki/Extension:EduSharing",
 	"descriptionmsg": "edusharing-desc",
 	"requires": {
-		"MediaWiki": ">= 1.35.0",
+		"MediaWiki": ">= 1.43.0",
 		"extensions": {
 		}
 	},
 	"license-name": "MIT",
 	"type": "",
 	"SpecialPages": {
-		"EduSharingRegister": "SpecialEduSharingRegister",
-		"EduRenderProxy": "SpecialEduRenderProxy",
-		"EduInlineHelper": "SpecialEduInlineHelper"
+		"EduSharingRegister": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister"
+		},
+		"EduRenderProxy": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy"
+		},
+		"EduInlineHelper": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper"
+		}
 	},
 	"MessagesDirs": {
 		"EduSharing": [
 			"i18n"
 		]
 	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\EduSharing\\": "includes/"
+	},
 	"AutoloadClasses": {
-		"EduSharing": "includes/EduSharing.php",
-		"EduSharingConfig": "includes/EduSharingConfig.php",
-		"EduSharingService": "includes/EduSharingService.php",
-		"EduSharingHooks": "includes/EduSharingHooks.php",
-		"SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
-		"SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
-		"SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
 	"Hooks": {
-		"ResourceLoaderGetConfigVars": [
-			"EduSharingHooks::onResourceLoaderGetConfigVars"
-		],
-		"MakeGlobalVariablesScript": [
-			"EduSharingHooks::onMakeGlobalVariablesScript"
-		],
-		"ParserFirstCallInit": [
-			"EduSharingHooks::wfEdusharingExtensionInit"
-		],
-		"ParserPreSaveTransformComplete": [
-			"EduSharingHooks::onParserPreSaveTransformComplete"
-		],
-		"ArticleDelete": [
-			"EduSharingHooks::onArticleDelete"
-		],
-		"ArticleUndelete": [
-			"EduSharingHooks::onArticleUndelete"
-		],
-		"BeforePageDisplay": [
-			"EduSharingHooks::onBeforePageDisplay"
-		],
-		"LoadExtensionSchemaUpdates": [
-			"EduSharingHooks::createEdusharingDatabase",
-			"EduSharingHooks::updateEdusharingDatabase"
-		],
-		"ArticleInsertComplete": [
-			"EduSharingHooks::onArticleInsertComplete"
-		]
+		"ResourceLoaderGetConfigVars": "handleEduSharingHooks",
+		"MakeGlobalVariablesScript": "handleEduSharingHooks",
+		"ParserFirstCallInit": "handleEduSharingHooks",
+		"ParserPreSaveTransformComplete": "handleEduSharingHooks",
+		"PageSaveComplete": "handleEduSharingHooks",
+		"PageDelete": "handleEduSharingHooks",
+		"PageUndeleteComplete": "handleEduSharingHooks",
+		"BeforePageDisplay": "handleEduSharingHooks",
+		"LoadExtensionSchemaUpdates": "handleEduSharingInstallHooks"
+	},
+	"HookHandlers": {
+		"handleEduSharingHooks": {
+			"class": "MediaWiki\\Extension\\EduSharing\\EduSharingHooks"
+		},
+		"handleEduSharingInstallHooks": {
+			"class": "MediaWiki\\Extension\\EduSharing\\EduSharingInstallHooks"
+		}
 	},
 	"attributes": {
 		"VisualEditor": {

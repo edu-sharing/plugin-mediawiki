@@ -9,43 +9,66 @@
 /**
  * EduSharing hooks
  */
+namespace MediaWiki\Extension\EduSharing;
 
-use MediaWiki\Revision\SlotRecord, Mediawiki\MediaWikiServices;
+use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Config\Config;
+use MediaWiki\Content\TextContent;
+use MediaWiki\MediaWikiServices;
+use MediaWiki\Page\ProperPageIdentity;
+use MediaWiki\Page\PageReference;
+use MediaWiki\Permissions\Authority;
+use MediaWiki\Revision\RevisionRecord;
+use MediaWiki\SpecialPage\SpecialPage;
+use ManualLogEntry;
+use Parser;
+use StatusValue;
+use MediaWiki\Content\ContentHandler;
 
-class EduSharingHooks {
+class EduSharingHooks implements
+    \MediaWiki\ResourceLoader\Hook\ResourceLoaderGetConfigVarsHook,
+    \MediaWiki\Output\Hook\MakeGlobalVariablesScriptHook,
+    \MediaWiki\Hook\ParserFirstCallInitHook,
+    \MediaWiki\Hook\ParserPreSaveTransformCompleteHook,
+    \MediaWiki\Page\Hook\PageDeleteHook,
+    \MediaWiki\Page\Hook\PageUndeleteCompleteHook,
+    \MediaWiki\Output\Hook\BeforePageDisplayHook,
+    \MediaWiki\Storage\Hook\PageSaveCompleteHook
+{
 
-    /**
-     * Adds extra variables to the global config
-     *  @param array &$vars
-     */
-    public static function onResourceLoaderGetConfigVars( array &$vars ) {
+    /** @var array<string,int[]>  pageKey => [resourceId, ...] */
+    private static array $pendingResourceIds = [];
+
+    /** @inheritDoc */
+    public function onResourceLoaderGetConfigVars( array &$vars, $skin, Config $config ): void {
         #TODO: move static js config here from self::onMakeGlobalVariablesScript()
     }
 
     /**
      * Adds edu-sharing item to editor toolbar
-     * 
-     * @param $editPage
-     * @param $output
-     * @return true
      */
-    public static function onMakeGlobalVariablesScript( array &$vars, OutputPage $output ) {
+    /** @inheritDoc */
+    public function onMakeGlobalVariablesScript( &$vars, $out ): void {
         
-        $eduService = new EduSharingService();
-        $ticket = $eduService -> getTicket();
+        $user    = $out->getUser();
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $user, $mwConfig );
+        $ticket = $eduService->getTicket();
 
         global $wgServer, $wgScriptPath;
 
-        $output -> addModules('ext.eduSharing.dialog');
-        $output -> addJsConfigVars( [ 'eduticket' => $ticket ] );
-        $output -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
-        $output -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
-        $output -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=WINDOW' ] );
+        $out -> addModules('ext.eduSharing.dialog');
+        $out -> addJsConfigVars( [ 'eduticket' => $ticket ] );
+        $out -> addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
+        $out -> addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
+        $out -> addJsConfigVars( [ 'edugui' => $eduService->config->baseUrl . '/components/search?ticket=' . $ticket . '&reurl=WINDOW' ] );
 
-        $output -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
-        $output -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
-        $output -> addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
-        $output -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
+        $out -> addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
+        $out -> addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
+        $out -> addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
+        $out -> addJsConfigVars( [ 'eduicon' => $wgServer . $wgScriptPath . '/extensions/EduSharing/resources/images/edu-icon.svg' ] );
     }
 
 
@@ -63,7 +86,7 @@ class EduSharingHooks {
     }
 
 
-    private static function deleteResourceAndUsage( $resource ) {
+    private static function deleteResourceAndUsage( EduSharingService $eduService, $resource ) {
 
         /*
         * Delete record in db
@@ -73,17 +96,16 @@ class EduSharingHooks {
 
         $dbw -> delete('edusharing_resource', array( 'EDUSHARING_RESOURCE_ID = ' . $resource->EDUSHARING_RESOURCE_ID ), $fname = 'Database::delete');
 
-        $postData           = new stdClass ();
+        $postData           = new \stdClass ();
         $postData->nodeId   = str_replace("ccrep://local/","",$resource->EDUSHARING_RESOURCE_OBJECT_URL);
         $postData->usageId  = $resource->EDUSHARING_RESOURCE_USAGE;
 
         // delete usage from repo
-        $eduService = new EduSharingService();
         $eduService -> deleteUsage( $postData );
     }
 
 
-    private static function addResourceAndUsage( $resourceData, bool $isRestore = false ) {
+    private static function addResourceAndUsage( EduSharingService $eduService, $resourceData, bool $isRestore = false ) {
         
         // if we don't restore a previously deleted resource, we don't want to re-use an existing id
         if ( $isRestore !== true ) {
@@ -94,17 +116,16 @@ class EduSharingHooks {
         $dbw = $dbProvider->getPrimaryDatabase();
         
         $dbw -> insert('edusharing_resource', $resourceData, 'Database::insert');
-        $resourceId = $dbw -> insertId();
+        $resourceId = $dbw->insertId();
 
-        $eduService = new EduSharingService();
-        $postData   = new stdClass ();
+        $postData   = new \stdClass ();
 
         $postData->ticket       = $eduService->getTicket();
         $postData->containerId  = $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ];
         $postData->resourceId   = $resourceId;
         $postData->nodeId       = str_replace( "ccrep://local/", "", $resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ] );
 
-        $usage = $eduService -> createUsage( $postData );
+        $usage = $eduService->createUsage( $postData );
 
         if ( $usage ) {
             $dbw->update( 'edusharing_resource', [ 'EDUSHARING_RESOURCE_USAGE' => $usage->usageId ], ['EDUSHARING_RESOURCE_ID' => $resourceId ], 'Database::update' );
@@ -122,7 +143,7 @@ class EduSharingHooks {
      * @param &$error
      * @return true
      */
-    public static function onArticleDelete( &$article, &$user, &$reason, &$error ) {
+    public function onPageDelete( ProperPageIdentity $page, Authority $deleter, string $reason, StatusValue $status, bool $suppress ) {
         
         /*
          * Select edu-sharing resources of the article that will be deleted
@@ -132,7 +153,7 @@ class EduSharingHooks {
         
         $res = $dbr -> select('edusharing_resource',
             array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
-            'EDUSHARING_RESOURCE_PAGE_ID = ' . $article -> getId(),
+            'EDUSHARING_RESOURCE_PAGE_ID = ' . $page -> getId(),
             'Database::select',
             array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
         );
@@ -140,8 +161,13 @@ class EduSharingHooks {
         /*
          * Delete usages for edusharing resources 
          */
+        $user = $deleter->getUser(); 
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $user, $mwConfig );        
         foreach($res as $resource) {    
-            self::deleteResourceAndUsage( $resource );
+            self::deleteResourceAndUsage( $eduService, $resource );
         }
 
         return true;
@@ -158,15 +184,28 @@ class EduSharingHooks {
      * 
      * @return true
      */
-    public static function onArticleUndelete( Title $title, $create, $comment, $oldPageId, $restoredPages ) {
+    public function onPageUndeleteComplete( ProperPageIdentity $pageIdentity, Authority $restorer, string $reason, RevisionRecord $restoredRev, ManualLogEntry $logEntry, int $restoredRevisionCount, bool $created, array $restoredPageIds ): void {
         
-        // get article content, we have to parse the wikitext since we have probably deleted the resource registration before
-        $wikiPage = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $title );
-        $text = $wikiPage->getRevisionRecord()->getContent( SlotRecord::MAIN )->getText();
+        $content = $restoredRev->getContent( SlotRecord::MAIN );
+        if ( !$content ) {
+            error_log( 'No content found for page ' . $pageIdentity->__toString() . " with revision: " . $restoredRev->getId() ); 
+            return;
+        }
 
-        self::syncArticleResources( $title, $oldPageId, $text, true );
+        if ( $content instanceof TextContent ) {
+            $text = $content->getText();
+        } else {
+            error_log( 'No Text Content for page ' . $pageIdentity->__toString() . " with revision: " . $restoredRev->getId() ); 
+            return;
+        }
+
+        $user = $restorer->getUser(); 
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $user, $mwConfig );  
+        self::syncArticleResources( $eduService, $pageIdentity, $text, true );
         
-        return true;
     }
 
     /*
@@ -176,24 +215,41 @@ class EduSharingHooks {
     * if we are in article restore context, we use the existing resourceId from the tag to write the database record, 
     * otherwise we create a new onde and insert it into the tag.
     */
-    private static function syncArticleResources( $title, $pageId, string $text, bool $isRestore ) {
-
+    private static function syncArticleResources( EduSharingService $eduService, PageReference|ProperPageIdentity $pageRef, string &$text, bool $isRestore ): array {
+        $resourceIds = [];
+        $old_list = [];
+        $pageId = NULL;
         /*
          * Select all article's resources
          */
         $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
         $dbr = $dbProvider->getReplicaDatabase();
 
-        $res = $dbr->select('edusharing_resource', 
-            array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
-            'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, // $conds
-            'Database::select', // $fname = 'Database::select',
-            array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC') // $options = array()
-        );
+        if ( $pageRef instanceof ProperPageIdentity ) {
+            // if we have a PageIdentity object, we are in undelete context and have a pageId
+            $pageId = $pageRef->getId();
+        } else {
+            // otherwise we come from creating/editing a page and may or may not have a pageId
+            // to check we create a title object from the PageReference and and have a look at its articleId. 
+            // If 0, the page is new and we don't have a pageId and can't use it right now
+            $title = MediaWikiServices::getInstance()
+                ->getTitleFactory()
+                ->newFromPageReference( $pageRef );
 
-        $old_list = array();
-        foreach ($res as $row) {
-            $old_list[$row -> EDUSHARING_RESOURCE_ID] = $row;
+            $articleId = $title->getArticleID();
+            $pageId = ( $articleId > 0 ? $articleId : NULL );
+        }
+        if ( $pageId !== NULL ) {
+            $res = $dbr->select('edusharing_resource', 
+                array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
+                'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, // $conds
+                'Database::select', // $fname = 'Database::select',
+                array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC') // $options = array()
+            );
+
+            foreach ($res as $row) {
+                $old_list[$row->EDUSHARING_RESOURCE_ID] = $row;
+            }
         }
 
         /*
@@ -211,7 +267,7 @@ class EduSharingHooks {
                 'EDUSHARING_RESOURCE_ID' => (string)$Response['resourceid'],
                 'EDUSHARING_RESOURCE_PAGE_ID' => $pageId, 
                 'EDUSHARING_RESOURCE_OBJECT_URL' => (string)$Response['id'],
-                'EDUSHARING_RESOURCE_TITLE' => $title, 
+                'EDUSHARING_RESOURCE_TITLE' => $pageRef->getDBkey(), 
                 'EDUSHARING_RESOURCE_WIDTH' => (string)$Response['width'], 
                 'EDUSHARING_RESOURCE_HEIGHT' => (string)$Response['height'], 
                 'EDUSHARING_RESOURCE_FLOAT' => (string)$Response['float']
@@ -222,13 +278,16 @@ class EduSharingHooks {
              */
             if ($Response['action'] == 'new') {
 
-                $usage = self::addResourceAndUsage( $resourceData, $isRestore );
-
+                $usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
+                // if we don't have a pageId (b/c page is new and not yet saved) we need to save the resourceIds
+                // and add the pageId to the resource record in the PageSaveCompleteHook
+                if ( $pageId === NULL ) {
+                    $resourceIds[] = $usage->resourceId;
+                }
                 $Response -> addAttribute( 'resourceid', $usage->resourceId );
                 $Response['action'] = 'processed';          
                 
             } else if ($Response['action'] == 'processed') {               
-                                
                 /*
                  * Try to get record for this resource with select conditions article id and resource id.
                  * If no record can be found this resource must be copied from another page. So add new record and add usage.
@@ -249,16 +308,21 @@ class EduSharingHooks {
                 /*
                  * If record exists unset resource from deletion list
                  */
-                if($resCount > 0) {
+                if( $resCount > 0 ) {
                     
                     $_resourceid = (int)$Response['resourceid'];
                     unset($old_list[$_resourceid]);
 
                 } else {
                                         
-                    $usage = self::addResourceAndUsage( $resourceData, $isRestore );
+                    $usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
 
                     $Response['resourceid'] = $usage->resourceId;
+                    // if we don't have a pageId (b/c page is new and not yet saved) we need to save the resourceIds
+                    // and add the pageId to the resource record in the PageSaveCompleteHook
+                    if ( $pageId === NULL ) {
+                        $resourceIds[] = $usage->resourceId;
+                    }
                 }
             }
 
@@ -277,35 +341,11 @@ class EduSharingHooks {
             /*
              * Delete usage
              */
-           	self::deleteResourceAndUsage( $item );
+           	self::deleteResourceAndUsage( $eduService, $item );
         }
 
-        return $text;
+        return $resourceIds;
 
-    }
-
-    /**
-    * Retrieves the next autoincrement value vor page.page_id field from mysql
-    *
-    * @return Integer
-    */        
-    public static function getNextPageId() {
-        $dbProvider = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-        $dbr = $dbProvider->getReplicaDatabase();
-        
-        $res = $dbr->newSelectQueryBuilder()
-            ->select( 'Auto_increment' )
-            ->from( 'information_schema.tables' )
-            ->where( [
-                'table_schema' => $dbr->getDBname(),
-                'table_name' => trim( $dbr->tableName( 'page' ), ' ` ' ),
-            ])
-            ->caller( __METHOD__ )->fetchField();
-
-        if ($res)
-            return $res;
-        else 
-            return 0;
     }
 
     
@@ -314,27 +354,74 @@ class EduSharingHooks {
      * 
      * @param $parser
      * @param &$text
-     * @return true
      */
 
-     public static function onParserPreSaveTransformComplete( $parser, &$text ) {
-        $user = $parser->getUserIdentity();
-        $title = $parser->getTitle();
+     public function onParserPreSaveTransformComplete( $parser, &$text ) {
+        $pageRef = $parser->getPage();
 
         // check if called from the "right" context, i.e. while saving a normal wikipage
         // to prevent exception when running in visual editor context
-        if ( $title->getNamespace() == -1 )
+        if ( !$pageRef || $pageRef->getNamespace() === NS_SPECIAL ) {
             return true;
-        $pageId     = $title->getArticleID();
-
-        // for a new page we do not have an id at this point, so we try and get it via database autoincrement value
-        if ( $pageId == 0 ) {
-            $pageId = self::getNextPageId();
         }
 
-        $text = self::syncArticleResources( $title, $pageId, $text, false );
+        $user    = $parser->getUserIdentity();
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
+        $eduService = new EduSharingService( $user, $mwConfig );
+
+        $resourceIds = self::syncArticleResources( $eduService, $pageRef, $text, false );
+
+        // save resourceIds with missing pageId to be completed in PageSaveCompleteHook
+        if ( $resourceIds ) {
+            $pageKey = $pageRef->getNamespace() . ':' . $pageRef->getDBkey();
+            if ( !isset( self::$pendingResourceIds[$pageKey] ) ) {
+                self::$pendingResourceIds[$pageKey] = [];
+            }
+            self::$pendingResourceIds[$pageKey] = array_merge(
+                self::$pendingResourceIds[$pageKey],
+                $resourceIds
+            );
+        }
         return true;
+    }
+
+    /**
+     * Adds pageId reference to freshly created resources where missing
+     * 
+     */    
+    public function onPageSaveComplete( $wikiPage, $user, $summary, $flags, $revisionRecord, $editResult ) {
+        $pageId = $wikiPage->getId();
+        $title  = $wikiPage->getTitle();
+        $pageKey = $wikiPage->getNamespace() . ':' . $wikiPage->getDBkey();
+
+        if ( empty( self::$pendingResourceIds[$pageKey] ) ) {
+            return;
+        }
+
+        $resourceIds = self::$pendingResourceIds[$pageKey];
+
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbw = $dbProvider->getPrimaryDatabase();
+
+        foreach ( $resourceIds as $resId ) {
+            $dbw->update(
+                'edusharing_resource',
+                [
+                    'EDUSHARING_RESOURCE_PAGE_ID'   => $pageId,
+                    'EDUSHARING_RESOURCE_TITLE'     => $title->getPrefixedText(),
+                ],
+                [
+                    'EDUSHARING_RESOURCE_ID'      => $resId,
+                    'EDUSHARING_RESOURCE_PAGE_ID' => null,
+                ],
+                __METHOD__
+            );
+        }
+
+        // Optional: aufräumen
+        unset( self::$pendingResourceIds[$pageKey] );
     }
 
     /**
@@ -343,9 +430,9 @@ class EduSharingHooks {
      * @param $parser
      * @return true
      */
-    public static function wfEdusharingExtensionInit(Parser $parser) {
+    public function onParserFirstCallInit( $parser ) {
 
-        $parser -> setHook("edusharing", array( __CLASS__, 'wfEduSharingRender' ));
+        $parser->setHook( 'edusharing', [ self::class, 'wfEduSharingRender' ] );
         return true;
     }
 
@@ -359,7 +446,7 @@ class EduSharingHooks {
      * @param $frame
      * @return string
      */
-    public static function wfEduSharingRender($input, array $args, Parser $parser, PPFrame $frame) { 
+    public static function wfEduSharingRender($input, array $args, Parser $parser, \PPFrame $frame) { 
                 
         /*
          * Set edu-sharing properties, params for proxy request
@@ -380,13 +467,21 @@ class EduSharingHooks {
                 'Database::select',
                 array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
             );
-
-            $usageId = $res->EDUSHARING_RESOURCE_USAGE;
+            if ( $res ) {
+                $usageId = $res->EDUSHARING_RESOURCE_USAGE;
+            } else {
+                return 'No resource record found, please try and save the page again.';
+            }
 
             global $wgServer, $wgScriptPath;
-            $eduService = new EduSharingService();
+            
+            $user    = $parser->getUserIdentity();
+            $services = MediaWikiServices::getInstance();
+            $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
-            $edu_sharing = new stdClass();
+            $eduService = new EduSharingService( $user, $mwConfig );
+
+            $edu_sharing = new \stdClass();
 
             $edu_sharing -> id = $args['id'];
             $eduObject = parse_url($edu_sharing -> id);
@@ -440,8 +535,9 @@ class EduSharingHooks {
                 $wrapperWidth = 'style="max-width: 100%; width: ' . $edu_sharing -> width . 'px;"';                   
                 //$wrapperStyle = 'style="height: ' . $edu_sharing -> height . 'px; width:' . $edu_sharing -> width . 'px; ' . $style . '"';                   
                 $text = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner"><div class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '" ' . $wrapperWidth . '><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div></div></div>';
-            } else {    
-                $text = self::getPreview($edu_sharing, $input, $style);
+            } else {
+                // TODO: figure out what to do here and why
+                //$text = self::getPreview($edu_sharing, $input, $style);
             }
             
             return $text;
@@ -458,40 +554,13 @@ class EduSharingHooks {
      * Add module 'ext.eduSharing.display' providing js loadScript function
      * @param &$out
      * @param &$skin
-     * @return true
      * 
      */
-    public static function onBeforePageDisplay( OutputPage &$out, Skin &$skin ) {
+    public function onBeforePageDisplay( $out, $skin ):void {
         global $wgOut;
         $wgOut->addModules( 'ext.eduSharing.display' );
         $wgOut->addModules( 'ext.eduSharing.visualEditor' );
-        return true;
     }
-
-
-    /**
-     * Adds table 'edusharing_resource' to wiki db
-     * @param $updater
-     * @return true
-     * 
-     */
-    public static function createEdusharingDatabase( DatabaseUpdater $updater ) {
-        $updater -> addExtensionTable('edusharing_resource', __DIR__ . '/../sql/EduSharing.sql', true);
-        return true;
-    }
-
-    /**
-     * Adds field "usageid to existing "table 'edusharing_resource' when updating
-     * @param $updater
-     * @return true
-     * 
-     */
-    public static function updateEdusharingDatabase( DatabaseUpdater $updater ) {
-        $updater -> addExtensionField('edusharing_resource', 'EDUSHARING_RESOURCE_USAGE', __DIR__ . '/../sql/EduSharingAddUsageField.sql', true);
-        $updater -> addExtensionIndex('edusharing_resource', 'id_usage', __DIR__ . '/../sql/EduSharingAddUsageIndex.sql', true);
-        return true;
-    }
-
 
 }
 ?>

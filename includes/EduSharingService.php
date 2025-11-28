@@ -1,47 +1,72 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace MediaWiki\Extension\EduSharing;
 
-use EduSharingApiClient\EduSharingHelperBase, EduSharingApiClient\EduSharingAuthHelper, EduSharingApiClient\EduSharingNodeHelper, EduSharingApiClient\EduSharingNodeHelperConfig, EduSharingApiClient\UrlHandling, EduSharingApiClient\Usage;
+use MediaWiki\Config\Config;
+use MediaWiki\User\User;
+use EduSharingApiClient\EduSharingHelperBase;
+use EduSharingApiClient\EduSharingAuthHelper;
+use EduSharingApiClient\EduSharingNodeHelper;
+use EduSharingApiClient\EduSharingNodeHelperConfig; 
+use EduSharingApiClient\UrlHandling;
+use EduSharingApiclient\UsageDeletedException;
+use EduSharingApiclient\Usage;
+use EduSharingApiclient\NodeDeletedException;
+
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 class EduSharingService {
 
-    public $config;
-    public $helperBase;
-    private $authHelper;
+    public EduSharingConfig $config;
+    private EduSharingTicketManager $ticketManager;    
+    public EduSharingHelperBase $helperBase;
+    private $nodeHelper;
 
-    public function __construct() {
+    public function __construct( User $user, Config $mwConfig ) {
 
-        $user = RequestContext::getMain()->getUser();
-        $config = new EduSharingConfig( $user );
-        $this -> config = $config;
-        $this -> helperBase = new EduSharingHelperBase( $config->baseUrl, $config->privateKey, $config->appId );
-        $this -> authHelper = new EduSharingAuthHelper( $this->helperBase ); 
+        $this->config       = new EduSharingConfig( $user, $mwConfig );
+        $this->helperBase   = new EduSharingHelperBase( $this->config->baseUrl, $this->config->privateKey, $this->config->appId );
+
+        $this->helperBase->verifyCompatibility();
+
+        $authHelper   = new EduSharingAuthHelper( $this->helperBase );
+        $this->nodeHelper   = new EduSharingNodeHelper( $this->helperBase, 
+                                                        new EduSharingNodeHelperConfig(
+                                                            new UrlHandling(true, 'example-api.php?action=REDIRECT')
+                                                        )
+                                                    );
+        $this->ticketManager = new EduSharingTicketManager(
+            $authHelper,
+            $this->config
+        );
     }
 
+    public function getTicket(): ?string {
+        return $this->ticketManager->getTicket();
+    }    
    
     public function createUsage( $postData)  {
 
-        $nodeHelper = new EduSharingNodeHelper( $this->helperBase, new EduSharingNodeHelperConfig( new UrlHandling( false ) ) );
-        $result = $nodeHelper->createUsage(
+        $result = $this->nodeHelper->createUsage(
             $postData->ticket,
             $postData->containerId,
             $postData->resourceId,
             $postData->nodeId
         );
         return $result;
-
     }
 
+
     public function deleteUsage( $postData ) {
-        $nodeHelper = new EduSharingNodeHelper($this->helperBase, new EduSharingNodeHelperConfig(new UrlHandling(false)) );
+
         try {
-            $result = $nodeHelper->deleteUsage(
+            $result = $this->nodeHelper->deleteUsage(
                 $postData->nodeId,
                 $postData->usageId
             );    
             return $result;
 
-        } catch ( Exception $e ) {
+        } catch ( \Exception $e ) {
             if ( $e instanceof UsageDeletedException ) {
                 error_log( 'noted, deleting locally: ' . $e->getMessage() ); 
             } else {
@@ -50,10 +75,11 @@ class EduSharingService {
         }
     }
 
+
     public function getNode($postData) {
-        $nodeHelper = new EduSharingNodeHelper($this->helperBase, new EduSharingNodeHelperConfig(new UrlHandling(false)) );
+
         try {
-            $result = $nodeHelper->getNodeByUsage(
+            $result = $this->nodeHelper->getNodeByUsage(
                 new Usage(
                     $postData->nodeId,
                     $postData->nodeVersion,
@@ -64,7 +90,7 @@ class EduSharingService {
             );
             return $result;
 
-        } catch ( Exception $e ) {
+        } catch ( \Exception $e ) {
             if ( $e instanceof UsageDeletedException || $e instanceof NodeDeletedException ) {
                 error_log( $e->getMessage() ); 
                 return $this->getFakeNodeWithPreview( $postData->nodeId );
@@ -73,47 +99,6 @@ class EduSharingService {
             }
         }
         
-    }
-
-    public function getTicket() {
-        $ticket = '';
-
-        // try and get ticket from cache
-        $ticket = RequestContext::getMain()->getRequest()->getSession()->get('EduSharingRepoTicket_' . $this->config->username);
-        if ( !is_null( $ticket ) ) {
-            // check if ticket is still valid
-            try {
-                $ticketInfo = $this->authHelper->getTicketAuthenticationInfo( $ticket );
-            } catch ( Exception $e ) {
-                // something went wrong, e.g. cached ticket is not valid, so get a new one
-            }
-
-            if ( isset( $ticketInfo ) && $ticketInfo['statusCode'] == 'OK' ) {
-                return $ticket;
-            }
-        } 
-
-        // if we don't have a valid ticket or no ticket at all, we should get a new one
-        $ticket = $this->doGetTicketAndCacheIt();
-        return $ticket;
-    }
-
-    private function doGetTicketAndCacheIt() {
-
-        $ticket = null;
-
-        try {
-            $ticket = $this->authHelper->getTicketForUser($this->config->username);
-        } catch (Exception $e) {
-            error_log( "Couldn't get ticket from Edusharing repository ($e)" );
-        }
-
-        // cache ticket if ok and return
-        if ( ! is_null ( $ticket ) ) {
-            RequestContext::getMain()->getRequest()->getSession()->set('EduSharingRepoTicket_' . $this->config->username, $ticket);
-        }
-
-        return $ticket;
     }
 
 

@@ -1,35 +1,28 @@
 <?php
+namespace MediaWiki\Extension\EduSharing;
+
+use MediaWiki\MediaWikiServices;
+use MediaWiki\SpecialPage\SpecialPage;
+use SimpleXMLElement;
+
 class SpecialEduSharingRegister extends SpecialPage {
 
     function __construct() {
 		parent::__construct( 'EduSharingRegister', '', false );
 	}
 
-	private static function toXml(SimpleXMLElement $object, array $data) {   
-		foreach ($data as $key => $value) {
-			if (is_array($value)) {
-				$new_object = $object->addChild($key);
-				self::toXml($new_object, $value);
-			} else {
-				// if the key is an integer, it needs text with it to actually work.
-				if ($key != 0 && $key == (int) $key) {
-					$key = "key_$key";
-				}
-	
-				$object->addChild($key, $value);
-			}   
-		}   
-	} 
-
 	public function execute( $par ) {
-        $config = new EduSharingConfig( $this->getUser() );
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $this->getUser(), $mwConfig );
 
 		$data = [
-				'appid' => $config->appId,
-				'public_key' => $config->getPublicKey(),
-				'type' => $config->appType,
-                'domain' => $config->appDomain,
-                'host' => $config->appHost,
+				'appid' => $eduService->config->appId,
+				'public_key' => $eduService->config->getPublicKey(),
+				'type' => $eduService->config->appType,
+                'domain' => $eduService->config->appDomain,
+                'host' => $eduService->config->appHost,
                 'trustedclient' => 'true'
 		];
 

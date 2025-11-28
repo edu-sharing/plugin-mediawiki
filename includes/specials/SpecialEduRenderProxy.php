@@ -1,6 +1,8 @@
 <?php
+namespace MediaWiki\Extension\EduSharing;
 
-// autoloader: EduSharingService
+use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\MediaWikiServices;
 
 class SpecialEduRenderProxy extends SpecialPage {
 
@@ -11,7 +13,7 @@ class SpecialEduRenderProxy extends SpecialPage {
     public function execute( $par ) {
 
         $request = $this->getRequest();
-        $edu_sharing = new stdClass ();
+        $edu_sharing = new \stdClass ();
 
         $edu_sharing->id = $request->getVal('oid');
         $edu_sharing->appid = $request->getVal('appid');
@@ -26,10 +28,13 @@ class SpecialEduRenderProxy extends SpecialPage {
         
         $usageid = $request->getVal('usageid');
 
-        $eduSharingService = new EduSharingService();
-        $postData = new stdClass ();
+        $services = MediaWikiServices::getInstance();
+        $config = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
-        $edu_sharing->contenturl = $eduSharingService->config->contentUrl;
+        $eduService = new EduSharingService( $this->getUser(), $config );
+        $postData = new \stdClass ();
+
+        $edu_sharing->contenturl = $eduService->config->contentUrl;
 
         $postData->nodeId = str_replace("ccrep://local/","", $request->getVal('oid'));
         $postData->nodeVersion= null;
@@ -37,7 +42,7 @@ class SpecialEduRenderProxy extends SpecialPage {
         $postData->resourceId = $request->getVal('resid');
         $postData->usageId =  $usageid;
 
-        $result = $eduSharingService ->getNode($postData);
+        $result = $eduService ->getNode($postData);
 
         $html = $result["detailsSnippet"];
         $edu_sharing->mediatype = $result['node']['mediatype'];

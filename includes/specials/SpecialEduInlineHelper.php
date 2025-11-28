@@ -1,4 +1,9 @@
 <?php
+namespace MediaWiki\Extension\EduSharing;
+
+use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\MediaWikiServices;
+
 class SpecialEduInlineHelper extends SpecialPage {
 
     function __construct() {
@@ -13,7 +18,10 @@ class SpecialEduInlineHelper extends SpecialPage {
         $parts = parse_url( $redirect_url );
         parse_str( $parts[ 'query' ], $query );
 
-        $eduService = new EduSharingService();
+        $services = MediaWikiServices::getInstance();
+        $config = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $this->getUser(), $config );
 
         $paramString = '';
         $ts = round ( microtime ( true ) * 1000 );
