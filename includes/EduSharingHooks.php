@@ -121,7 +121,7 @@ class EduSharingHooks implements
         $postData   = new \stdClass ();
 
         $postData->ticket       = $eduService->getTicket();
-        $postData->containerId  = $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ];
+        $postData->containerId  = ( $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ] === NULL ? 0 : $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ] );
         $postData->resourceId   = $resourceId;
         $postData->nodeId       = str_replace( "ccrep://local/", "", $resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ] );
 
