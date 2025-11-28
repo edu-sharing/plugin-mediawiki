@@ -21,6 +21,9 @@
 		"EduRenderProxy": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy"
 		},
+		"EduRenderServiceProxy": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderServiceProxy"
+		},
 		"EduServiceWorker": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker"
 		},
@@ -39,6 +42,7 @@
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderServiceProxy": "includes/specials/SpecialEduRenderServiceProxy.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker": "includes/specials/SpecialEduServiceWorker.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
@@ -197,6 +201,10 @@
 		"EduSharingForceGuestUser": {
 			"description": "Always use anonymous repository access",
 			"value": false
+		},
+		"EduSharingEnableServiceWorker": {
+			"description": "Enable registration of the edu-sharing rendering service worker",
+			"value": true
 		}
 	},
 	"ConfigRegistry": {

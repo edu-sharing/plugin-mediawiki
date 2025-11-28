@@ -27,6 +27,7 @@ class EduSharingConfig {
     private $repoPublicKeyFile;
     private $repoGuestUserName;
     private $repoForceGuestUser;
+    public bool $enableServiceWorker;
 
     public function __construct( User $user, Config $config ) {
 
@@ -43,6 +44,7 @@ class EduSharingConfig {
         $this->repoPublicKeyFile    = $config->get( 'EduSharingRepoPublicKeyFile' );
         $this->repoGuestUserName    = $config->get( 'EduSharingGuestUserName' );
         $this->repoForceGuestUser   = $config->get( 'EduSharingForceGuestUser' );
+        $this->enableServiceWorker  = (bool)$config->get( 'EduSharingEnableServiceWorker' );
 
         if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false || $this->repoForceGuestUser === true )
             $this->username = $this->repoGuestUserName;
