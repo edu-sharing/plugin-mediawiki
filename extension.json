@@ -21,6 +21,9 @@
 		"EduRenderProxy": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy"
 		},
+		"EduServiceWorker": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker"
+		},
 		"EduInlineHelper": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper"
 		}
@@ -36,6 +39,7 @@
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker": "includes/specials/SpecialEduServiceWorker.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
 	"Hooks": {

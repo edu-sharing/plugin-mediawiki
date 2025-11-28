@@ -3,6 +3,9 @@ namespace MediaWiki\Extension\EduSharing;
 
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Request\WebRequest;
+use EduSharingApiClient\Usage;
+use EduSharingApiClient\PreviewSize;
 
 class SpecialEduRenderProxy extends SpecialPage {
 
@@ -13,6 +16,12 @@ class SpecialEduRenderProxy extends SpecialPage {
     public function execute( $par ) {
 
         $request = $this->getRequest();
+        $mode = $request->getVal( 'mode' );
+        if ( $mode ) {
+            $this->handleRenderingServiceRequest( $mode, $request );
+            return;
+        }
+
         $edu_sharing = new \stdClass ();
 
         $edu_sharing->id = $request->getVal('oid');
@@ -50,6 +59,46 @@ class SpecialEduRenderProxy extends SpecialPage {
         $this->getOutput()->disable();
 
         print($this->display ( str_replace("width:0px;", "",  $html), $edu_sharing ));
+    }
+
+    private function handleRenderingServiceRequest( string $mode, WebRequest $request ): void {
+        $services = MediaWikiServices::getInstance();
+        $config = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $this->getUser(), $config );
+        $usage = $this->requestToUsage( $request );
+
+        try {
+            if ( $mode === 'preview' ) {
+                $preview = $eduService->getPreview( $usage, PreviewSize::SIZE_400_PX );
+                $this->getOutput()->disable();
+                header( 'Content-Type: ' . ( $preview->info['content_type'] ?? 'image/*' ) );
+                echo $preview->content;
+                return;
+            }
+
+            $url = $eduService->getRedirectUrl(
+                $mode,
+                $usage,
+                [],
+                null,
+                $eduService->usesRenderingService2()
+            );
+            $this->getOutput()->redirect( $url );
+        } catch ( \Exception $e ) {
+            $this->getOutput()->setStatusCode( 500 );
+            $this->getOutput()->addHTML( htmlspecialchars( $e->getMessage() ) );
+        }
+    }
+
+    private function requestToUsage( WebRequest $request ): Usage {
+        return new Usage(
+            $request->getVal( 'nodeId' ),
+            $request->getVal( 'nodeVersion' ),
+            $request->getVal( 'containerId' ),
+            $request->getVal( 'resourceId' ),
+            $request->getVal( 'usageId' )
+        );
     }
 
     public function getRedirectUrl($eduobj, $display_mode = 'inline') {

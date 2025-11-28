@@ -3,14 +3,18 @@ namespace MediaWiki\Extension\EduSharing;
 
 use MediaWiki\Config\Config;
 use MediaWiki\User\User;
-use EduSharingApiClient\EduSharingHelperBase;
+use EduSharingApiClient\CurlResult;
 use EduSharingApiClient\EduSharingAuthHelper;
+use EduSharingApiClient\EduSharingHelperBase;
 use EduSharingApiClient\EduSharingNodeHelper;
 use EduSharingApiClient\EduSharingNodeHelperConfig; 
+use EduSharingApiClient\PreviewSize;
+use EduSharingApiClient\SecuredNode;
 use EduSharingApiClient\UrlHandling;
-use EduSharingApiclient\UsageDeletedException;
-use EduSharingApiclient\Usage;
-use EduSharingApiclient\NodeDeletedException;
+use EduSharingApiClient\Usage;
+use EduSharingApiClient\UsageDeletedException;
+use EduSharingApiClient\NodeDeletedException;
+use MediaWiki\SpecialPage\SpecialPage;
 
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -32,7 +36,10 @@ class EduSharingService {
         $authHelper   = new EduSharingAuthHelper( $this->helperBase );
         $this->nodeHelper   = new EduSharingNodeHelper( $this->helperBase, 
                                                         new EduSharingNodeHelperConfig(
-                                                            new UrlHandling(true, 'example-api.php?action=REDIRECT')
+                                                            new UrlHandling(
+                                                                true,
+                                                                SpecialPage::getTitleFor( 'EduRenderProxy' )->getLocalURL()
+                                                            )
                                                         )
                                                     );
         $this->ticketManager = new EduSharingTicketManager(
@@ -99,6 +106,36 @@ class EduSharingService {
             }
         }
         
+    }
+
+    public function getSecuredNodeByUsage( Usage $usage ): SecuredNode {
+        return $this->nodeHelper->getSecuredNodeByUsage( $usage );
+    }
+
+    public function getRenderingServiceUrl(): string {
+        $about = $this->helperBase->getAbout();
+        if ( isset( $about['renderingService2']['url'] ) ) {
+            return $about['renderingService2']['url'];
+        }
+
+        throw new \RuntimeException( 'Rendering Service 2 is not configured in edu-sharing.' );
+    }
+
+    public function usesRenderingService2(): bool {
+        try {
+            $this->getRenderingServiceUrl();
+            return true;
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+    }
+
+    public function getRedirectUrl( string $mode, Usage $usage, array $additionalParams = [], ?string $userId = null, bool $rendering2 = true ): string {
+        return $this->nodeHelper->getRedirectUrl( $mode, $usage, $additionalParams, $userId, $rendering2 );
+    }
+
+    public function getPreview( Usage $usage, PreviewSize $size = PreviewSize::SIZE_400_PX ): CurlResult {
+        return $this->nodeHelper->getPreview( $usage, $size );
     }
 
 

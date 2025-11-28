@@ -11,15 +11,18 @@
  */
 namespace MediaWiki\Extension\EduSharing;
 
-use MediaWiki\Revision\SlotRecord;
 use MediaWiki\Config\Config;
 use MediaWiki\Content\TextContent;
+use MediaWiki\Json\FormatJson;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\ProperPageIdentity;
 use MediaWiki\Page\PageReference;
 use MediaWiki\Permissions\Authority;
+use MediaWiki\Revision\SlotRecord;
 use MediaWiki\Revision\RevisionRecord;
 use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Title\Title;
+use EduSharingApiClient\Usage;
 use ManualLogEntry;
 use Parser;
 use StatusValue;
@@ -447,107 +450,149 @@ class EduSharingHooks implements
      * @return string
      */
     public static function wfEduSharingRender($input, array $args, Parser $parser, \PPFrame $frame) { 
-                
-        /*
-         * Set edu-sharing properties, params for proxy request
-         * Render wrapper
-         * 
-         * $args['action'] === 'processed' - page view
-         * $_GET['action'] == 'submit' - preview
-         */
-        if (isset($args['action']) && ($args['action'] === 'processed') || $_GET['action'] == 'submit') {
+        $isProcessed = isset( $args['action'] ) && $args['action'] === 'processed';
+        $isPreview = isset( $_GET['action'] ) && $_GET['action'] === 'submit';
 
-            // get usageId from database
-            $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-            $dbr = $dbProvider->getReplicaDatabase();
-
-            $res = $dbr -> selectRow('edusharing_resource',
-                array( 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE','EDUSHARING_RESOURCE_OBJECT_URL' ), // $vars (columns of the table)
-                'EDUSHARING_RESOURCE_ID = ' . $args['resourceid'],
-                'Database::select',
-                array('ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC')
-            );
-            if ( $res ) {
-                $usageId = $res->EDUSHARING_RESOURCE_USAGE;
-            } else {
-                return 'No resource record found, please try and save the page again.';
-            }
-
-            global $wgServer, $wgScriptPath;
-            
-            $user    = $parser->getUserIdentity();
-            $services = MediaWikiServices::getInstance();
-            $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
-
-            $eduService = new EduSharingService( $user, $mwConfig );
-
-            $edu_sharing = new \stdClass();
-
-            $edu_sharing -> id = $args['id'];
-            $eduObject = parse_url($edu_sharing -> id);
-            $edu_sharing -> id = str_replace('/', '', $eduObject['path']);
-            $edu_sharing -> appid = $eduService->config->appId;
-            $edu_sharing -> repid = $eduObject['host'];           
-            $edu_sharing -> resourceid = $args['resourceid'];
-            $edu_sharing -> height = $args['height'];
-            $edu_sharing -> width = $args['width'];
-            $edu_sharing -> mimetype = $args['mimetype'];
-            $edu_sharing -> page = $parser->getTitle()->getArticleID();
-            $edu_sharing -> usageid = ( $usageId !== null ) ? $usageId : "";
-
-            if(!empty($args['float'])){
-            	 $edu_sharing -> float = $args['float'];
-            } else {
-            	 $edu_sharing -> float = 'none';
-            }
-
-            $param = '&oid=' . $edu_sharing -> id;
-            $param .= '&resid=' . $edu_sharing -> resourceid;
-            $param .= '&usageid=' .  $edu_sharing -> usageid;
-            $param .= '&height=' . $edu_sharing -> height;
-            $param .= '&width=' . $edu_sharing -> width;
-            $param .= '&mime=' . $edu_sharing -> mimetype;
-            $param .= '&pid=' . $edu_sharing -> page;
-            $param .= '&appid=' . $edu_sharing -> appid;
-            $param .= '&repid=' . $edu_sharing -> repid;
-            $param .= '&printTitle=' . addslashes($input);
-            $param .= '&language=' . MediaWikiServices::getInstance()->getUserOptionsLookup()->getOption( $eduService->config->user, 'language' );
-
-            $dataUrl = SpecialPage::getTitleFor('EduRenderProxy')->getLocalUrl() . $param;
-
-            switch($edu_sharing -> float) {
-            //     case 'left': $style = "float: left; display: block; margin: 10px 10px 10px 0;"; break;
-            //     case 'none': $style = "float: none; display: block; margin: 10px 0;"; break;
-            //     case 'center': $style = "float: none; display: block; margin: 10px auto; border: 5px solid red"; break;
-            //     case 'right': $style = "float: right; display: block; margin: 10px 0 10px 10px;"; break;
-            //     case 'inline':
-            //     default: $style = 'float: none; display: inline-block; margin: 0';
-
-                case 'left': $classes = "tleft"; break;
-                case 'none': $classes = "tnone center"; break;
-                case 'center': $classes = "tnone center"; break;
-                case 'right': $classes = "tright"; break;
-                case 'inline':
-                default: $classes = "tnone center"; break;
-            }
-
-            if(isset($args['action']) && ($args['action'] === 'processed')) {
-                $wrapperWidth = 'style="max-width: 100%; width: ' . $edu_sharing -> width . 'px;"';                   
-                //$wrapperStyle = 'style="height: ' . $edu_sharing -> height . 'px; width:' . $edu_sharing -> width . 'px; ' . $style . '"';                   
-                $text = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner"><div class="edu_wrapper" id="content_wrapper' . $edu_sharing -> id . '-' . $edu_sharing -> resourceid . '" ' . $wrapperWidth . '><div data-type="esObject" data-url="'.$dataUrl.'" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div></div></div></div>';
-            } else {
-                // TODO: figure out what to do here and why
-                //$text = self::getPreview($edu_sharing, $input, $style);
-            }
-            
-            return $text;
-
-        } else {
-
-            return 'Unknown edusharing action: "' . $args['action'] . '"';
-
+        if ( !$isProcessed && !$isPreview ) {
+            return 'Unknown edusharing action: "' . ( $args['action'] ?? '' ) . '"';
         }
 
+        $dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+        $dbr = $dbProvider->getReplicaDatabase();
+
+        $res = $dbr->selectRow(
+            'edusharing_resource',
+            [ 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE', 'EDUSHARING_RESOURCE_OBJECT_URL' ],
+            'EDUSHARING_RESOURCE_ID = ' . $args['resourceid'],
+            __METHOD__,
+            [ 'ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC' ]
+        );
+
+        if ( !$res ) {
+            return 'No resource record found, please try and save the page again.';
+        }
+
+        $pageReference = $parser->getPage();
+        if ( !$pageReference ) {
+            return '';
+        }
+
+        $title = $pageReference instanceof Title ? $pageReference : Title::newFromPageReference( $pageReference );
+
+        $user    = $parser->getUserIdentity();
+        $services = MediaWikiServices::getInstance();
+        $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+
+        $eduService = new EduSharingService( $user, $mwConfig );
+
+        $nodeId = str_replace( 'ccrep://local/', '', $args['id'] );
+        $usage = new Usage(
+            $nodeId,
+            $args['nodeversion'] ?? null,
+            (string)$title->getArticleID(),
+            (string)$args['resourceid'],
+            (string)$res->EDUSHARING_RESOURCE_USAGE
+        );
+
+        try {
+            $securedNode = $eduService->getSecuredNodeByUsage( $usage );
+            $renderingUrl = rtrim( $eduService->getRenderingServiceUrl(), '/' );
+        } catch ( \Throwable $e ) {
+            return 'edu-sharing rendering failed: ' . htmlspecialchars( $e->getMessage() );
+        }
+
+        $float = $args['float'] ?? 'none';
+        switch ( $float ) {
+            case 'left':
+                $classes = 'tleft';
+                break;
+            case 'right':
+                $classes = 'tright';
+                break;
+            case 'center':
+                $classes = 'tnone center';
+                break;
+            case 'inline':
+                $classes = 'tnone center';
+                break;
+            case 'none':
+            default:
+                $classes = 'tnone center';
+                break;
+        }
+
+        $wrapperId = 'edusharing-render-' . $usage->resourceId . '-' . $usage->usageId;
+        $width = isset( $args['width'] ) ? (int)$args['width'] : null;
+        $wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
+
+        $repoBase = rtrim( $eduService->config->baseUrl, '/' );
+        $renderComponentBase = $repoBase . '/web-components/rendering-service';
+        $serviceWorkerUrl = SpecialPage::getTitleFor( 'EduServiceWorker' )->getLocalURL();
+        $proxyTitle = SpecialPage::getTitleFor( 'EduRenderProxy' );
+        $resourceUrl = $proxyTitle->getLocalURL( [
+            'mode' => 'content',
+            'nodeId' => $usage->nodeId,
+            'nodeVersion' => $usage->nodeVersion,
+            'containerId' => $usage->containerId,
+            'resourceId' => $usage->resourceId,
+            'usageId' => $usage->usageId,
+        ] );
+        $previewUrl = $proxyTitle->getLocalURL( [
+            'mode' => 'preview',
+            'nodeId' => $usage->nodeId,
+            'nodeVersion' => $usage->nodeVersion,
+            'containerId' => $usage->containerId,
+            'resourceId' => $usage->resourceId,
+            'usageId' => $usage->usageId,
+        ] );
+
+        $userData = [
+            'authorityName' => $eduService->config->username,
+        ];
+
+        $componentData = [
+            'id' => $wrapperId,
+            'encodedNode' => $securedNode->securedNode,
+            'signature' => $securedNode->signature,
+            'jwt' => $securedNode->jwt,
+            'renderUrl' => $renderingUrl,
+            'encodedUser' => base64_encode( json_encode( $userData ) ),
+            'assetsUrl' => $renderComponentBase . '/assets',
+            'scriptUrl' => $renderComponentBase . '/main.js',
+            'styleUrl' => $renderComponentBase . '/styles.css',
+            'serviceWorkerUrl' => $serviceWorkerUrl,
+            'previewUrl' => $previewUrl,
+            'resourceUrl' => $resourceUrl,
+            'apiUrl' => $repoBase . '/rest',
+            'width' => $width,
+        ];
+
+        $componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
+
+        $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '>';
+        $html .= '<div class="thumbinner"><div class="edu_wrapper" id="' . $wrapperId . '" ' . $wrapperWidth . '></div></div></div>';
+
+        $html .= '<script type="module">';
+        $html .= '(function(){';
+        $html .= 'const data=' . $componentJson . ';';
+        $html .= 'const wrapper=document.getElementById(data.id);';
+        $html .= 'if(!wrapper){return;}';
+        $html .= 'window.__env=window.__env||{};';
+        $html .= 'window.__env.EDU_SHARING_API_URL=data.apiUrl;';
+        $html .= 'const loadAssets=()=>{';
+        $html .= 'if(!document.querySelector(\'script[data-edusharing-rendering]\')){const s=document.createElement("script");s.type="module";s.src=data.scriptUrl;s.dataset.edusharingRendering="1";document.head.appendChild(s);}';
+        $html .= 'if(!document.querySelector(\'link[data-edusharing-rendering]\')){const l=document.createElement("link");l.rel="stylesheet";l.href=data.styleUrl;l.dataset.edusharingRendering="1";document.head.appendChild(l);}';
+        $html .= '};';
+        $html .= 'const registerServiceWorker=async()=>{if(!("serviceWorker"in navigator)||window.__eduSharingSW){return;}window.__eduSharingSW=true;try{await navigator.serviceWorker.register(data.serviceWorkerUrl,{scope:"/"});await navigator.serviceWorker.ready;}catch(e){console.warn("edu-sharing service worker registration failed",e);}};';
+        $html .= 'const initComponent=()=>{const el=document.createElement("edu-sharing-render");el.encoded_node=data.encodedNode;el.signature=data.signature;el.jwt=data.jwt;el.render_url=data.renderUrl;el.encoded_user=data.encodedUser;el.service_worker_url=data.serviceWorkerUrl;el.activate_service_worker=true;el.assets_url=data.assetsUrl;el.preview_url=data.previewUrl;el.resource_url=data.resourceUrl;el.style.maxWidth="100%";if(data.width){el.style.width=data.width+"px";}wrapper.innerHTML="";wrapper.appendChild(el);};';
+        $html .= 'loadAssets();';
+        $html .= 'registerServiceWorker().catch(()=>{});';
+        $html .= 'const waitForElement=()=>{if(window.customElements&&window.customElements.get("edu-sharing-render")){initComponent();return;}setTimeout(waitForElement,50);};';
+        $html .= 'waitForElement();';
+        $html .= '})();';
+        $html .= '</script>';
+
+        return $html;
     }
 
     /**
