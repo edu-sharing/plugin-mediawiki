@@ -56,16 +56,34 @@
 		}
 	}
 
-	&.center {
+	&.tleft {
+		float: left;
+		clear: left;
+		margin-right: 1em;
+		margin-bottom: 0.5em;
+	}
+	
+	&.tright {
+		float: right;
+		clear: right;
+		margin-left: 1em;
+		margin-bottom: 0.5em;
+	}
+	
+	&.tnone.center {
 		margin-left: auto;
 		margin-right: auto;
-		.edusharing_rendering_content_footer_top {
-			.license_permalink,
-			.license {
-				margin-left: initial;
-			}
-		}
-	}	
+		display: block;
+		float: none;
+		clear: both;
+		text-align: center;
+	}
+	
+	.mw-edusharing-container:after {
+		content: "";
+		display: table;
+		clear: both;
+	}
 }
 
 .videoWrapperOuter {
@@ -78,133 +96,22 @@
 	background: #fff !important;
 }
 
-// .spinnerContainer {
-// 	width: 180px;
-// 	color: rgba(0, 0, 0, 0.0); /*do not change*/
-// }
+.ve-ce-mwEduSharingNode {
+    display: inline;
+    width: auto;
+    max-width: 100%;
+	.mw-edusharing-placeholder,
+	.mw-edusharing-error {
+		padding: 10px;
+		background: #f5f5f5;
+		border: 1px dashed #ccc;
+		color: #333;
+		min-height: 50px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+	}
+}
 
-// .inner {
-// 	width: 30px;
-// 	height: 50px;
-// 	display: inline-block;
-// }
-// .spinner1 {
-// 	background: url(./../images/hex1.svg);
-// 	background-repeat: no-repeat;
-// 	background-position: center;
-// 	background-size: 50px;
-// 	width: 50px;
-// 	height: 50px;
-// 	-webkit-animation: spin 2s infinite ease-in;
-// 	-moz-animation: spin 2s infinite ease-in;
-// 	-ms-animation: spin 2s infinite ease-in;
-// 	-o-animation: spin 2s infinite ease-in;
-// 	animation: spin 2s infinite ease-in;
-// 	-webkit-animation-delay: 0.1s;
-// 	-moz-animation-delay: 0.1s;
-// 	animation-delay: 0.1s;
-// }
 
-// .spinner2 {
-// 	background: url(./../images/hex2.svg);
-// 	background-repeat: no-repeat;
-// 	background-position: center;
-// 	background-size: 50px;
-// 	width: 50px;
-// 	height: 50px;
-// 	-webkit-animation: spin 2s infinite ease-in;
-// 	-moz-animation: spin 2s infinite ease-in;
-// 	-ms-animation: spin 2s infinite ease-in;
-// 	-o-animation: spin 2s infinite ease-in;
-// 	animation: spin 2s infinite ease-in;
-// 	-webkit-animation-delay: 0.25s;
-// 	-moz-animation-delay: 0.25s;
-// 	animation-delay: 0.25s;
-// }
-
-// .spinner3 {
-// 	background: url(./../images/hex3.svg);
-// 	background-repeat: no-repeat;
-// 	background-position: center;
-// 	background-size: 50px;
-// 	width: 50px;
-// 	height: 50px;
-// 	-webkit-animation: spin 2s infinite ease-in;
-// 	-moz-animation: spin 2s infinite ease-in;
-// 	-ms-animation: spin 2s infinite ease-in;
-// 	-o-animation: spin 2s infinite ease-in;
-// 	animation: spin 2s infinite ease-in;
-// 	-webkit-animation-delay: 0.5s;
-// 	-moz-animation-delay: 0.5s;
-// 	animation-delay: 0.5s;
-// }
-
-// @-webkit-keyframes spin {
-// 	0% {
-// 		transform: scale(1);
-// 	}
-
-// 	50% {
-// 		transform: scale(0.5);
-// 	}
-
-// 	100% {
-// 		transform: scale(1);
-// 	}
-// }
-
-// @-moz-keyframes spin {
-// 	0% {
-// 		transform: scale(1);
-// 	}
-
-// 	50% {
-// 		transform: scale(0.5);
-// 	}
-
-// 	100% {
-// 		transform: scale(1);
-// 	}
-// }
-
-// @-ms-keyframes spin {
-// 	0% {
-// 		transform: scale(1);
-// 	}
-
-// 	50% {
-// 		transform: scale(0.5);
-// 	}
-
-// 	100% {
-// 		transform: scale(1);
-// 	}
-// }
-
-// @-o-keyframes spin {
-// 	0% {
-// 		transform: scale(1);
-// 	}
-
-// 	50% {
-// 		transform: scale(0.5);
-// 	}
-
-// 	100% {
-// 		transform: scale(1);
-// 	}
-// }
-
-// @keyframes spin {
-// 	0% {
-// 		transform: scale(1);
-// 	}
-
-// 	50% {
-// 		transform: scale(0.5) rotate(90deg);
-// 	}
-
-// 	100% {
-// 		transform: scale(1);
-// 	}
-// }

@@ -56,12 +56,9 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	// } );
 
 	// Preview
-	// this.$previewContainer = $( '<div>' ).addClass( 've-ui-mwEduSharingDialog-preview' );
-	// this.$edusharing = $( '<div>' ).appendTo( this.$previewContainer );
-	// this.edusharing = null;
-
 	this.$previewContainer = $( '<div>' ).addClass( 've-ui-mwEduSharingDialog-preview' );
-    this.$edusharing = $( '<div>' ).appendTo( this.$previewContainer );
+	this.$edusharing = $( '<div>' ).appendTo( this.$previewContainer );
+	this.edusharing = null;
 
 	// Panel
 	this.indexLayout = new OO.ui.IndexLayout( {
@@ -179,44 +176,12 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	this.repoButton.$element.click ( function(){
 		openRepo();
 	} );
-
-	if (this.selectedNode) {
-        this.updatePreview();
-    }
 };
 
 // Open new window and load the edu-sharing repo
 function openRepo(){
 	window.win = window.open( mw.config.get('edugui') );
 }
-
-// Update preview
-ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
-    var mwData = this.selectedNode.getAttribute('mw');
-    var fullId = mwData.attrs.id; // "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-    var previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
-
-    // Extrahiere die UUID
-    var pureNodeId = fullId.replace('ccrep://local/', '');
-
-    // Baue die Preview-URL
-    var previewImageUrl = previewUrl + '?nodeId=' + pureNodeId +
-                          '&storeProtocol=workspace&storeId=SpacesStore' +
-                          '&dontcache=' + Date.now();
-
-    // Zeige das Vorschaubild im Dialog an
-    this.$edusharing.html(`
-        <div class="mw-edusharing-dialog-preview-container">
-            <img class="mw-edusharing-dialog-preview-image"
-                 src="${previewImageUrl}"
-                 alt="${mwData.body.extsrc || 'Vorschau'}"
-                 style="max-width: 100%; height: auto;">
-            <div class="mw-edusharing-dialog-preview-caption">
-                ${mwData.body.extsrc || 'EduSharing-Inhalt'}
-            </div>
-        </div>
-    `);
-};
 
 /**
  * Handle change events on the dimensions widget
@@ -242,6 +207,11 @@ ve.ui.MWEduSharingDialog.prototype.insertOrUpdateNode = function () {
  * @inheritdoc ve.ui.MWExtensionWindow
  */
 ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
+
+	if ( !this.id || !this.id.getValue() ) {
+		// Keine gültige ID, nichts einfügen
+		return;
+	}
 
 	this.indexLayout.setTabPanel( 'options' );
 
@@ -309,135 +279,107 @@ ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper = function ( data ) {
 /**
  * @inheritdoc
  */
-/**
- * @inheritdoc
- */
-ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function (data) {
-    return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call(this, data)
-        .next(function () {
-            var mwAttrs = this.selectedNode && this.selectedNode.getAttribute('mw').attrs || {},
-                mwBody = this.selectedNode && this.selectedNode.getAttribute('mw').body || {},
-                isReadOnly = this.isReadOnly(),
-                that = this,
-                node;
+ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
-            // Funktion zum Aktualisieren der Vorschau
-            this.updatePreview = function () {
-                if (!this.selectedNode) return;
+	data = data || {};
+	return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call( this, data )
+		.next( function () {
+			var mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
+			mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
+			isReadOnly = this.isReadOnly();
 
-                var mwData = this.selectedNode.getAttribute('mw');
-                var fullId = mwData.attrs.id; // z. B. "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-                var previewUrl = mw.config.get('edupreview');
+			var that = this, node;
+			// Receive data from iframe
+			window.addEventListener('message', handleRepo, false);
+			function handleRepo( event ){
+				if(event.data.event == 'APPLY_NODE'){
+					node = event.data.data;
 
-                // Extrahiere die UUID aus "ccrep://local/<UUID>"
-                var pureNodeId = fullId.replace('ccrep://local/', '');
+					window.win.close();
 
-                // Baue die Preview-URL
-                var previewImageUrl = previewUrl + 'nodeId=' + pureNodeId;
+					that.id.setValue(node.objectUrl);
+					that.caption.setValue(node.title);
+					that.mediatype.setValue(node.mediatype);
+					that.mimetype.setValue(node.mimetype);
+					that.version.setValue(node.content.version);
+					that.repotype.setValue(node.repositoryType);
 
-                // Zeige das Vorschaubild im Dialog an
-                this.$edusharing.html(`
-                    <div class="mw-edusharing-dialog-preview-container">
-                        <img class="mw-edusharing-dialog-preview-image"
-                             src="${previewImageUrl}"
-                             alt="${mwBody.extsrc || 'Vorschau'}"
-                             style="max-width: 100%; height: auto;">
-                        <div class="mw-edusharing-dialog-preview-caption">
-                            ${mwBody.extsrc || 'EduSharing-Inhalt'}
-                        </div>
-                    </div>
-                `);
-            };
+					var typeSwitchHelper = ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper( node );
+					if ( typeSwitchHelper === 'textlike' ){
+						$('#field-dimensions').hide();
+						that.$edusharing.html( '' );
+					} else {
+						$('#field-dimensions').show();
+						var mwId = node.objectUrl.substr(14),
+						url = previewUrl + 'nodeId=' + mwId;
+						that.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
+					}
+					
+					window.removeEventListener('message', handleRepo, false );
+				}
+			};
 
-            // Receive data from iframe
-            window.addEventListener('message', handleRepo, false);
-            function handleRepo(event) {
-                if (event.data.event == 'APPLY_NODE') {
-                    node = event.data.data;
-                    window.win.close();
 
-                    // Setze die neuen Werte
-                    that.id.setValue(node.objectUrl);
-                    that.caption.setValue(node.title);
-                    that.mediatype.setValue(node.mediatype);
-                    that.mimetype.setValue(node.mimetype);
-                    that.version.setValue(node.content.version);
-                    that.repotype.setValue(node.repositoryType);
+			if ( this.selectedNode ) {
+				this.scalable = this.selectedNode.getScalable();
+			} else {
+				this.scalable = ve.dm.MWEduSharingNode.static.createScalable(
+					{ width: 400, height: 300 }
+				);
+			}
 
-                    // Aktualisiere die Vorschau mit den neuen Daten
-                    var previewUrl = mw.config.get('edupreview');
-                    var pureNodeId = node.objectUrl.substr(14); // Extrahiere die UUID
+			// Events
 
-                    // Baue die Preview-URL
-                    var previewImageUrl = previewUrl + 'nodeId=' + pureNodeId;
+			this.id.setValue( mwAttrs.id ).setDisabled( isReadOnly );
+			
+			this.caption.setValue( mwBody.extsrc ).setDisabled( isReadOnly );
 
-                    // Zeige das neue Vorschaubild im Dialog an
-                    that.$edusharing.html(`
-                        <div class="mw-edusharing-dialog-preview-container">
-                            <img class="mw-edusharing-dialog-preview-image"
-                                 src="${previewImageUrl}"
-                                 alt="${node.title || 'Vorschau'}"
-                                 style="max-width: 100%; height: auto;">
-                            <div class="mw-edusharing-dialog-preview-caption">
-                                ${node.title || 'EduSharing-Inhalt'}
-                            </div>
-                        </div>
-                    `);
+			this.mediatype.setValue( mwAttrs.mediatype ).setDisabled( isReadOnly );
 
-                    window.removeEventListener('message', handleRepo, false);
-                }
-            };
+			this.mimetype.setValue( mwAttrs.mimetype ).setDisabled( isReadOnly );
 
-            // Initialisierung
-            if (this.selectedNode) {
-                this.scalable = this.selectedNode.getScalable();
-                this.repoButton.setLabel(ve.msg('visualeditor-mwedusharingdialog-change'));
-            } else {
-                this.scalable = ve.dm.MWEduSharingNode.static.createScalable({ width: 400, height: 300 });
-                this.repoButton.setLabel(ve.msg('visualeditor-mwedusharingdialog-select'));
-                this.$edusharing.html('');
-            }
+			this.version.setValue( mwAttrs.version ).setDisabled( isReadOnly );
 
-            // Setze die Werte der Felder
-            this.id.setValue(mwAttrs.id).setDisabled(isReadOnly);
-            this.caption.setValue(mwBody.extsrc).setDisabled(isReadOnly);
-            this.mediatype.setValue(mwAttrs.mediatype).setDisabled(isReadOnly);
-            this.mimetype.setValue(mwAttrs.mimetype).setDisabled(isReadOnly);
-            this.version.setValue(mwAttrs.version).setDisabled(isReadOnly);
-            this.repotype.setValue(mwAttrs.repotype).setDisabled(isReadOnly);
-            this.versionshow.setValue(mwAttrs.versionshow).setDisabled(isReadOnly);
-            this.dimensions.setDimensions(this.scalable.getCurrentDimensions()).setReadOnly(isReadOnly);
+			this.repotype.setValue( mwAttrs.repotype ).setDisabled( isReadOnly );
 
-            // Vorschau aktualisieren, falls ein Node ausgewählt ist
-            if (this.selectedNode) {
-                var typeSwitchHelper = this.getTypeSwitchHelper(mwAttrs);
-                if (typeSwitchHelper === 'textlike') {
-                    $('#field-dimensions').hide();
-                    this.$edusharing.html('');
-                } else {
-                    $('#field-dimensions').show();
-                    var mwId = mwAttrs.id.replace('ccrep://local/', '');
-                    var url = previewUrl + 'nodeId=' + mwId;
-                    this.$edusharing.html('<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>');
-                }
-                this.updatePreview();
-            }
+			this.versionshow.setValue( mwAttrs.versionshow ).setDisabled( isReadOnly );
 
-            // Align-Widget
-            this.align.selectItemByData(mwAttrs.float || 'right').setDisabled(isReadOnly);
+			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
 
-            // Events verbinden
-            this.dimensions.connect(this, {
-                widthChange: 'onDimensionsChange',
-                heightChange: 'onDimensionsChange'
-            });
-            this.caption.connect(this, { change: 'updateActions' });
-            this.versionshow.connect(this, { change: 'updateActions' });
-            this.align.connect(this, { choose: 'updateActions' });
-        }, this);
+			if ( this.selectedNode ) {
+				// alert(this.indexLayout.getElementId('repo-button'));
+				this.repoButton.setLabel( ve.msg('visualeditor-mwedusharingdialog-change') );
+				var typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
+				if ( typeSwitchHelper === 'textlike' ){
+					$('#field-dimensions').hide();
+					this.$edusharing.html( '' );
+				} else {
+					$('#field-dimensions').show();
+					var mwId = mwAttrs.id.substr(14),
+					url = previewUrl + 'nodeId=' + mwId;
+					this.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
+				}
+			} else {
+				this.repoButton.setLabel( ve.msg('visualeditor-mwedusharingdialog-select') );
+				this.$edusharing.html( '' );
+			}
+			
+			// this.align.selectItemByData( mwAttrs.align || 'right' ).setDisabled( isReadOnly );
+			this.align.selectItemByData( mwAttrs.float || 'right' ).setDisabled( isReadOnly ); // The edusharing tag uses float not align
+
+			this.dimensions.connect( this, {
+				widthChange: 'onDimensionsChange',
+				heightChange: 'onDimensionsChange'
+			} );
+
+			this.caption.connect( this, { change: 'updateActions' } );
+
+			this.versionshow.connect( this, { change: 'updateActions' } );
+
+			this.align.connect( this, { choose: 'updateActions' } );
+			
+		}, this );
 };
-
-
 
 /**
  * @inheritdoc

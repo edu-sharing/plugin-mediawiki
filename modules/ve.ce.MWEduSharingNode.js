@@ -14,38 +14,39 @@
  * @param {ve.dm.MWEduSharingNode} model Model to observe
  * @param {Object} [config] Configuration options
  */
- ve.ce.MWEduSharingNode = function VeCeMWEduSharing( model, config ) {
+ve.ce.MWEduSharingNode = function VeCeMWEduSharing(model, config) {
 	config = config || {};
 	var typeSwitchHelper;
-	
-	this.$thumbinner = $( '<div>' ).addClass( 'thumbinner' );
-	this.$edusharing = $( '<div>' ).addClass( 'mw-edusharing-preview' );
-	this.$caption = $( '<div>' ).addClass( 'mw-edusharing-caption' );
+
+	this.$thumbinner = $('<div>').addClass('thumbinner');
+	this.$edusharing = $('<div>').addClass('mw-edusharing-preview');
+	// this.$caption = $( '<div>' ).addClass( 'mw-edusharing-caption' );
 
 	// Parent constructor
-	ve.ce.MWEduSharingNode.super.apply( this, arguments );
+	ve.ce.MWEduSharingNode.super.apply(this, arguments);
 
 	// Mixin constructors
 	typeSwitchHelper = this.model.getTypeSwitchHelper();
-	if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ){
-		ve.ce.ResizableNode.call( this, this.$edusharing, config );
+	if (typeSwitchHelper === 'image' || typeSwitchHelper === 'video') {
+		ve.ce.ResizableNode.call(this, this.$edusharing, config);
 	}
 
 	this.$imageLoader = null;
 
 	// Events
-	
-	this.model.connect( this, { attributeChange: 'onAttributeChange' } );
 
-	this.$caption.html( this.requiresInteractive() );
+	this.model.connect(this, { attributeChange: 'onAttributeChange' });
+
+	// this.$caption.html( this.requiresInteractive() );
 
 	// DOM changes
 	this.$element
 		.empty()
-		.addClass( 've-ce-mwEduSharingNode mw-edusharing-container mw-edusharing-' + typeSwitchHelper + ' thumb' )
+		.addClass('ve-ce-mwEduSharingNode mw-edusharing-container mw-edusharing-' + typeSwitchHelper + ' thumb')
 		.append(
 			this.$thumbinner.append(
-				this.$edusharing, this.$caption
+				this.$edusharing,
+				// this.$caption
 			)
 		);
 
@@ -53,9 +54,9 @@
 
 /* Inheritance */
 
-OO.inheritClass( ve.ce.MWEduSharingNode, ve.ce.MWBlockExtensionNode );
+OO.inheritClass(ve.ce.MWEduSharingNode, ve.ce.MWBlockExtensionNode);
 
-OO.mixinClass( ve.ce.MWEduSharingNode, ve.ce.ResizableNode );
+OO.mixinClass(ve.ce.MWEduSharingNode, ve.ce.ResizableNode);
 
 /* Static Properties */
 
@@ -71,8 +72,8 @@ ve.ce.MWEduSharingNode.static.primaryCommandName = 'mwEduSharing';
   * @return {boolean} EduSharing requires interactive rendering
  */
 ve.ce.MWEduSharingNode.prototype.requiresInteractive = function () {
-	var mwData = this.model.getAttribute( 'mw' );
-	return ( mwData.body && mwData.body.extsrc );
+	var mwData = this.model.getAttribute('mw');
+	return (mwData.body && mwData.body.extsrc);
 };
 
 /**
@@ -92,7 +93,7 @@ ve.ce.MWEduSharingNode.prototype.onAttributeChange = function () {
  * @inheritdoc
  */
 ve.ce.MWEduSharingNode.prototype.onSetup = function () {
-	ve.ce.MWEduSharingNode.super.prototype.onSetup.call( this );
+	ve.ce.MWEduSharingNode.super.prototype.onSetup.call(this);
 	this.update();
 };
 
@@ -101,20 +102,20 @@ ve.ce.MWEduSharingNode.prototype.onSetup = function () {
  */
 ve.ce.MWEduSharingNode.prototype.update = function () {
 	var requiresInteractive = this.requiresInteractive(),
-		align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
-			( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
+		align = ve.getProp(this.model.getAttribute('mw'), 'attrs', 'float') ||
+			(this.model.doc.getDir() === 'ltr' ? 'right' : 'left'),
 		alignClasses = {
 			left: 'tleft',
 			center: 'tnone center',
 			right: 'tright'
 		};
 
-		if ( !this.model ) {
-			return;
-		}
+	if (!this.model) {
+		return;
+	}
 
-	if ( requiresInteractive ) {
-		if ( this.edusharing ) {
+	if (requiresInteractive) {
+		if (this.edusharing) {
 			// Node was previously interactive
 			this.edusharing.remove();
 			this.edusharing = null;
@@ -126,15 +127,15 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 
 	// Classes documented in removeClass
 	this.$element
-		.removeClass( 'tleft tnone center tright' )
-		.addClass( alignClasses[ align ] );
+		.removeClass('tleft tnone center tright')
+		.addClass(alignClasses[align]);
 	this.$edusharing
-		.css( this.model.getCurrentDimensions() );
+		.css(this.model.getCurrentDimensions());
 	this.$thumbinner
 		.css({
-			'width' : '100%',	
-			'max-width' : this.model.getCurrentDimensions().width,
-			'height' : 'auto'
+			'width': '100%',
+			'max-width': this.model.getCurrentDimensions().width,
+			'height': 'auto'
 		});
 };
 
@@ -142,46 +143,65 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
  * Update the static rendering
  */
 ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
-	var url, node = this, typeSwitchHelper;
-	if ( !this.model.getCurrentDimensions().width ) {
-		return;
+	var mwData = this.model.getAttribute('mw');
+	var fullId = mwData.attrs.id; // "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
+	var previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
+	var align = ve.getProp(this.model.getAttribute('mw'), 'attrs', 'float') ||
+		(this.model.doc.getDir() === 'ltr' ? 'right' : 'left'),
+		alignClasses = {
+			left: 'tleft',
+			center: 'tnone center',
+			right: 'tright'
+		};
+
+	// Entferne alte Ausrichtungsklassen
+	this.$element.removeClass('tleft tnone center tright');
+
+	// Füge die neue Ausrichtungsklasse hinzu
+	if (alignClasses[align]) {
+		this.$element.addClass(alignClasses[align]);
 	}
 
-	if ( this.$imageLoader ) {
-		this.$imageLoader.off();
-		this.$imageLoader = null;
-	}
+	// Extrahiere die UUID
+	var pureNodeId = fullId.replace('ccrep://local/', '');
 
-	url = this.model.getUrl();
-	typeSwitchHelper = this.model.getTypeSwitchHelper();
+	// Baue die Preview-URL
+	var previewImageUrl = previewUrl + '?nodeId=' + pureNodeId +
+		'&storeProtocol=workspace&storeId=SpacesStore' +
+		'&dontcache=' + Date.now();
 
-	if ( typeSwitchHelper !== 'textlike'){
-		this.$imageLoader = $( '<img>' ).on( 'load', function () {
-			node.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
-		} ).attr( 'src', url );
-	} else {
-		node.$edusharing.html('');
-	}
-
-	$caption = this.requiresInteractive();
-	node.$caption.html( $caption );
-
+	// Zeige das Vorschaubild an
+	this.$edusharing.html(`
+        <div class="mw-edusharing-preview-container">
+            <img class="mw-edusharing-preview-image"
+                 src="${previewImageUrl}"
+                 alt="${mwData.body.extsrc || 'Vorschau'}"
+                 style="max-width: 100%; height: auto;">
+            <div class="mw-edusharing-preview-caption">
+                ${mwData.body.extsrc || 'EduSharing-Inhalt'}
+            </div>
+        </div>
+    `);
 };
+
+
+
+
 
 /**
  * @inheritdoc ve.ce.ResizableNode
  */
 ve.ce.MWEduSharingNode.prototype.onResizableResizing = function () {
 	// Mixin method
-	ve.ce.ResizableNode.prototype.onResizableResizing.apply( this, arguments );
+	ve.ce.ResizableNode.prototype.onResizableResizing.apply(this, arguments);
 };
 
 /**
  * @inheritdoc ve.ce.ResizableNode
  */
 // ve.ce.MWEduSharingNode.prototype.getAttributeChanges = function ( width, height ) {
-	ve.ce.MWEduSharingNode.prototype.getAttributeChanges = function ( width ) {
-	var mwData = ve.copy( this.model.getAttribute( 'mw' ) );
+ve.ce.MWEduSharingNode.prototype.getAttributeChanges = function (width) {
+	var mwData = ve.copy(this.model.getAttribute('mw'));
 
 	mwData.attrs.width = width.toString();
 	// mwData.attrs.height = height.toString();
@@ -192,4 +212,4 @@ ve.ce.MWEduSharingNode.prototype.onResizableResizing = function () {
 
 /* Registration */
 
-ve.ce.nodeFactory.register( ve.ce.MWEduSharingNode );
+ve.ce.nodeFactory.register(ve.ce.MWEduSharingNode);
