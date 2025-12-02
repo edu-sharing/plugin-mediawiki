@@ -46,6 +46,28 @@ class SpecialEduProxy extends SpecialPage {
             $targetUrl .= ( str_contains( $targetUrl, '?' ) ? '&' : '?' ) . wfArrayToCgi( $params );
         }
 
+        // Redirect handling: generate repo redirect and send it to client
+        if ( !$isAsset && str_starts_with( $path, 'public/redirect' ) ) {
+            $usage = $this->requestToUsage( $params );
+            if ( $usage ) {
+                try {
+                    $mode = $params['mode'] ?? 'content';
+                    $redirectUrl = $eduService->getRedirectUrl(
+                        mode: $mode,
+                        usage: $usage,
+                        additionalParams: [],
+                        userId: null,
+                        rendering2: true
+                    );
+                    header( 'Location: ' . $redirectUrl, true, 302 );
+                    return;
+                } catch ( \Throwable $e ) {
+                    $this->outputError( 500, 'Redirect generation failed: ' . $e->getMessage() );
+                    return;
+                }
+            }
+        }
+
         $method = $this->getRequest()->getMethod();
         $body = file_get_contents( 'php://input' );
 
