@@ -211,6 +211,10 @@
 			"description": "Override preview endpoint (defaults to /public/preview)",
 			"value": "/public/preview"
 		},
+		"EduSharingOpenResourceInNewTab": {
+			"description": "Open resource links in a new browser tab/window",
+			"value": false
+		},
 		"EduSharingGuestUserName": {
 			"description": "Username to use for anonymous repository access",
 			"value": "esguest"

@@ -565,6 +565,7 @@ class EduSharingHooks implements
             'apiUrl' => $proxyBase . '/rest',
             'width' => $width,
             'activateServiceWorker' => $useServiceWorker,
+            'openInNewTab' => $eduService->config->openResourceInNewTab,
         ];
 
         // Ensure client-side rendering script is loaded

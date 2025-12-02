@@ -31,6 +31,7 @@ class EduSharingConfig {
     public string $repoId;
     public string $redirectEndpoint;
     public string $previewEndpoint;
+    public bool $openResourceInNewTab;
 
     public function __construct( User $user, Config $config ) {
 
@@ -51,6 +52,7 @@ class EduSharingConfig {
         $this->repoId               = (string)$config->get( 'EduSharingRepoId' );
         $this->redirectEndpoint     = (string)$config->get( 'EduSharingRedirectEndpoint' );
         $this->previewEndpoint      = (string)$config->get( 'EduSharingPreviewEndpoint' );
+        $this->openResourceInNewTab = (bool)$config->get( 'EduSharingOpenResourceInNewTab' );
 
         if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false || $this->repoForceGuestUser === true )
             $this->username = $this->repoGuestUserName;

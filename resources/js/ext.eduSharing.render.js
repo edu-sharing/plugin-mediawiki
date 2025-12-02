@@ -96,6 +96,27 @@
 			el.style.width = config.width + 'px';
 		}
 		wrapper.appendChild( el );
+
+		// Enforce link target for resource links if configured
+		if ( config.openInNewTab ) {
+			const setTargets = () => {
+				const root = el.shadowRoot || el;
+				root.querySelectorAll( 'a' ).forEach( ( a ) => {
+					a.target = '_blank';
+				} );
+			};
+			let tries = 0;
+			const poll = setInterval( () => {
+				setTargets();
+				tries++;
+				if ( tries > 200 ) {
+					clearInterval( poll );
+				}
+			}, 50 );
+			const obs = new MutationObserver( () => setTargets() );
+			obs.observe( el.shadowRoot || el, { childList: true, subtree: true } );
+			setTimeout( () => obs.disconnect(), 10000 );
+		}
 	};
 
 	const init = () => {
