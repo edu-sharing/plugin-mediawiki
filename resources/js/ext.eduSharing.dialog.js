@@ -61,7 +61,6 @@ var customizeToolbar = function () {
                     var edu_object, edu_caption, edu_height, edu_width, edu_mediatype, edu_mimetype, edu_repotype;
 
                     edu_object = $('#wikieditor-toolbar-edu-object').val();
-                    console.log('edu_object: '); console.log(edu_object);
                     edu_caption = $('#wikieditor-toolbar-edu-caption').val();
                     edu_height = $('#wikieditor-toolbar-edu-height').val();
                     edu_width = $('#wikieditor-toolbar-edu-width').val();
