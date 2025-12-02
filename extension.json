@@ -18,11 +18,8 @@
 		"EduSharingRegister": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister"
 		},
-		"EduRenderProxy": {
-			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy"
-		},
-		"EduRenderServiceProxy": {
-			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduRenderServiceProxy"
+		"EduProxy": {
+			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduProxy"
 		},
 		"EduServiceWorker": {
 			"class": "MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker"
@@ -41,8 +38,7 @@
 	},
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduSharingRegister": "includes/specials/SpecialEduSharingRegister.php",
-		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderProxy": "includes/specials/SpecialEduRenderProxy.php",
-		"MediaWiki\\Extension\\EduSharing\\SpecialEduRenderServiceProxy": "includes/specials/SpecialEduRenderServiceProxy.php",
+		"MediaWiki\\Extension\\EduSharing\\SpecialEduProxy": "includes/specials/SpecialEduProxy.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduServiceWorker": "includes/specials/SpecialEduServiceWorker.php",
 		"MediaWiki\\Extension\\EduSharing\\SpecialEduInlineHelper": "includes/specials/SpecialEduInlineHelper.php"
 	},
@@ -114,6 +110,15 @@
 				"desktop"
 			],
 			"position": "top"
+		},
+		"ext.eduSharing.render": {
+			"scripts": "resources/js/ext.eduSharing.render.js",
+			"dependencies": [],
+			"messages": [],
+			"targets": [
+				"mobile",
+				"desktop"
+			]
 		},
 		"ext.eduSharing.visualEditor": {
 			"scripts": [
@@ -193,6 +198,18 @@
 		"EduSharingRepoPublicKeyFile": {
 			"description": "Path to file containing the repository's public key, relative to MW install dir",
 			"value": "extensions/EduSharing/conf/repopublic.key"
+		},
+		"EduSharingRepoId": {
+			"description": "Repository id used for rendering service requests",
+			"value": "local"
+		},
+		"EduSharingRedirectEndpoint": {
+			"description": "Override redirect endpoint (defaults to /public/redirect)",
+			"value": "/public/redirect"
+		},
+		"EduSharingPreviewEndpoint": {
+			"description": "Override preview endpoint (defaults to /public/preview)",
+			"value": "/public/preview"
 		},
 		"EduSharingGuestUserName": {
 			"description": "Username to use for anonymous repository access",

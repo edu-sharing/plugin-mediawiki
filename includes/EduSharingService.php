@@ -34,14 +34,15 @@ class EduSharingService {
         $this->helperBase->verifyCompatibility();
 
         $authHelper   = new EduSharingAuthHelper( $this->helperBase );
-        $this->nodeHelper   = new EduSharingNodeHelper( $this->helperBase, 
-                                                        new EduSharingNodeHelperConfig(
-                                                            new UrlHandling(
-                                                                true,
-                                                                SpecialPage::getTitleFor( 'EduRenderProxy' )->getLocalURL()
-                                                            )
-                                                        )
-                                                    );
+        $this->nodeHelper   = new EduSharingNodeHelper(
+            $this->helperBase,
+            new EduSharingNodeHelperConfig(
+                new UrlHandling(
+                    true,
+                    SpecialPage::getTitleFor( 'EduProxy' )->getLocalURL()
+                )
+            )
+        );
         $this->ticketManager = new EduSharingTicketManager(
             $authHelper,
             $this->config

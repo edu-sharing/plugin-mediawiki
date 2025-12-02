@@ -28,6 +28,9 @@ class EduSharingConfig {
     private $repoGuestUserName;
     private $repoForceGuestUser;
     public bool $enableServiceWorker;
+    public string $repoId;
+    public string $redirectEndpoint;
+    public string $previewEndpoint;
 
     public function __construct( User $user, Config $config ) {
 
@@ -45,6 +48,9 @@ class EduSharingConfig {
         $this->repoGuestUserName    = $config->get( 'EduSharingGuestUserName' );
         $this->repoForceGuestUser   = $config->get( 'EduSharingForceGuestUser' );
         $this->enableServiceWorker  = (bool)$config->get( 'EduSharingEnableServiceWorker' );
+        $this->repoId               = (string)$config->get( 'EduSharingRepoId' );
+        $this->redirectEndpoint     = (string)$config->get( 'EduSharingRedirectEndpoint' );
+        $this->previewEndpoint      = (string)$config->get( 'EduSharingPreviewEndpoint' );
 
         if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false || $this->repoForceGuestUser === true )
             $this->username = $this->repoGuestUserName;

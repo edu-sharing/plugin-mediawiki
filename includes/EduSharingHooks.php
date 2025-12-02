@@ -526,28 +526,24 @@ class EduSharingHooks implements
         $wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
 
         $repoBase = rtrim( $eduService->config->baseUrl, '/' );
-        $renderProxyBase = rtrim( SpecialPage::getTitleFor( 'EduRenderServiceProxy' )->getLocalURL(), '/' );
-        // Static assets still come from the repository to avoid auth headers; API calls go through the proxy.
-        $renderComponentBase = $repoBase . '/web-components/rendering-service';
+        $proxyBase = rtrim( SpecialPage::getTitleFor( 'EduProxy' )->getFullURL(), '/' );
+        $renderComponentBase = $proxyBase . '/web-components/rendering-service';
         $useServiceWorker = $eduService->config->enableServiceWorker;
-        $serviceWorkerUrl = $useServiceWorker ? SpecialPage::getTitleFor( 'EduServiceWorker' )->getLocalURL() : '';
-        $proxyTitle = SpecialPage::getTitleFor( 'EduRenderProxy' );
-        $resourceUrl = $proxyTitle->getLocalURL( [
-            'mode' => 'content',
-            'nodeId' => $usage->nodeId,
-            'nodeVersion' => $usage->nodeVersion,
-            'containerId' => $usage->containerId,
-            'resourceId' => $usage->resourceId,
-            'usageId' => $usage->usageId,
-        ] );
-        $previewUrl = $proxyTitle->getLocalURL( [
-            'mode' => 'preview',
-            'nodeId' => $usage->nodeId,
-            'nodeVersion' => $usage->nodeVersion,
-            'containerId' => $usage->containerId,
-            'resourceId' => $usage->resourceId,
-            'usageId' => $usage->usageId,
-        ] );
+        $serviceWorkerUrl = $useServiceWorker ? $renderComponentBase . '/edu-service-worker.js' : '';
+        $resourceUrl = $proxyBase . '/public/redirect?mode=content'
+            . '&nodeId=' . rawurlencode( $usage->nodeId )
+            . '&nodeVersion=' . rawurlencode( $usage->nodeVersion ?? '' )
+            . '&containerId=' . rawurlencode( $usage->containerId )
+            . '&resourceId=' . rawurlencode( $usage->resourceId )
+            . '&usageId=' . rawurlencode( $usage->usageId )
+            . '&repoId=' . rawurlencode( $eduService->config->repoId );
+        $previewUrl = $proxyBase . '/public/preview'
+            . '?nodeId=' . rawurlencode( $usage->nodeId )
+            . '&nodeVersion=' . rawurlencode( $usage->nodeVersion ?? '' )
+            . '&containerId=' . rawurlencode( $usage->containerId )
+            . '&resourceId=' . rawurlencode( $usage->resourceId )
+            . '&usageId=' . rawurlencode( $usage->usageId )
+            . '&repoId=' . rawurlencode( $eduService->config->repoId );
 
         $userData = [
             'authorityName' => $eduService->config->username,
@@ -558,7 +554,7 @@ class EduSharingHooks implements
             'encodedNode' => $securedNode->securedNode,
             'signature' => $securedNode->signature,
             'jwt' => $securedNode->jwt,
-            'renderUrl' => $renderProxyBase,
+            'renderUrl' => $proxyBase,
             'encodedUser' => base64_encode( json_encode( $userData ) ),
             'assetsUrl' => $renderComponentBase . '/assets',
             'scriptUrl' => $renderComponentBase . '/main.js',
@@ -566,35 +562,18 @@ class EduSharingHooks implements
             'serviceWorkerUrl' => $serviceWorkerUrl,
             'previewUrl' => $previewUrl,
             'resourceUrl' => $resourceUrl,
-            'apiUrl' => $repoBase . '/rest',
+            'apiUrl' => $proxyBase . '/rest',
             'width' => $width,
             'activateServiceWorker' => $useServiceWorker,
         ];
 
+        // Ensure client-side rendering script is loaded
+        $parser->getOutput()->addModules( [ 'ext.eduSharing.render' ] );
+
         $componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
 
         $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '>';
-        $html .= '<div class="thumbinner"><div class="edu_wrapper" id="' . $wrapperId . '" ' . $wrapperWidth . '></div></div></div>';
-
-        $html .= '<script type="module">';
-        $html .= '(function(){';
-        $html .= 'const data=' . $componentJson . ';';
-        $html .= 'const wrapper=document.getElementById(data.id);';
-        $html .= 'if(!wrapper){return;}';
-        $html .= 'window.__env=window.__env||{};';
-        $html .= 'window.__env.EDU_SHARING_API_URL=data.apiUrl;';
-        $html .= 'const loadAssets=()=>{';
-        $html .= 'if(!document.querySelector(\'script[data-edusharing-rendering]\')){const s=document.createElement("script");s.type="module";s.src=data.scriptUrl;s.dataset.edusharingRendering="1";document.head.appendChild(s);}';
-        $html .= 'if(!document.querySelector(\'link[data-edusharing-rendering]\')){const l=document.createElement("link");l.rel="stylesheet";l.href=data.styleUrl;l.dataset.edusharingRendering="1";document.head.appendChild(l);}';
-        $html .= '};';
-        $html .= 'const registerServiceWorker=async()=>{if(!data.activateServiceWorker||!("serviceWorker"in navigator)||window.__eduSharingSW||!data.serviceWorkerUrl){return;}window.__eduSharingSW=true;try{await navigator.serviceWorker.register(data.serviceWorkerUrl,{scope:"/"});await navigator.serviceWorker.ready;}catch(e){console.warn("edu-sharing service worker registration failed",e);}};';
-        $html .= 'const initComponent=()=>{const el=document.createElement("edu-sharing-render");el.encoded_node=data.encodedNode;el.signature=data.signature;el.jwt=data.jwt;el.render_url=data.renderUrl;el.encoded_user=data.encodedUser;el.service_worker_url=data.serviceWorkerUrl;el.activate_service_worker=!!data.activateServiceWorker;el.assets_url=data.assetsUrl;el.preview_url=data.previewUrl;el.resource_url=data.resourceUrl;el.style.maxWidth="100%";if(data.width){el.style.width=data.width+"px";}wrapper.innerHTML="";wrapper.appendChild(el);};';
-        $html .= 'loadAssets();';
-        $html .= 'registerServiceWorker().catch(()=>{});';
-        $html .= 'const waitForElement=()=>{if(window.customElements&&window.customElements.get("edu-sharing-render")){initComponent();return;}setTimeout(waitForElement,50);};';
-        $html .= 'waitForElement();';
-        $html .= '})();';
-        $html .= '</script>';
+        $html .= '<div class="thumbinner"><div class="edu_wrapper edusharing-render" id="' . $wrapperId . '" data-edusharing-config="' . htmlspecialchars( $componentJson, ENT_QUOTES ) . '" ' . $wrapperWidth . '></div></div></div>';
 
         return $html;
     }
