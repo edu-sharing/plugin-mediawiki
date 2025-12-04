@@ -37,9 +37,10 @@
   "visualeditor-mwedusharingdialog-mimetype": "Mimetype",
 	"visualeditor-mwedusharingdialog-version": "Version",
 	"visualeditor-mwedusharingdialog-repotype": "Repotype",
-	"visualeditor-mwedusharingdialog-versionshow": "Which version to display?",
-	"visualeditor-mwedusharingdialog-versionshow-latest": "Always the latest",
-	"visualeditor-mwedusharingdialog-versionshow-current": "The current version",
+ "visualeditor-mwedusharingdialog-versionshow": "Which version to display?",
+ "visualeditor-mwedusharingdialog-versionshow-latest": "Always the latest",
+ "visualeditor-mwedusharingdialog-versionshow-current": "The current version",
 	"visualeditor-mwedusharingdialog-size": "Width",
-	"visualeditor-mwedusharingdialog-align": "Alignment"
+	"visualeditor-mwedusharingdialog-align": "Alignment",
+  "edusharing-placeholder-unavailable": "edu-sharing repository unavailable"
 }

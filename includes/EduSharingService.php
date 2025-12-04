@@ -25,13 +25,23 @@ class EduSharingService {
     private EduSharingTicketManager $ticketManager;    
     public EduSharingHelperBase $helperBase;
     private $nodeHelper;
+    public bool $isAvailable = true;
+    public ?string $availabilityError = null;
 
     public function __construct( User $user, Config $mwConfig ) {
 
         $this->config       = new EduSharingConfig( $user, $mwConfig );
         $this->helperBase   = new EduSharingHelperBase( $this->config->baseUrl, $this->config->privateKey, $this->config->appId );
 
-        $this->helperBase->verifyCompatibility();
+        try {
+            $this->helperBase->verifyCompatibility();
+        } catch ( \Throwable $e ) {
+            $this->isAvailable = false;
+            $msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
+            $this->availabilityError = $msg;
+            wfDebugLog( 'edusharing', 'EduSharingService unavailable: ' . $e->getMessage() );
+            return;
+        }
 
         $authHelper   = new EduSharingAuthHelper( $this->helperBase );
         $this->nodeHelper   = new EduSharingNodeHelper(
@@ -50,10 +60,16 @@ class EduSharingService {
     }
 
     public function getTicket(): ?string {
+        if ( !$this->isAvailable || !isset( $this->ticketManager ) ) {
+            return null;
+        }
         return $this->ticketManager->getTicket();
     }    
    
     public function createUsage( $postData)  {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
 
         $result = $this->nodeHelper->createUsage(
             $postData->ticket,
@@ -66,6 +82,9 @@ class EduSharingService {
 
 
     public function deleteUsage( $postData ) {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
 
         try {
             $result = $this->nodeHelper->deleteUsage(
@@ -85,6 +104,9 @@ class EduSharingService {
 
 
     public function getNode($postData) {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
 
         try {
             $result = $this->nodeHelper->getNodeByUsage(
@@ -110,10 +132,16 @@ class EduSharingService {
     }
 
     public function getSecuredNodeByUsage( Usage $usage ): SecuredNode {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
         return $this->nodeHelper->getSecuredNodeByUsage( $usage );
     }
 
     public function getRenderingServiceUrl(): string {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
         $about = $this->helperBase->getAbout();
         if ( isset( $about['renderingService2']['url'] ) ) {
             return $about['renderingService2']['url'];
@@ -132,10 +160,16 @@ class EduSharingService {
     }
 
     public function getRedirectUrl( string $mode, Usage $usage, array $additionalParams = [], ?string $userId = null, bool $rendering2 = true ): string {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
         return $this->nodeHelper->getRedirectUrl( $mode, $usage, $additionalParams, $userId, $rendering2 );
     }
 
     public function getPreview( Usage $usage, PreviewSize $size = PreviewSize::SIZE_400_PX ): CurlResult {
+        if ( !$this->isAvailable ) {
+            throw new \RuntimeException( 'edu-sharing backend unavailable' );
+        }
         return $this->nodeHelper->getPreview( $usage, $size );
     }
 

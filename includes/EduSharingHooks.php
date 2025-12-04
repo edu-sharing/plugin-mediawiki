@@ -15,6 +15,7 @@ use MediaWiki\Config\Config;
 use MediaWiki\Content\TextContent;
 use MediaWiki\Json\FormatJson;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Context\RequestContext;
 use MediaWiki\Page\ProperPageIdentity;
 use MediaWiki\Page\PageReference;
 use MediaWiki\Permissions\Authority;
@@ -52,13 +53,13 @@ class EduSharingHooks implements
      */
     /** @inheritDoc */
     public function onMakeGlobalVariablesScript( &$vars, $out ): void {
-        
+
         $user    = $out->getUser();
         $services = MediaWikiServices::getInstance();
         $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
         $eduService = new EduSharingService( $user, $mwConfig );
-        $ticket = $eduService->getTicket();
+        $ticket = $eduService->getTicket() ?? '';
 
         global $wgServer, $wgScriptPath;
 
@@ -169,6 +170,9 @@ class EduSharingHooks implements
         $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
         $eduService = new EduSharingService( $user, $mwConfig );        
+        if ( !$eduService->isAvailable ) {
+            return true;
+        }
         foreach($res as $resource) {    
             self::deleteResourceAndUsage( $eduService, $resource );
         }
@@ -207,6 +211,9 @@ class EduSharingHooks implements
         $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
         $eduService = new EduSharingService( $user, $mwConfig );  
+        if ( !$eduService->isAvailable ) {
+            return;
+        }
         self::syncArticleResources( $eduService, $pageIdentity, $text, true );
         
     }
@@ -220,6 +227,9 @@ class EduSharingHooks implements
     */
     private static function syncArticleResources( EduSharingService $eduService, PageReference|ProperPageIdentity $pageRef, string &$text, bool $isRestore ): array {
         $resourceIds = [];
+        if ( !$eduService->isAvailable ) {
+            return $resourceIds;
+        }
         $old_list = [];
         $pageId = NULL;
         /*
@@ -373,6 +383,9 @@ class EduSharingHooks implements
         $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
         $eduService = new EduSharingService( $user, $mwConfig );
+        if ( !$eduService->isAvailable ) {
+            return true;
+        }
 
         $resourceIds = self::syncArticleResources( $eduService, $pageRef, $text, false );
 
@@ -485,6 +498,39 @@ class EduSharingHooks implements
 
         $eduService = new EduSharingService( $user, $mwConfig );
 
+        if ( !$eduService->isAvailable ) {
+            $float = $res->EDUSHARING_RESOURCE_FLOAT ?? ( $args['float'] ?? 'none' );
+            switch ( $float ) {
+                case 'left':
+                    $classes = 'tleft';
+                    break;
+                case 'right':
+                    $classes = 'tright';
+                    break;
+                case 'center':
+                    $classes = 'tnone center';
+                    break;
+                case 'inline':
+                    $classes = 'tnone center';
+                    break;
+                case 'none':
+                default:
+                    $classes = 'tnone center';
+                    break;
+            }
+            $width = isset( $args['width'] ) ? (int)$args['width'] : null;
+            $wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
+            $msgKey = 'edusharing-placeholder-unavailable';
+            $msg = wfMessage( $msgKey )->isDisabled()
+                ? 'edu-sharing repository unavailable'
+                : wfMessage( $msgKey )->text();
+            if ( $eduService->availabilityError ) {
+                $msg .= ' (' . $eduService->availabilityError . ')';
+            }
+            return '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner"><div class="edu_wrapper edusharing-render" style="padding:8px;border:1px dashed #ccc;">'
+                . htmlspecialchars( $msg ) . '</div></div></div>';
+        }
+
         $nodeId = str_replace( 'ccrep://local/', '', $args['id'] );
         $usage = new Usage(
             $nodeId,
@@ -572,6 +618,12 @@ class EduSharingHooks implements
         $parser->getOutput()->addModules( [ 'ext.eduSharing.render' ] );
 
         $componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
+
+        // Store JWT in the session so follow-up proxy calls (e.g., job polling) can forward it
+        $req = RequestContext::getMain()->getRequest();
+        if ( $req ) {
+            $req->getSession()->set( 'edusharingJwt', $securedNode->jwt );
+        }
 
         $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '>';
         $html .= '<div class="thumbinner"><div class="edu_wrapper edusharing-render" id="' . $wrapperId . '" data-edusharing-config="' . htmlspecialchars( $componentJson, ENT_QUOTES ) . '" ' . $wrapperWidth . '></div></div></div>';

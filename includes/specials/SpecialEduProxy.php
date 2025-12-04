@@ -18,6 +18,11 @@ class SpecialEduProxy extends SpecialPage {
         $config = $services->getConfigFactory()->makeConfig( 'edusharing' );
         $eduService = new EduSharingService( $this->getUser(), $config );
 
+        if ( !$eduService->isAvailable ) {
+            $this->outputError( 503, 'edu-sharing backend unavailable' );
+            return;
+        }
+
         $path = ltrim( (string)$par, '/' );
         $isRest = str_starts_with( $path, 'rest/' );
         $isAsset = str_starts_with( $path, 'web-components/rendering-service' );
@@ -90,6 +95,8 @@ class SpecialEduProxy extends SpecialPage {
 
         $forwardHeaders = [];
         $hasAuthHeader = false;
+        $session = $this->getRequest()->getSession();
+        $sessionJwt = $session->get( 'edusharingJwt' );
         foreach ( getallheaders() as $name => $value ) {
             $nameLower = strtolower( $name );
             if ( in_array( $nameLower, $skipHeaders, true ) ) {
@@ -103,13 +110,28 @@ class SpecialEduProxy extends SpecialPage {
 
         // Add edu-sharing auth headers (not for static assets)
         $ticket = $eduService->getTicket();
-        if ( !$isAsset && $ticket ) {
+        if ( $isRest && !$isAsset && $ticket && !$hasAuthHeader ) {
             $forwardHeaders = array_filter(
                 $forwardHeaders,
                 static fn ( $h ) => stripos( $h, 'Authorization:' ) !== 0
             );
             $forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
             $forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
+        }
+        // Public job polling may also require auth; attach ticket if none is present
+        // If we have a JWT stored from rendering, prefer forwarding it for job polling
+        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
+            if ( !$hasAuthHeader && $sessionJwt ) {
+                // Remove any previous Authorization we might have added above
+                $forwardHeaders = array_filter(
+                    $forwardHeaders,
+                    static fn ( $h ) => stripos( $h, 'Authorization:' ) !== 0
+                );
+                $forwardHeaders[] = 'Authorization: Bearer ' . $sessionJwt;
+            } elseif ( !$hasAuthHeader && $ticket ) {
+                $forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
+                $forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
+            }
         }
 
         // Add signing headers for REST endpoints
@@ -141,7 +163,33 @@ class SpecialEduProxy extends SpecialPage {
             }
         }
 
+        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
+            $logHeaders = array_map(
+                static fn ( $h ) => stripos( $h, 'Authorization:' ) === 0 ? 'Authorization: [redacted]' : $h,
+                $forwardHeaders
+            );
+            wfDebugLog( 'edusharing', 'Public job proxy ' . json_encode( [
+                'method' => $method,
+                'path' => $path,
+                'targetUrl' => $targetUrl,
+                'headers' => $logHeaders,
+            ], JSON_UNESCAPED_SLASHES ) );
+        }
+
         try {
+            $responseHeaders = [];
+            $headerFn = static function ( $ch, $header ) use ( &$responseHeaders ) {
+                $len = strlen( $header );
+                // Reset on new response (handles redirects)
+                if ( stripos( $header, 'HTTP/' ) === 0 ) {
+                    $responseHeaders = [];
+                }
+                $trimmed = trim( $header );
+                if ( $trimmed !== '' ) {
+                    $responseHeaders[] = $trimmed;
+                }
+                return $len;
+            };
             $result = $eduService->helperBase->handleCurlRequest( $targetUrl, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
@@ -151,10 +199,23 @@ class SpecialEduProxy extends SpecialPage {
                 CURLOPT_CUSTOMREQUEST => $method,
                 CURLOPT_HTTPHEADER => $forwardHeaders,
                 CURLOPT_POSTFIELDS => $body,
+                CURLOPT_HEADERFUNCTION => $headerFn,
             ] );
         } catch ( \Throwable $e ) {
             $this->outputError( 500, 'Proxy failed: ' . $e->getMessage() );
             return;
+        }
+
+        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
+            $bodyPreview = $result->content;
+            if ( strlen( $bodyPreview ) > 300 ) {
+                $bodyPreview = substr( $bodyPreview, 0, 300 ) . '...';
+            }
+            wfDebugLog( 'edusharing', 'Public job proxy result ' . json_encode( [
+                'status' => (int)( $result->info['http_code'] ?? 0 ),
+                'contentType' => $result->info['content_type'] ?? null,
+                'body' => $bodyPreview,
+            ], JSON_UNESCAPED_SLASHES ) );
         }
 
         $status = (int)( $result->info['http_code'] ?? 500 );
@@ -163,6 +224,19 @@ class SpecialEduProxy extends SpecialPage {
         $contentType = $result->info['content_type'] ?? 'application/octet-stream';
         header( 'Content-Type: ' . $contentType );
         header( 'Access-Control-Allow-Origin: *' );
+        if ( !empty( $responseHeaders ) ) {
+            $host = $this->getRequest()->getHeader( 'Host' ) ?: parse_url( $this->getRequest()->getFullRequestURL(), PHP_URL_HOST );
+            foreach ( $responseHeaders as $hdr ) {
+                if ( stripos( $hdr, 'Set-Cookie:' ) === 0 ) {
+                    $cookie = $hdr;
+                    if ( $host && stripos( $cookie, 'Domain=' ) !== false ) {
+                        // Rewrite upstream cookie domain to current host so the browser accepts it
+                        $cookie = preg_replace( '/Domain=[^;]+/i', 'Domain=' . $host, $cookie );
+                    }
+                    header( $cookie, false );
+                }
+            }
+        }
         if ( str_contains( $path, 'edu-service-worker.js' ) ) {
             header( 'Service-Worker-Allowed: /' );
         }
