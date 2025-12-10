@@ -34,11 +34,6 @@ class SpecialEduProxy extends SpecialPage {
             $this->outputError( 400, 'Invalid proxy target' );
             return;
         }
-        if ( str_contains( $path, 'public/tracking' ) ) {
-            http_response_code( 204 );
-            header( 'Access-Control-Allow-Origin: *' );
-            return;
-        }
 
         $params = $this->getRequest()->getValues();
         unset( $params['title'] );
@@ -79,8 +74,6 @@ class SpecialEduProxy extends SpecialPage {
         $skipHeaders = [
             'host',
             'content-length',
-            'origin',
-            'referer',
             'sec-fetch-mode',
             'sec-fetch-site',
             'sec-fetch-dest',
@@ -95,6 +88,7 @@ class SpecialEduProxy extends SpecialPage {
 
         $forwardHeaders = [];
         $hasAuthHeader = false;
+        $hasOriginHeader = false;
         $session = $this->getRequest()->getSession();
         $sessionJwt = $session->get( 'edusharingJwt' );
         foreach ( getallheaders() as $name => $value ) {
@@ -105,7 +99,21 @@ class SpecialEduProxy extends SpecialPage {
             if ( $nameLower === 'authorization' ) {
                 $hasAuthHeader = true;
             }
+            if ( $nameLower === 'origin' ) {
+                $hasOriginHeader = true;
+            }
             $forwardHeaders[] = $name . ': ' . $value;
+        }
+        if ( !$hasOriginHeader ) {
+            $reqUrl = $this->getRequest()->getFullRequestURL();
+            $parts = parse_url( $reqUrl );
+            if ( isset( $parts['scheme'], $parts['host'] ) ) {
+                $origin = $parts['scheme'] . '://' . $parts['host'];
+                if ( isset( $parts['port'] ) ) {
+                    $origin .= ':' . $parts['port'];
+                }
+                $forwardHeaders[] = 'Origin: ' . $origin;
+            }
         }
 
         // Add edu-sharing auth headers (not for static assets)
@@ -163,12 +171,13 @@ class SpecialEduProxy extends SpecialPage {
             }
         }
 
-        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
+        if ( $isPublic && ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) ) ) {
             $logHeaders = array_map(
                 static fn ( $h ) => stripos( $h, 'Authorization:' ) === 0 ? 'Authorization: [redacted]' : $h,
                 $forwardHeaders
             );
-            wfDebugLog( 'edusharing', 'Public job proxy ' . json_encode( [
+            $label = str_contains( $path, 'public/job' ) ? 'Public job proxy' : 'Public renderdata proxy';
+            wfDebugLog( 'edusharing', $label . ' ' . json_encode( [
                 'method' => $method,
                 'path' => $path,
                 'targetUrl' => $targetUrl,
@@ -206,15 +215,20 @@ class SpecialEduProxy extends SpecialPage {
             return;
         }
 
-        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
+        if ( $isPublic && ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) ) ) {
             $bodyPreview = $result->content;
             if ( strlen( $bodyPreview ) > 300 ) {
                 $bodyPreview = substr( $bodyPreview, 0, 300 ) . '...';
             }
-            wfDebugLog( 'edusharing', 'Public job proxy result ' . json_encode( [
+            $label = str_contains( $path, 'public/job' ) ? 'Public job proxy result' : 'Public renderdata proxy result';
+            wfDebugLog( 'edusharing', $label . ' ' . json_encode( [
                 'status' => (int)( $result->info['http_code'] ?? 0 ),
                 'contentType' => $result->info['content_type'] ?? null,
                 'body' => $bodyPreview,
+                'setCookie' => array_values( array_filter(
+                    $responseHeaders,
+                    static fn ( $h ) => stripos( $h, 'Set-Cookie:' ) === 0
+                ) ),
             ], JSON_UNESCAPED_SLASHES ) );
         }
 
@@ -232,6 +246,10 @@ class SpecialEduProxy extends SpecialPage {
                     if ( $host && stripos( $cookie, 'Domain=' ) !== false ) {
                         // Rewrite upstream cookie domain to current host so the browser accepts it
                         $cookie = preg_replace( '/Domain=[^;]+/i', 'Domain=' . $host, $cookie );
+                    }
+                    if ( stripos( $cookie, 'Path=/rendering' ) !== false ) {
+                        // Broaden path so cookie is sent to /wiki/Spezial:EduProxy/*
+                        $cookie = preg_replace( '/Path=\\/rendering/i', 'Path=/', $cookie );
                     }
                     header( $cookie, false );
                 }
