@@ -83,10 +83,31 @@ class EduSharingHooks implements
      * @return array $matches
      */
     public static function get_edutags($tag, $xml) {
-        $tag = preg_quote($tag);
-        preg_match_all('#<' . $tag . '([^>]*)>(.*)</' . $tag . '>#Umsi', $xml, $matches, PREG_PATTERN_ORDER);
+        $tag = preg_quote($tag, '#' );
+        // Match either self-closing <edusharing .../> or normal <edusharing ...>...</edusharing>
+        $pattern = '#<' . $tag . '\\b[^>]*?(?:/>|>.*?</' . $tag . '>)#is';
+        preg_match_all( $pattern, $xml, $matches, PREG_PATTERN_ORDER );
+        $tags = $matches[0] ?? [];
 
-        return $matches[0];
+        // Return both the raw match (as it appears in the text) and a normalized version
+        // that can be parsed by simplexml (expand self-closing tags).
+        $result = [];
+        foreach ( $tags as $t ) {
+            $normalized = $t;
+            if ( str_ends_with( trim( $t ), '/>' ) ) {
+                $normalized = preg_replace(
+                    '/<(' . $tag . '\\b[^>]*)\\/>/i',
+                    '<$1></' . $tag . '>',
+                    $t
+                );
+            }
+            $result[] = [
+                'raw'        => $t,
+                'normalized' => $normalized
+            ];
+        }
+
+        return $result;
     }
 
 
@@ -273,8 +294,18 @@ class EduSharingHooks implements
         /*
          * For each resource found in text 
          */
-        foreach ($matches as $edutag) {            
-            $Response   = simplexml_load_string($edutag);
+        foreach ( $matches as $match ) {
+            $edutagOriginal   = $match['raw'];
+            $edutagNormalized = $match['normalized'];
+
+            libxml_use_internal_errors( true );
+            $Response = simplexml_load_string( $edutagNormalized );
+            if ( $Response === false ) {
+                // Skip malformed tag to avoid fatal errors
+                libxml_clear_errors();
+                continue;
+            }
+            libxml_clear_errors();
 
             $resourceData = array(
                 'EDUSHARING_RESOURCE_ID' => (string)$Response['resourceid'],
@@ -343,7 +374,11 @@ class EduSharingHooks implements
             * Write properties to text
             */
             $_tag = html_entity_decode(str_replace('<?xml version="1.0"?>', '', $Response -> asXML()));
-            $text = str_replace($edutag, $_tag, $text);      
+            // Replace both the original tag (as found in the text) and the normalized variant
+            $text = str_replace( $edutagOriginal, $_tag, $text );
+            if ( $edutagNormalized !== $edutagOriginal ) {
+                $text = str_replace( $edutagNormalized, $_tag, $text );
+            }
             
         }
 
