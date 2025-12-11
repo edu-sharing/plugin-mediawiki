@@ -39,7 +39,6 @@ class EduSharingService {
             $this->isAvailable = false;
             $msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
             $this->availabilityError = $msg;
-            wfDebugLog( 'edusharing', 'EduSharingService unavailable: ' . $e->getMessage() );
             return;
         }
 

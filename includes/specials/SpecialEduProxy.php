@@ -164,12 +164,6 @@ class SpecialEduProxy extends SpecialPage {
                 $forwardHeaders
             );
             $label = str_contains( $path, 'public/job' ) ? 'Public job proxy' : 'Public renderdata proxy';
-            wfDebugLog( 'edusharing', $label . ' ' . json_encode( [
-                'method' => $method,
-                'path' => $path,
-                'targetUrl' => $targetUrl,
-                'headers' => $logHeaders,
-            ], JSON_UNESCAPED_SLASHES ) );
         }
 
         try {
@@ -208,19 +202,6 @@ class SpecialEduProxy extends SpecialPage {
                 $bodyPreview = substr( $bodyPreview, 0, 300 ) . '...';
             }
             $label = str_contains( $path, 'public/job' ) ? 'Public job proxy result' : 'Public renderdata proxy result';
-            wfDebugLog( 'edusharing', $label . ' ' . json_encode( [
-                'status' => (int)( $result->info['http_code'] ?? 0 ),
-                'contentType' => $result->info['content_type'] ?? null,
-                'body' => $bodyPreview,
-                'setCookie' => array_values( array_filter(
-                    $responseHeaders,
-                    static fn ( $h ) => stripos( $h, 'Set-Cookie:' ) === 0
-                ) ),
-                'authInfo' => array_values( array_filter(
-                    $responseHeaders,
-                    static fn ( $h ) => stripos( $h, 'Authentication-Info:' ) === 0
-                ) ),
-            ], JSON_UNESCAPED_SLASHES ) );
         }
 
         $status = (int)( $result->info['http_code'] ?? 500 );
