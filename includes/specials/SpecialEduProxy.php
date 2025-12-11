@@ -89,8 +89,6 @@ class SpecialEduProxy extends SpecialPage {
         $forwardHeaders = [];
         $hasAuthHeader = false;
         $hasOriginHeader = false;
-        $session = $this->getRequest()->getSession();
-        $sessionJwt = $session->get( 'edusharingJwt' );
         foreach ( getallheaders() as $name => $value ) {
             $nameLower = strtolower( $name );
             if ( in_array( $nameLower, $skipHeaders, true ) ) {
@@ -115,7 +113,6 @@ class SpecialEduProxy extends SpecialPage {
                 $forwardHeaders[] = 'Origin: ' . $origin;
             }
         }
-
         // Add edu-sharing auth headers (not for static assets)
         $ticket = $eduService->getTicket();
         if ( $isRest && !$isAsset && $ticket && !$hasAuthHeader ) {
@@ -126,20 +123,10 @@ class SpecialEduProxy extends SpecialPage {
             $forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
             $forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
         }
-        // Public job polling may also require auth; attach ticket if none is present
-        // If we have a JWT stored from rendering, prefer forwarding it for job polling
-        if ( $isPublic && str_contains( $path, 'public/job' ) ) {
-            if ( !$hasAuthHeader && $sessionJwt ) {
-                // Remove any previous Authorization we might have added above
-                $forwardHeaders = array_filter(
-                    $forwardHeaders,
-                    static fn ( $h ) => stripos( $h, 'Authorization:' ) !== 0
-                );
-                $forwardHeaders[] = 'Authorization: Bearer ' . $sessionJwt;
-            } elseif ( !$hasAuthHeader && $ticket ) {
-                $forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
-                $forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
-            }
+        // Public endpoints: keep client auth; only fall back to ticket if none is present
+        if ( $isPublic && ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) ) && !$hasAuthHeader && $ticket ) {
+            $forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
+            $forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
         }
 
         // Add signing headers for REST endpoints
@@ -229,6 +216,10 @@ class SpecialEduProxy extends SpecialPage {
                     $responseHeaders,
                     static fn ( $h ) => stripos( $h, 'Set-Cookie:' ) === 0
                 ) ),
+                'authInfo' => array_values( array_filter(
+                    $responseHeaders,
+                    static fn ( $h ) => stripos( $h, 'Authentication-Info:' ) === 0
+                ) ),
             ], JSON_UNESCAPED_SLASHES ) );
         }
 
@@ -247,13 +238,17 @@ class SpecialEduProxy extends SpecialPage {
                         // Rewrite upstream cookie domain to current host so the browser accepts it
                         $cookie = preg_replace( '/Domain=[^;]+/i', 'Domain=' . $host, $cookie );
                     }
-                    if ( stripos( $cookie, 'Path=/rendering' ) !== false ) {
-                        // Broaden path so cookie is sent to /wiki/Spezial:EduProxy/*
-                        $cookie = preg_replace( '/Path=\\/rendering/i', 'Path=/', $cookie );
-                    }
-                    header( $cookie, false );
+                if ( stripos( $cookie, 'Path=/rendering' ) !== false ) {
+                    // Broaden path so cookie is sent to /wiki/Spezial:EduProxy/*
+                    $cookie = preg_replace( '/Path=\\/rendering/i', 'Path=/', $cookie );
                 }
+                header( $cookie, false );
+                continue;
             }
+            if ( stripos( $hdr, 'Authentication-Info:' ) === 0 ) {
+                header( $hdr, false );
+            }
+        }
         }
         if ( str_contains( $path, 'edu-service-worker.js' ) ) {
             header( 'Service-Worker-Allowed: /' );

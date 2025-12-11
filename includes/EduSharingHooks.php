@@ -595,17 +595,26 @@ class EduSharingHooks implements
             'authorityName' => $eduService->config->username,
         ];
 
+        $renderingBase = null;
+        try {
+            $renderingBase = rtrim( $eduService->getRenderingServiceUrl(), '/' );
+        } catch ( \Throwable $e ) {
+            $renderingBase = null;
+        }
+        // Rendering calls can go directly to rendering service; assets/service worker via proxy to avoid CORS
+        $renderComponentProxyBase = $proxyBase . '/web-components/rendering-service';
+
         $componentData = [
             'id' => $wrapperId,
             'encodedNode' => $securedNode->securedNode,
             'signature' => $securedNode->signature,
             'jwt' => $securedNode->jwt,
-            'renderUrl' => $proxyBase,
+            'renderUrl' => $renderingBase ?? $proxyBase,
             'encodedUser' => base64_encode( json_encode( $userData ) ),
-            'assetsUrl' => $renderComponentBase . '/assets',
-            'scriptUrl' => $renderComponentBase . '/main.js',
-            'styleUrl' => $renderComponentBase . '/styles.css',
-            'serviceWorkerUrl' => $serviceWorkerUrl,
+            'assetsUrl' => $renderComponentProxyBase . '/assets',
+            'scriptUrl' => $renderComponentProxyBase . '/main.js',
+            'styleUrl' => $renderComponentProxyBase . '/styles.css',
+            'serviceWorkerUrl' => $useServiceWorker ? $renderComponentProxyBase . '/edu-service-worker.js' : '',
             'previewUrl' => $previewUrl,
             'resourceUrl' => $resourceUrl,
             'apiUrl' => $proxyBase . '/rest',
@@ -613,17 +622,10 @@ class EduSharingHooks implements
             'activateServiceWorker' => $useServiceWorker,
             'openInNewTab' => $eduService->config->openResourceInNewTab,
         ];
-
         // Ensure client-side rendering script is loaded
         $parser->getOutput()->addModules( [ 'ext.eduSharing.render' ] );
 
         $componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
-
-        // Store JWT in the session so follow-up proxy calls (e.g., job polling) can forward it
-        $req = RequestContext::getMain()->getRequest();
-        if ( $req ) {
-            $req->getSession()->set( 'edusharingJwt', $securedNode->jwt );
-        }
 
         $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '>';
         $html .= '<div class="thumbinner"><div class="edu_wrapper edusharing-render" id="' . $wrapperId . '" data-edusharing-config="' . htmlspecialchars( $componentJson, ENT_QUOTES ) . '" ' . $wrapperWidth . '></div></div></div>';
