@@ -2,96 +2,102 @@
 namespace MediaWiki\Extension\EduSharing;
 
 use MediaWiki\Config\Config;
-use MediaWiki\User\User; 
+use MediaWiki\User\User;
 
 class EduSharingConfig {
 
-    public $appId;
-    public $appDomain;
-    public $appHost;    
-    public $baseUrl;
-    public $contentUrl;
-    public $user;
-    public $iconMimeAudio;
-    public $iconMimeVideo;
-    
-    public $username;
-    public $eduUrl;
-    public $appType = 'LMS';
+	public $appId;
+	public $appDomain;
+	public $appHost;
+	public $baseUrl;
+	public $contentUrl;
+	public $user;
+	public $iconMimeAudio;
+	public $iconMimeVideo;
 
-    public $privateKey;
-    private $publicKey;
-    private $repoPublicKey;
-    private $privateKeyFile;
-    private $publicKeyFile;
-    private $repoPublicKeyFile;
-    private $repoGuestUserName;
-    private $repoForceGuestUser;
-    public bool $enableServiceWorker;
-    public string $repoId;
-    public string $redirectEndpoint;
-    public string $previewEndpoint;
-    public bool $openResourceInNewTab;
+	public $username;
+	public $eduUrl;
+	public $appType = 'LMS';
 
-    public function __construct( User $user, Config $config ) {
+	public $privateKey;
+	private $publicKey;
+	private $repoPublicKey;
+	private $privateKeyFile;
+	private $publicKeyFile;
+	private $repoPublicKeyFile;
+	private $repoGuestUserName;
+	private $repoForceGuestUser;
+	public bool $enableServiceWorker;
+	public string $repoId;
+	public string $redirectEndpoint;
+	public string $previewEndpoint;
+	public bool $openResourceInNewTab;
 
-        $this->appId                = $config->get( 'EduSharingAppId' );
-        $this->appDomain            = $config->get( 'EduSharingAppDomain' );
-        $this->appHost              = $config->get( 'EduSharingAppHost' );
-        $this->baseUrl              = $config->get( 'EduSharingBaseUrl' );
-        $this->contentUrl           = $this->baseUrl . '/renderingproxy';
-        $this->user                 = $user;
-        $this->privateKeyFile       = $config->get( 'EduSharingPrivateKeyFile' );
-        $this->publicKeyFile        = $config->get( 'EduSharingPublicKeyFile' );
-        $this->repoPublicKeyFile    = $config->get( 'EduSharingRepoPublicKeyFile' );
-        $this->repoGuestUserName    = $config->get( 'EduSharingGuestUserName' );
-        $this->repoForceGuestUser   = $config->get( 'EduSharingForceGuestUser' );
-        $this->enableServiceWorker  = (bool)$config->get( 'EduSharingEnableServiceWorker' );
-        $this->repoId               = (string)$config->get( 'EduSharingRepoId' );
-        $this->redirectEndpoint     = (string)$config->get( 'EduSharingRedirectEndpoint' );
-        $this->previewEndpoint      = (string)$config->get( 'EduSharingPreviewEndpoint' );
-        $this->openResourceInNewTab = (bool)$config->get( 'EduSharingOpenResourceInNewTab' );
+	public function __construct( User $user, Config $config ) {
+		$this->appId                = $config->get( 'EduSharingAppId' );
+		$this->appDomain            = $config->get( 'EduSharingAppDomain' );
+		$this->appHost              = $config->get( 'EduSharingAppHost' );
+		$this->baseUrl              = $config->get( 'EduSharingBaseUrl' );
+		$this->contentUrl           = $this->baseUrl . '/renderingproxy';
+		$this->user                 = $user;
+		$this->privateKeyFile       = $config->get( 'EduSharingPrivateKeyFile' );
+		$this->publicKeyFile        = $config->get( 'EduSharingPublicKeyFile' );
+		$this->repoPublicKeyFile    = $config->get( 'EduSharingRepoPublicKeyFile' );
+		$this->repoGuestUserName    = $config->get( 'EduSharingGuestUserName' );
+		$this->repoForceGuestUser   = $config->get( 'EduSharingForceGuestUser' );
+		$this->enableServiceWorker  = (bool)$config->get( 'EduSharingEnableServiceWorker' );
+		$this->repoId               = (string)$config->get( 'EduSharingRepoId' );
+		$this->redirectEndpoint     = (string)$config->get( 'EduSharingRedirectEndpoint' );
+		$this->previewEndpoint      = (string)$config->get( 'EduSharingPreviewEndpoint' );
+		$this->openResourceInNewTab = (bool)$config->get( 'EduSharingOpenResourceInNewTab' );
 
-        if ( empty( $user ) || filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false || $this->repoForceGuestUser === true )
-            $this->username = $this->repoGuestUserName;
-        else
-            $this->username = trim( strtolower( $user->getName() ) );
-        $this->loadPrivateKeyFromFile();
-    }
-    
-    public function getPublicKey() {
-        if ( !$this->publicKey ) 
-            $this->loadPublicKeyFromFile();
-        
-        return $this->publicKey;
-    }
+		if (
+				empty( $user ) ||
+				filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false ||
+				$this->repoForceGuestUser === true
+			) {
+			$this->username = $this->repoGuestUserName;
+		} else {
+			$this->username = trim( strtolower( $user->getName() ) );
+		}
+		$this->loadPrivateKeyFromFile();
+	}
 
-    public function getRepoPublicKey() {
-        if ( !$this->repoPublicKey ) 
-            $this->loadRepoPublicKeyFromFile();
-        
-        return $this->repoPublicKey;
-    }
+	public function getPublicKey() {
+		if ( !$this->publicKey ) {
+			$this->loadPublicKeyFromFile();
+		}
 
-    private function loadPrivateKeyFromFile() {
+		return $this->publicKey;
+	}
 
-        $this->privateKey = @file_get_contents( $this->privateKeyFile );
-        if ( !$this->privateKey )
-            error_log( "no private key" );    
-    }
+	public function getRepoPublicKey() {
+		if ( !$this->repoPublicKey ) {
+			$this->loadRepoPublicKeyFromFile();
+		}
 
-    private function loadRepoPublicKeyFromFile() {
+		return $this->repoPublicKey;
+	}
 
-        $this->repoPublicKey = @file_get_contents( $this->repoPublicKeyFile );
-        if ( !$this->repoPublicKey )
-            error_log( "no repository public key" );
-    }
+	private function loadPrivateKeyFromFile() {
+		$this->privateKey = @file_get_contents( $this->privateKeyFile );
+		if ( !$this->privateKey ) {
+			error_log( "no private key" );
+		}
+	}
 
-    private function loadPublicKeyFromFile() {
+	private function loadRepoPublicKeyFromFile() {
+		$this->repoPublicKey = @file_get_contents( $this->repoPublicKeyFile );
+		if ( !$this->repoPublicKey ) {
+			error_log( "no repository public key" );
+		}
+	}
 
-        $this->publicKey = @file_get_contents( $this->publicKeyFile );
-        if ( !$this->publicKey )
-        error_log( "no public key" );
-    }
+	private function loadPublicKeyFromFile() {
+		$this->publicKey = @file_get_contents( $this->publicKeyFile );
+		if ( !$this->publicKey ) {
+			error_log( "no public key" );
+		}
+	}
 
 }

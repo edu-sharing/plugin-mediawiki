@@ -1,8 +1,8 @@
 <?php
 /**
- * Create a pair of private / public keys for edusharing extension 
+ * Create a pair of private / public keys for edusharing extension
  * and retrieve the public key from the configured edu-sharing - repository.
- * 
+ *
  * Usage: php createKeys.php [--regenerate-key-pair] [--get-repo-key-only]
  * where
  *   [--regenerate-key-pair] regenerates the keys even if there are exisitng ones
@@ -103,4 +103,3 @@ class createEduSharingKeys extends Maintenance {
 
 $maintClass = createEduSharingKeys::class;
 require_once RUN_MAINTENANCE_IF_MAIN;
-?>
