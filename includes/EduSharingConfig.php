@@ -41,8 +41,6 @@ class EduSharingConfig {
         $this->baseUrl              = $config->get( 'EduSharingBaseUrl' );
         $this->contentUrl           = $this->baseUrl . '/renderingproxy';
         $this->user                 = $user;
-        $this->iconMimeAudio        = $config->get( 'EduSharingIconMimeAudio' );
-        $this->iconMimeVideo        = $config->get( 'EduSharingIconMimeVideo' );
         $this->privateKeyFile       = $config->get( 'EduSharingPrivateKeyFile' );
         $this->publicKeyFile        = $config->get( 'EduSharingPublicKeyFile' );
         $this->repoPublicKeyFile    = $config->get( 'EduSharingRepoPublicKeyFile' );
