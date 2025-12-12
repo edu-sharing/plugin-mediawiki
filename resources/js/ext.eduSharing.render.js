@@ -119,8 +119,11 @@
 		}
 	};
 
-	const init = () => {
-		document.querySelectorAll( '.edusharing-render[data-edusharing-config]' ).forEach( ( wrapper ) => {
+	const init = ( root ) => {
+		( root || document ).querySelectorAll( '.edusharing-render[data-edusharing-config]' ).forEach( ( wrapper ) => {
+			if ( wrapper.dataset.edusharingInit === '1' ) {
+				return;
+			}
 			const raw = wrapper.getAttribute( 'data-edusharing-config' );
 			if ( !raw ) {
 				return;
@@ -131,6 +134,7 @@
 			} catch ( e ) {
 				return;
 			}
+			wrapper.dataset.edusharingInit = '1';
 			loadAssetsOnce( config );
 			installRewrite( config.apiUrl, config.renderUrl );
 			registerServiceWorker( config ).catch( () => {} );
@@ -145,9 +149,20 @@
 		} );
 	};
 
+	// Run on initial page load
 	if ( document.readyState === 'complete' || document.readyState === 'interactive' ) {
 		init();
 	} else {
-		document.addEventListener( 'DOMContentLoaded', init );
+		document.addEventListener( 'DOMContentLoaded', () => init() );
+	}
+
+	// Re-run after post-edit reloads and other content replacements
+	if ( mw && mw.hook ) {
+		mw.hook( 'wikipage.content' ).add( ( $content ) => {
+			// $content is a jQuery object; pass underlying node if present
+			const node = $content && $content[ 0 ] ? $content[ 0 ] : document;
+			init( node );
+		} );
+		mw.hook( 'postEdit' ).add( () => init() );
 	}
 }() );
