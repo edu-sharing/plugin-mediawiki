@@ -1,73 +1,74 @@
-!function(){function a(a,b){var c=void 0!==window.pageYOffset?window.pageYOffset:(document.documentElement||document.body.parentNode||document.body).scrollTop,d=document.documentElement.clientHeight,e=c+d;b=b||0;var f=a.getBoundingClientRect();if(0===f.height)return!1;var g=f.top+c-b,h=f.bottom+c+b;return h>c&&e>g}jQuery.expr[":"]["near-viewport"]=function(b,c,d){var e=parseInt(d[3])||0;return a(b,e)}}();
+/**
+ * EduSharing Loading Spinner
+ *
+ * This script provides functions to manage loading spinners for EduSharing containers.
+ * It removes spinners once the EduSharing content is rendered and observes dynamic changes
+ * in the DOM to ensure spinners are removed as needed.
+ *
+ * @author   Jan Böhme <jan@idea-sketch.com>
+ * @author   Uwe Schützenmeister <uwe@idea-sketch.com>
+ * @license  MIT
+ */
 
-function eduSharingScripts() {
+/**
+ * Removes the loading spinner from a specified container.
+ *
+ * @function removeSpinner
+ * @param {HTMLElement} container The container element from which the spinner should be removed
+ */
+function removeSpinner(container) {
+    const spinner = container.querySelector('.spinnerContainer');
+    if (spinner) {
+        spinner.remove();
+    }
+}
 
-	$.ajaxSetup({ cache: false });
-	
-	function renderEsObject(esObject, wrapper) {
-		var url = esObject.attr("data-url");
-        var videoFormat = 'webm';
-        var v = document.createElement('video');
-        if(v.canPlayType && v.canPlayType('video/mp4').replace(/no/, '')) {
-            videoFormat = 'mp4';
-        }
-        url += '&videoFormat='+videoFormat;
-
-		if(typeof wrapper == 'undefined')
-            var wrapper = esObject.parent();
-
-		$.get(url, function(data) {
-			wrapper.html('').append(data);
-			if (data.toLowerCase().indexOf('data-view="lock"') >= 0)
-				setTimeout(function(){ renderEsObject(esObject, wrapper);}, 1111);
-		});
-		
-		// $('.edu_wrapper').css({width: 'auto', height: 'auto'});
-        $('.edu_wrapper').css({'min-width': '300px', 'height': 'auto'});
-		esObject.removeAttr("data-type");
-	}
-	
-	$("[data-type='esObject']:near-viewport(400)").each(function() {
-		renderEsObject($(this));
-	});
-
-	$(window).scroll(function() {
-		$("[data-type='esObject']:near-viewport(400)").each(function() {
-			renderEsObject($(this));
-		});
-	});
-
-    $("body").unbind('click').click(function(e) {
-        if ($(e.target).closest(".edusharing_metadata").length) {
-            // clicked inside ".edusharing_metadata" - do nothing
-        } else {
-            $(".edusharing_metadata_toggle_button").text($(".edusharing_metadata_toggle_button").data('textopen'));
-            $(".edusharing_metadata").hide();
-            if ($(e.target).closest(".edusharing_metadata_toggle_button").length) {
-                $(".edusharing_metadata_toggle_button").text($(this).data('textopen'));
-                $(".edusharing_metadata").hide();
-                toggle_button = $(e.target);
-                metadata = toggle_button.parent().find(".edusharing_metadata");
-                if (metadata.hasClass('open')) {
-                    metadata.removeClass('open');
-                    metadata.hide();
-                    toggle_button.text(toggle_button.data('textopen'));
-                } else {
-                    $(".edusharing_metadata").removeClass('open');
-                    metadata.addClass('open');
-                    metadata.show();
-                    toggle_button.text(toggle_button.data('textclose'));
-                }
-            } else {
-                $(".edusharing_metadata").removeClass('open');
-            }
+/**
+ * Checks all EduSharing containers and removes spinners if the content is rendered.
+ *
+ * @function checkContainers
+ */
+function checkContainers() {
+    const containers = document.querySelectorAll('.mw-edusharing-container');
+    containers.forEach(container => {
+        if (container.querySelector('edu-sharing-render')) {
+            removeSpinner(container);
         }
     });
-};
+}
 
-$(document).ready(function() {
-    eduSharingScripts();
+// MutationObserver to watch for dynamic changes in the DOM
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes) {
+            checkContainers();
+        }
+    });
 });
-  
-// Reload script when closing VisualEditor
-mw.hook( "ve.deactivationComplete" ).add( eduSharingScripts );
+
+// Observe the entire document body for changes
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+/**
+ * Initializes the EduSharing spinner management when the document is ready.
+ */
+jQuery(document).ready(function($) {
+    if (typeof eduSharingScripts === 'function') {
+        eduSharingScripts();
+    }
+    checkContainers();
+});
+
+/**
+ * Reloads the EduSharing scripts when the VisualEditor is deactivated.
+ */
+if (typeof mw !== 'undefined' && typeof mw.hook === 'function') {
+    mw.hook("ve.deactivationComplete").add(function() {
+        if (typeof eduSharingScripts === 'function') {
+            eduSharingScripts();
+        }
+    });
+}

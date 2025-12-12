@@ -1,6 +1,12 @@
 // Output
 .mw-edusharing-container {
+	position: relative;
+	min-width: 400px;
+	min-height: 250px;
 	background: #f8f8f8;
+	.inline-metadata {
+		background-color: transparent !important;
+	}
 	img {
 		max-width: 100%;
 		height: auto;
@@ -64,7 +70,12 @@
 
 // Spinner
 .spinnerContainer {
-	width: 180px;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	color: rgba(0, 0, 0, 0.0); /*do not change*/
 }
 

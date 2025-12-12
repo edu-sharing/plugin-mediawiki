@@ -662,7 +662,7 @@ class EduSharingHooks implements
 
         $componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
 
-        $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '>';
+        $html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div data-type="esObject" class="spinnerContainer"><div class="inner"><div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div></div><div class="inner"><div class="spinner3"></div></div></div>';
         $html .= '<div class="thumbinner"><div class="edu_wrapper edusharing-render" id="' . $wrapperId . '" data-edusharing-config="' . htmlspecialchars( $componentJson, ENT_QUOTES ) . '" ' . $wrapperWidth . '></div></div></div>';
 
         return $html;
