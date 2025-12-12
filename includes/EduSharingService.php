@@ -22,7 +22,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 class EduSharingService {
 
     public EduSharingConfig $config;
-    private EduSharingTicketManager $ticketManager;    
+    private EduSharingTicketManager $ticketManager;
     public EduSharingHelperBase $helperBase;
     private $nodeHelper;
     public bool $isAvailable = true;
@@ -31,6 +31,12 @@ class EduSharingService {
     public function __construct( User $user, Config $mwConfig ) {
 
         $this->config       = new EduSharingConfig( $user, $mwConfig );
+        if ( !$this->config->privateKey ) {
+            $this->isAvailable = false;
+            $this->availabilityError = wfMessage( 'edusharing-missing-keys-hint' )->inContentLanguage()->text();
+            return;
+        }
+
         $this->helperBase   = new EduSharingHelperBase( $this->config->baseUrl, $this->config->privateKey, $this->config->appId );
 
         try {
@@ -38,6 +44,14 @@ class EduSharingService {
         } catch ( \Throwable $e ) {
             $this->isAvailable = false;
             $msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
+            // If keys exist but signature verification fails, offer guidance
+            $hasLocalKeys = (bool)$this->config->getPublicKey() && (bool)$this->config->getRepoPublicKey();
+            if ( $hasLocalKeys && $msg && stripos( $msg, 'signature' ) !== false ) {
+                $hint = wfMessage( 'edusharing-signature-invalid-hint' )->inContentLanguage()->text();
+                if ( $hint ) {
+                    $msg .= ' - ' . $hint;
+                }
+            }
             $this->availabilityError = $msg;
             return;
         }

@@ -579,7 +579,43 @@ class EduSharingHooks implements
             $securedNode = $eduService->getSecuredNodeByUsage( $usage );
             $renderingUrl = rtrim( $eduService->getRenderingServiceUrl(), '/' );
         } catch ( \Throwable $e ) {
-            return 'edu-sharing rendering failed: ' . htmlspecialchars( $e->getMessage() );
+            $err = trim( $e->getMessage() );
+            $float = $args['float'] ?? 'none';
+            switch ( $float ) {
+                case 'left':
+                    $classes = 'tleft';
+                    break;
+                case 'right':
+                    $classes = 'tright';
+                    break;
+                case 'center':
+                    $classes = 'tnone center';
+                    break;
+                case 'inline':
+                    $classes = 'tnone center';
+                    break;
+                case 'none':
+                default:
+                    $classes = 'tnone center';
+                    break;
+            }
+            $width = isset( $args['width'] ) ? (int)$args['width'] : null;
+            $wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
+            $hint = '';
+            if ( stripos( $err, 'signature' ) !== false ) {
+                $hintMsg = wfMessage( 'edusharing-signature-invalid-hint' )->isDisabled()
+                    ? ''
+                    : wfMessage( 'edusharing-signature-invalid-hint' )->text();
+                $hint = $hintMsg ?: '';
+            }
+            $msg = 'edu-sharing rendering failed';
+            if ( $hint ) {
+                $msg .= ': ' . $hint;
+            } elseif ( $err ) {
+                $msg .= ': ' . $err;
+            }
+            return '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth . '><div class="thumbinner"><div class="edu_wrapper edusharing-render" style="padding:8px;border:1px dashed #ccc;">'
+                . htmlspecialchars( $msg ) . '</div></div></div>';
         }
 
         $float = $args['float'] ?? 'none';

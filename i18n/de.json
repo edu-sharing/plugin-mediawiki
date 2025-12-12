@@ -23,5 +23,7 @@
 	"visualeditor-mwedusharingdialog-versionshow-current": "Die derzeitige Version",
 	"visualeditor-mwedusharingdialog-size": "Breite",
 	"visualeditor-mwedusharingdialog-align": "Ausrichtung",
-	"edusharing-placeholder-unavailable": "edu-sharing Repository nicht verfügbar"
+	"edusharing-placeholder-unavailable": "edu-sharing Repository nicht verfügbar",
+	"edusharing-missing-keys-hint": "Keine edu-sharing-Schlüssel gefunden. Führen Sie das Wartungsskript „php extensions/EduSharing/maintenance/createKeys.php“ aus und registrieren Sie diese Installation am Repository.",
+	"edusharing-signature-invalid-hint": "Signaturprüfung fehlgeschlagen. Haben Sie die EduSharing - Extension mit den aktuellen Schlüsseln erneut am Repository registriert?"
 }

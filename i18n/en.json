@@ -19,10 +19,12 @@
   "visualeditor-mwedusharingdialog-mimetype": "Mimetype",
 	"visualeditor-mwedusharingdialog-version": "Version",
 	"visualeditor-mwedusharingdialog-repotype": "Repotype",
- "visualeditor-mwedusharingdialog-versionshow": "Which version to display?",
- "visualeditor-mwedusharingdialog-versionshow-latest": "Always the latest",
- "visualeditor-mwedusharingdialog-versionshow-current": "The current version",
+  "visualeditor-mwedusharingdialog-versionshow": "Which version to display?",
+  "visualeditor-mwedusharingdialog-versionshow-latest": "Always the latest",
+  "visualeditor-mwedusharingdialog-versionshow-current": "The current version",
 	"visualeditor-mwedusharingdialog-size": "Width",
 	"visualeditor-mwedusharingdialog-align": "Alignment",
-  "edusharing-placeholder-unavailable": "edu-sharing repository unavailable"
+  "edusharing-placeholder-unavailable": "edu-sharing repository unavailable",
+  "edusharing-missing-keys-hint": "No edu-sharing keys found. Run the maintenance script \"php extensions/EduSharing/maintenance/createKeys.php\" and register this installation at the repository.",
+  "edusharing-signature-invalid-hint": "Signature verification failed. Did you register the EduSharing extension at repository using the current keys?"
 }
