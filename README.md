@@ -1,62 +1,184 @@
-EduSharing mediawiki extension
-============================
+# EduSharing
 
-This extension adds a selection dialogue to the VisualEditor and WikiEditor extensions to select resources from an edu-sharing repository for use on your wiki.
+# Purpose
 
-You should have installed either the [VisualEditor](https://www.mediawiki.org/wiki/Extension:VisualEditor) or the [WikiEditor](https://www.mediawiki.org/wiki/Extension:WikiEditor) (or both) to make use of this functionality.
+EduSharing is a MediaWiki extension that integrates **edu-sharing repositories** into your wiki. It adds a selection dialogue to the **VisualEditor**, allowing users to embed educational resources from an edu-sharing repository directly into wiki pages.
 
-This extension works with Mediawiki 1.35 or higher versions.
-More information about edu-sharing can be found on the [edu-sharing homepage](http://www.edu-sharing.com).
+**Features:**
 
-Installation
-------------
-- Clone the git repositry into your Mediawiki extension folder ([MEDIAWIKI_INSTALL_DIR]/extensions/EduSharing/)
-- use --recurse-submodules with git clone or execute git submodule update --init after cloning to get the edu-sharing api client
-- Add/adjust the following values in LocalSettings.php
-  - wfLoadExtension( 'EduSharing' );
-- run php maintenance/update.php to create or update the necessary database table "edusharing_resource"
-OR   
-- Open [MEDIAWIKI_INSTALL_URL]/mw-config and upgrade your mediawiki to create/update the table.
+- Seamless integration with **VisualEditor**.
+- Direct access to resources from **edu-sharing repository**.
+- Compatible with **MediaWiki 1.43 and higher**
 
-Extension registration
-----------------------
-You will have to register the extension with an edu-sahing repository in order to use edu-sharing resources.
+---
 
-Adjust the following configuration values in your LocalSettings.php according to your repository:
+# How does it work
 
-- $wgEduSharingAppId = "your-wiki-app-id";
-- $wgEduSharingAppDomain = "yourwiki.domain.tld";
-- $wgEduSharingAppHost = "12.345.67.89"; 
-- $wgEduSharingBaseUrl = 'https://redaktion-staging.openeduhub.net/edu-sharing';
+The extension enables users to search and select resources from an edu-sharing repository via a dedicated dialogue in the editor. Selected resources are embedded as links or previews, depending on the repository’s configuration and the resource type.
 
-go to the extension's maintenance-folder [MEDIAWIKI_INSTALL_DIR]/extensions/EduSharing/maintenance and run
-php createKeys.php to generate a key pair for use with the repository and retrieve the repository's public key.
-(Usage: php createKeys.php [--regenerate-key-pair] [--get-repo-key-only])
+---
 
-At this moment this extension has no automatic registration procedure so you have to register it manually.
+# Requirements
 
-Go to your repository's admin page and enter the follwing URL to provide the xml with the necessary configuration data:
+- **MediaWiki 1.43+**
+- **PHP 8.0** (or higher, depending on your MediaWiki version).
+- Access to the **edu-sharing repository** (e.g., [edu-sharing Network](http://www.edu-sharing.com/)).
+- **VisualEditor** must be installed to use the selection dialogue.
 
-https://yourwiki.domain.tld/index.php?title=Special:EduSharingRegister
+---
 
+# Usage
 
+The extension adds a new button to the VisualEditor toolbar, which opens a dialogue to search and select resources from the configured edu-sharing repository.
 
-Extension configuration
------------------------
-You can configure the extension to use anonymous access to the edu-sharing repository. By default this is used if the wiki user is not logged in but this behaviour can be enforced by adding
+## Selecting Resources
 
+1. Edit your wiki page.
+2. Choose **Insert** -> **edu-sharing Media** in the toolbar.
+3. Search for resources in the dialogue and select the desired item.
+4. Add description (caption) and choose styling options
+5. The resource will be embedded as a preview in the wiki page.
+
+## Configuration
+
+The extension requires configuration in your `LocalSettings.php`:
+
+| Variable                      | Description                                                                           | Required | Default   |
+| ----------------------------- | ------------------------------------------------------------------------------------- | -------- | --------- |
+| `$wgEduSharingAppId`          | Your wiki’s application ID for the edu-sharing repository.                            | Yes      | -         |
+| `$wgEduSharingAppDomain`      | The domain of your wiki (e.g., `yourwiki.domain.tld`).                                | Yes      | -         |
+| `$wgEduSharingAppHost`        | The IP or hostname of your wiki server.                                               | Yes      | -         |
+| `$wgEduSharingBaseUrl`        | The base URL of your edu-sharing repository (e.g., `https://repository.example.org`). | Yes      | -         |
+| `$wgEduSharingForceGuestUser` | Force anonymous access for all users.                                                 | No       | `false`   |
+| `$wgEduSharingGuestUserName`  | Username for anonymous access to the repository.                                      | No       | `esguest` |
+
+### Example Configuration
+
+```php
+# EduSharing Extension Configuration
+wfLoadExtension( 'EduSharing' );
+
+# Required: Repository connection settings
+$wgEduSharingAppId = "your-wiki-app-id";
+$wgEduSharingAppDomain = "yourwiki.domain.tld";
+$wgEduSharingAppHost = "12.345.67.89";
+$wgEduSharingBaseUrl = 'https://redaktion-staging.openeduhub.net/edu-sharing';
+
+# Optional: Force anonymous access
 $wgEduSharingForceGuestUser = true;
 
-to your LocalSettings.php file.
-
-The default username to be used with the repository for anonymous access is "esguest". It can be configured setting
-
+# Optional: Custom guest username
 $wgEduSharingGuestUserName = 'YourGuestUserName';
+```
 
-to the appropriate value.
+### Configuration Notes:
 
+- **Repository Registration**: After configuring the above, you must register your wiki with the edu-sharing repository. Run the following command to generate a key pair and retrieve the repository’s public key:
+  ```bash
+  php [MEDIAWIKI_INSTALL_DIR]/extensions/EduSharing/maintenance/createKeys.php [--regenerate-key-pair] [--get-repo-key-only]
+  ```
+- **Manual Registration**: Visit your repository’s admin page and enter the following URL to complete the registration:
+  ```
+  https://yourwiki.domain.tld/index.php?title=Special:EduSharingRegister
+  ```
 
+---
 
-Contributing
-------------
-If you plan to contribute on a regular basis, please visit our [community site](http://edu-sharing-network.org/?lang=en).
+# Installation
+
+### Download the Extension
+
+Clone the extension into your MediaWiki `extensions/` directory:
+
+```bash
+cd extensions/
+git clone --recurse-submodules <repository-url> EduSharing
+```
+
+Or, if you already cloned without submodules:
+
+```bash
+git submodule update --init
+```
+
+### Enable the Extension
+
+Add the following line to your `LocalSettings.php`:
+
+```php
+wfLoadExtension( 'EduSharing' );
+```
+
+### Set Up the Database
+
+Run the following command to create or update the required database table:
+
+```bash
+php maintenance/update.php
+```
+
+Alternatively, upgrade your wiki via `[MEDIAWIKI_INSTALL_URL]/mw-config`.
+
+### Register the Extension
+
+Follow the [Configuration](#configuration) steps to register your wiki with the edu-sharing repository.
+
+---
+
+# Features in Detail
+
+## Resource Selection Dialogue
+
+- Search and filter resources directly from the editor.
+- Supports preview and metadata display for most resource types.
+- Resources are embedded as links or interactive previews, depending on the repository’s capabilities.
+
+## Anonymous Access
+
+- By default, logged-out users access the repository as a guest.
+- You can enforce anonymous access for all users with `$wgEduSharingForceGuestUser = true;`.
+- Customize the guest username with `$wgEduSharingGuestUserName`.
+
+## Database Integration
+
+- The extension creates a `edusharing_resource` table to store metadata and references.
+- This table is automatically updated during installation or upgrades.
+
+---
+
+# Troubleshooting
+
+### No resources appear in the dialogue
+
+- Verify `$wgEduSharingBaseUrl` is correct and accessible.
+- Check that your wiki is properly registered with the repository.
+- Ensure the repository’s public key is correctly imported.
+
+### Registration fails
+
+- Double-check the URL provided to the repository admin (`Special:EduSharingRegister`).
+- Verify the key pair was generated successfully (`createKeys.php`).
+
+### Database errors
+
+- Run `php maintenance/update.php` to ensure the `edusharing_resource` table exists.
+- Check your database user permissions.
+
+---
+
+# Compatibility
+
+- **Tested with**: MediaWiki 1.43, PHP 8.0+.
+- **Repositories**: Compatible with edu-sharing 6.x+ repository.
+
+---
+
+# License
+
+The software is licensed under the **MIT License**. For details, see [LICENSE](https://opensource.org/license/mit).
+
+---
+
+# History
+
+- **2025-12-12**: Update for MediaWiki 1.43
