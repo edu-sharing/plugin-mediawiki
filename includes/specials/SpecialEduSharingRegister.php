@@ -16,6 +16,7 @@ class SpecialEduSharingRegister extends SpecialPage {
         $mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
         $eduService = new EduSharingService( $this->getUser(), $mwConfig );
+        $response = $this->getRequest()->response();
 
 		$data = [
 				'appid' => $eduService->config->appId,
@@ -36,8 +37,9 @@ class SpecialEduSharingRegister extends SpecialPage {
 
         // take over output since we dont't want any stuff around our xml
         $this->getOutput()->disable();
-
-        print $xml->asXML();
+        $response->header( 'Content-Type: application/xml; charset=UTF-8' );
+        $response->header( 'Cache-Control: no-store, must-revalidate' );
+        echo $xml->asXML();
 
 	}
 }
