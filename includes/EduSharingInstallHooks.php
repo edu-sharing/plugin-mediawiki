@@ -11,8 +11,6 @@
  */
 namespace MediaWiki\Extension\EduSharing;
 
-use MediaWiki\Installer\DatabaseUpdater;
-
 class EduSharingInstallHooks implements \MediaWiki\Installer\Hook\LoadExtensionSchemaUpdatesHook {
 
     public function onLoadExtensionSchemaUpdates( $updater ) {

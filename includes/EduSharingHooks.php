@@ -15,7 +15,6 @@ use MediaWiki\Config\Config;
 use MediaWiki\Content\TextContent;
 use MediaWiki\Json\FormatJson;
 use MediaWiki\MediaWikiServices;
-use MediaWiki\Context\RequestContext;
 use MediaWiki\Page\ProperPageIdentity;
 use MediaWiki\Page\PageReference;
 use MediaWiki\Permissions\Authority;
@@ -27,7 +26,6 @@ use EduSharingApiClient\Usage;
 use ManualLogEntry;
 use Parser;
 use StatusValue;
-use MediaWiki\Content\ContentHandler;
 
 class EduSharingHooks implements
     \MediaWiki\ResourceLoader\Hook\ResourceLoaderGetConfigVarsHook,
@@ -577,7 +575,6 @@ class EduSharingHooks implements
 
         try {
             $securedNode = $eduService->getSecuredNodeByUsage( $usage );
-            $renderingUrl = rtrim( $eduService->getRenderingServiceUrl(), '/' );
         } catch ( \Throwable $e ) {
             $err = trim( $e->getMessage() );
             $float = $args['float'] ?? 'none';
@@ -642,11 +639,9 @@ class EduSharingHooks implements
         $width = isset( $args['width'] ) ? (int)$args['width'] : null;
         $wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
 
-        $repoBase = rtrim( $eduService->config->baseUrl, '/' );
         $proxyBase = rtrim( SpecialPage::getTitleFor( 'EduProxy' )->getFullURL(), '/' );
         $renderComponentBase = $proxyBase . '/web-components/rendering-service';
         $useServiceWorker = $eduService->config->enableServiceWorker;
-        $serviceWorkerUrl = $useServiceWorker ? $renderComponentBase . '/edu-service-worker.js' : '';
         $resourceUrl = $proxyBase . '/public/redirect?mode=content'
             . '&nodeId=' . rawurlencode( $usage->nodeId )
             . '&nodeVersion=' . rawurlencode( $usage->nodeVersion ?? '' )
