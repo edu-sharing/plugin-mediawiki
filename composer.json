@@ -14,20 +14,23 @@
 			"phpcbf"
 		],
 		"test": [
-			"parallel-lint . --exclude node_modules --exclude vendor",
-			"phpcs -p -s",
+			"@lint .",
+			"@phpcs .",
 			"minus-x check ."
-		]
+		],
+		"lint": "parallel-lint . --exclude node_modules --exclude vendor",
+		"phan": "phan -d . --long-progress-bar",
+		"phpcs": "phpcs -sp --cache"
 	},
 	"extra": {
 		"phan-taint-check-plugin": "6.1.0"
 	},
-		"config": {
-				"platform": {
-						"php": "8.3"
-				},
-				"allow-plugins": {
-						"dealerdirect/phpcodesniffer-composer-installer": true
-				}
+	"config": {
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
+	}
 }
