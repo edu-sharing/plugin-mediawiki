@@ -7,10 +7,18 @@ use MediaWiki\SpecialPage\SpecialPage;
 
 class SpecialEduProxy extends SpecialPage {
 
+	/**
+	 * Proxy requests to edu-sharing rendering/API endpoints, handling cookies and headers.
+	 */
 	public function __construct() {
 		parent::__construct( 'EduProxy', '', false );
 	}
 
+	/**
+	 * Proxy a request to the configured edu-sharing rendering/API endpoints.
+	 *
+	 * @param string|null $par Remaining path to proxy
+	 */
 	public function execute( $par ) {
 		$this->getOutput()->disable();
 

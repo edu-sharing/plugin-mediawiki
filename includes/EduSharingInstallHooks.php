@@ -13,6 +13,12 @@ namespace MediaWiki\Extension\EduSharing;
 
 class EduSharingInstallHooks implements \MediaWiki\Installer\Hook\LoadExtensionSchemaUpdatesHook {
 
+	/**
+	 * Register/patch database tables for the edu-sharing extension.
+	 *
+	 * @param \DatabaseUpdater $updater
+	 * @return void
+	 */
 	public function onLoadExtensionSchemaUpdates( $updater ) {
 		$dir = __DIR__ . '/../sql';
 

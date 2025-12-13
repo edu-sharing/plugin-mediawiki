@@ -85,7 +85,7 @@ class EduSharingHooks implements
 	 * @param string $xml
 	 * @return array $matches
 	 */
-	public static function get_edutags( $tag, $xml ) {
+	public static function getEduTags( $tag, $xml ) {
 		$tag = preg_quote( $tag, '#' );
 		// Match either self-closing <edusharing .../> or normal <edusharing ...>...</edusharing>
 		$pattern = '#<' . $tag . '\\b[^>]*?(?:/>|>.*?</' . $tag . '>)#is';
@@ -113,6 +113,13 @@ class EduSharingHooks implements
 		return $result;
 	}
 
+	/**
+	 * Delete a resource record locally and remove usage in the repository.
+	 *
+	 * @param EduSharingService $eduService
+	 * @param \stdClass $resource
+	 * @return void
+	 */
 	private static function deleteResourceAndUsage( EduSharingService $eduService, $resource ) {
 		/*
 		* Delete record in db
@@ -134,7 +141,19 @@ class EduSharingHooks implements
 		$eduService->deleteUsage( $postData );
 	}
 
-	private static function addResourceAndUsage( EduSharingService $eduService, $resourceData, bool $isRestore = false ) {
+	/**
+	 * Insert a resource record and create usage in the repository.
+	 *
+	 * @param EduSharingService $eduService
+	 * @param array $resourceData
+	 * @param bool $isRestore
+	 * @return mixed Usage object
+	 */
+	private static function addResourceAndUsage(
+		EduSharingService $eduService,
+		$resourceData,
+		bool $isRestore = false
+	) {
 		// if we don't restore a previously deleted resource, we don't want to re-use an existing id
 		if ( $isRestore !== true ) {
 			unset( $resourceData[ 'EDUSHARING_RESOURCE_ID' ] );
@@ -155,7 +174,11 @@ class EduSharingHooks implements
 				: $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ]
 		);
 		$postData->resourceId   = $resourceId;
-		$postData->nodeId       = str_replace( "ccrep://local/", "", $resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ] );
+			$postData->nodeId       = str_replace(
+				"ccrep://local/",
+				"",
+				$resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ]
+			);
 
 		$usage = $eduService->createUsage( $postData );
 
@@ -172,12 +195,14 @@ class EduSharingHooks implements
 	}
 
 	/**
-	 * Deletes usages for edu-sharing resources on article delete
-	 * @param $article
-	 * @param $user
-	 * @param $reason
-	 * @param $error
-	 * @return true
+	 * Deletes usages for edu-sharing resources on article delete.
+	 *
+	 * @param ProperPageIdentity $page
+	 * @param Authority $deleter
+	 * @param string $reason
+	 * @param StatusValue $status
+	 * @param bool $suppress
+	 * @return bool
 	 */
 	public function onPageDelete(
 		ProperPageIdentity $page,
@@ -222,14 +247,17 @@ class EduSharingHooks implements
 	}
 
 	/**
-	 * Adds usages for edu-sharing resources on article undelete
-	 * @param $title
-	 * @param $create
-	 * @param $comment
-	 * @param $oldPageId
-	 * @param $restoredPages
+	 * Adds usages for edu-sharing resources on article undelete.
 	 *
-	 * @return true
+	 * @param ProperPageIdentity $pageIdentity
+	 * @param Authority $restorer
+	 * @param string $reason
+	 * @param RevisionRecord $restoredRev
+	 * @param ManualLogEntry $logEntry
+	 * @param int $restoredRevisionCount
+	 * @param bool $created
+	 * @param array $restoredPageIds
+	 * @return void
 	 */
 	public function onPageUndeleteComplete(
 		ProperPageIdentity $pageIdentity,
@@ -253,7 +281,10 @@ class EduSharingHooks implements
 		if ( $content instanceof TextContent ) {
 			$text = $content->getText();
 		} else {
-			error_log( 'No Text Content for page ' . $pageIdentity->__toString() . " with revision: " . $restoredRev->getId() );
+			error_log(
+				'No Text Content for page ' . $pageIdentity->__toString() .
+				' with revision: ' . $restoredRev->getId()
+			);
 			return;
 		}
 
@@ -268,13 +299,15 @@ class EduSharingHooks implements
 		self::syncArticleResources( $eduService, $pageIdentity, $text, true );
 	}
 
-	/*
-	* parse articel text for edusharing tags and look for corresponding resource entries in the database.
-	* if no matching entry is found, it is created.
-	*
-	* if we are in article restore context, we use the existing resourceId from the tag to write the database record,
-	* otherwise we create a new onde and insert it into the tag.
-	*/
+	/**
+	 * Parse article text for edusharing tags and sync database resources/usages.
+	 *
+	 * @param EduSharingService $eduService
+	 * @param PageReference|ProperPageIdentity $pageRef
+	 * @param string &$text
+	 * @param bool $isRestore
+	 * @return array Resource IDs needing pageId completion
+	 */
 	private static function syncArticleResources(
 		EduSharingService $eduService,
 		PageReference|ProperPageIdentity $pageRef,
@@ -328,7 +361,7 @@ class EduSharingHooks implements
 		/*
 		 * Get edu-sharing tags from $text
 		 */
-		$matches = self::get_edutags( 'edusharing', $text );
+		$matches = self::getEduTags( 'edusharing', $text );
 
 		/*
 		 * For each resource found in text
@@ -371,17 +404,27 @@ class EduSharingHooks implements
 				$Response['action'] = 'processed';
 
 			} elseif ( $Response['action'] == 'processed' ) {
-				/*
-				 * Try to get record for this resource with select conditions article id and resource id.
-				 * If no record can be found this resource must be copied from another page. So add new record and add usage.
-				 */
+					/*
+					 * Try to get record for this resource with select conditions article id and resource id.
+					 * If no record can be found this resource must be copied from another page.
+					 * So add new record and add usage.
+					 */
 
 				$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
 				$dbr = $dbProvider->getReplicaDatabase();
 
-				$res = $dbr->select( 'edusharing_resource',
-					[ 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_PAGE_ID', 'EDUSHARING_RESOURCE_USAGE' ],
-					[ 'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId, 'EDUSHARING_RESOURCE_ID = ' . $Response['resourceid'] ] );
+				$res = $dbr->select(
+					'edusharing_resource',
+					[
+						'EDUSHARING_RESOURCE_ID',
+						'EDUSHARING_RESOURCE_PAGE_ID',
+						'EDUSHARING_RESOURCE_USAGE'
+					],
+					[
+						'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId,
+						'EDUSHARING_RESOURCE_ID = ' . $Response['resourceid']
+					]
+				);
 
 				$resCount = 0;
 				foreach ( $res as $r ) {
@@ -437,10 +480,10 @@ class EduSharingHooks implements
 	/**
 	 * Adds/removes resources and usages when article is saved
 	 *
-	 * @param $parser
-	 * @param &$text
+	 * @param Parser $parser
+	 * @param string &$text Text content (passed by reference)
+	 * @return bool
 	 */
-
 	public function onParserPreSaveTransformComplete( $parser, &$text ) {
 		$pageRef = $parser->getPage();
 
@@ -478,6 +521,13 @@ class EduSharingHooks implements
 	/**
 	 * Adds pageId reference to freshly created resources where missing
 	 *
+	 * @param \WikiPage $wikiPage
+	 * @param \User $user
+	 * @param string $summary
+	 * @param int $flags
+	 * @param \RevisionRecord $revisionRecord
+	 * @param \MediaWiki\Storage\EditResult $editResult
+	 * @return void
 	 */
 	public function onPageSaveComplete( $wikiPage, $user, $summary, $flags, $revisionRecord, $editResult ) {
 		$pageId = $wikiPage->getId();
@@ -515,7 +565,7 @@ class EduSharingHooks implements
 	/**
 	 * Adds hook to parser that handles edu-sharing tags
 	 *
-	 * @param $parser
+	 * @param Parser $parser
 	 * @return true
 	 */
 	public function onParserFirstCallInit( $parser ) {
@@ -527,15 +577,15 @@ class EduSharingHooks implements
 	 * The callback function for converting the input text to HTML output
 	 * Handles page view as well as page preview
 	 *
-	 * @param $input
-	 * @param $args
-	 * @param $parser
-	 * @param $frame
+	 * @param string $input
+	 * @param array $args
+	 * @param Parser $parser
+	 * @param \PPFrame $frame
 	 * @return string
 	 */
 	public static function wfEduSharingRender( $input, array $args, Parser $parser, \PPFrame $frame ) {
 		$isProcessed = isset( $args['action'] ) && $args['action'] === 'processed';
-		$isPreview = isset( $_GET['action'] ) && $_GET['action'] === 'submit';
+		$isPreview = $parser->getOptions()->getIsPreview();
 
 		if ( !$isProcessed && !$isPreview ) {
 			return 'Unknown edusharing action: "' . ( $args['action'] ?? '' ) . '"';
@@ -748,8 +798,9 @@ class EduSharingHooks implements
 
 	/**
 	 * Add module 'ext.eduSharing.display' providing js loadScript function
-	 * @param $out
-	 * @param $skin
+	 *
+	 * @param \OutputPage $out
+	 * @param \Skin $skin
 	 *
 	 */
 	public function onBeforePageDisplay( $out, $skin ): void {

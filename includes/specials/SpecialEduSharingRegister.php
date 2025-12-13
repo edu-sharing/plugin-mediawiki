@@ -7,10 +7,18 @@ use SimpleXMLElement;
 
 class SpecialEduSharingRegister extends SpecialPage {
 
+	/**
+	 * Register page for edu-sharing to provide application XML.
+	 */
 	public function __construct() {
 		parent::__construct( 'EduSharingRegister', '', false );
 	}
 
+	/**
+	 * Output the registration XML for this application.
+	 *
+	 * @param string|null $par Unused parameter
+	 */
 	public function execute( $par ) {
 		$services = MediaWikiServices::getInstance();
 		$mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );

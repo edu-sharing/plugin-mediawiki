@@ -7,8 +7,11 @@ use MediaWiki\MediaWikiServices;
 
 class EduSharingTicketManager {
 
+	/** @var \BagOStuff Cache for storing tickets per user */
 	private $cache;
+	/** @var EduSharingAuthHelper Helper to fetch tickets from the repo */
 	private EduSharingAuthHelper $authHelper;
+	/** @var EduSharingConfig Extension configuration */
 	private EduSharingConfig $config;
 
 	public function __construct( EduSharingAuthHelper $authHelper, EduSharingConfig $config ) {

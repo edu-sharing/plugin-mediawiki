@@ -27,19 +27,28 @@ require_once __DIR__ . '/../vendor/edu-sharing/auth-plugin/src/EduSharing/EduSha
 use EduSharingApiClient\EduSharingHelper;
 use MediaWiki\MediaWikiServices;
 
-class createEduSharingKeys extends Maintenance {
+class CreateKeys extends Maintenance {
 
+	/** @var string Path to private key file */
 	private $privateKeyFile;
+	/** @var string Path to public key file */
 	private $publicKeyFile;
+	/** @var string Path to repository public key file */
 	private $repoPublicKeyFile;
+	/** @var string Base URL of repository */
 	private $repoBaseUrl;
 
 	public function __construct() {
 		parent::__construct();
 		$this->requireExtension( 'EduSharing' );
-		$this->addDescription( "Create a new private/public key pair and retrieve the edu-sharing repository's public key." );
+		$this->addDescription(
+			"Create a new private/public key pair and retrieve the edu-sharing repository's public key."
+		);
 
-		$this->addOption( "regenerate-key-pair", "Generate a new pair of public/private keys even if key files already exist" );
+		$this->addOption(
+			"regenerate-key-pair",
+			"Generate a new pair of public/private keys even if key files already exist"
+		);
 		$this->addOption( "get-repo-key-only", "Only retrieve the repository public key; do not generate a key pair" );
 	}
 
@@ -47,13 +56,16 @@ class createEduSharingKeys extends Maintenance {
 		$services = MediaWikiServices::getInstance();
 		$config = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
-		$this->privateKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR . $config->get( 'EduSharingPrivateKeyFile' );
-		$this->publicKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR . $config->get( 'EduSharingPublicKeyFile' );
-		$this->repoPublicKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR . $config->get( 'EduSharingRepoPublicKeyFile' );
+		$this->privateKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR .
+			$config->get( 'EduSharingPrivateKeyFile' );
+		$this->publicKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR .
+			$config->get( 'EduSharingPublicKeyFile' );
+		$this->repoPublicKeyFile = MW_INSTALL_PATH . DIRECTORY_SEPARATOR .
+			$config->get( 'EduSharingRepoPublicKeyFile' );
 		$this->repoBaseUrl = rtrim( $config->get( 'EduSharingBaseUrl' ), '/' );
 
-		$existingPrivate = @file_get_contents( $this->privateKeyFile );
-		$existingPublic = @file_get_contents( $this->publicKeyFile );
+		$existingPrivate = file_get_contents( $this->privateKeyFile );
+		$existingPublic = file_get_contents( $this->publicKeyFile );
 
 		$regenerate = $this->getOption( 'regenerate-key-pair' ) !== null;
 		$repoOnly = $this->getOption( 'get-repo-key-only' ) !== null;
@@ -70,7 +82,10 @@ class createEduSharingKeys extends Maintenance {
 				$this->output( "Skipping key pair generation (--get-repo-key-only).\n" );
 			}
 		} elseif ( !$repoOnly ) {
-			$this->fatalError( "Key files already exist. Use --regenerate-key-pair to generate a new pair (requires re-registering in the repository)." );
+			$this->fatalError(
+				"Key files already exist. Use --regenerate-key-pair to generate a new pair " .
+				"(requires re-registering in the repository)."
+			);
 		}
 
 		// Retrieve public key from edu-sharing repository and save it to file
@@ -83,7 +98,7 @@ class createEduSharingKeys extends Maintenance {
 		}
 		$content = $request->getContent();
 
-		$xml = @simplexml_load_string( $content, "SimpleXMLElement", LIBXML_NOCDATA );
+		$xml = simplexml_load_string( $content, "SimpleXMLElement", LIBXML_NOCDATA );
 		if ( $xml === false ) {
 			$this->fatalError( "Couldn't parse repository metadata." );
 		}
@@ -101,5 +116,5 @@ class createEduSharingKeys extends Maintenance {
 
 }
 
-$maintClass = createEduSharingKeys::class;
+$maintClass = CreateKeys::class;
 require_once RUN_MAINTENANCE_IF_MAIN;

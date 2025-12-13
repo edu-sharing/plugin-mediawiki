@@ -6,10 +6,18 @@ use MediaWiki\SpecialPage\SpecialPage;
 
 class SpecialEduServiceWorker extends SpecialPage {
 
+	/**
+	 * Special page that proxies the edu-sharing service worker through MediaWiki.
+	 */
 	public function __construct() {
 		parent::__construct( 'EduServiceWorker', '', false );
 	}
 
+	/**
+	 * Output the service worker script fetched from the edu-sharing rendering service.
+	 *
+	 * @param string|null $par Unused parameter
+	 */
 	public function execute( $par ) {
 		$this->getOutput()->disable();
 
@@ -23,7 +31,7 @@ class SpecialEduServiceWorker extends SpecialPage {
 
 		$serviceWorkerUrl = rtrim( $eduService->config->baseUrl, '/' )
 			. '/web-components/rendering-service/edu-service-worker.js';
-		$content = @file_get_contents( $serviceWorkerUrl );
+		$content = file_get_contents( $serviceWorkerUrl );
 
 		if ( $content === false ) {
 			echo '// Failed to load edu-sharing service worker';

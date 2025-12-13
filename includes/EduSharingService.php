@@ -20,13 +20,23 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 class EduSharingService {
 
+	/** @var EduSharingConfig Extension configuration */
 	public EduSharingConfig $config;
+	/** @var EduSharingTicketManager Ticket manager */
 	private EduSharingTicketManager $ticketManager;
+	/** @var EduSharingHelperBase Low-level helper */
 	public EduSharingHelperBase $helperBase;
+	/** @var EduSharingNodeHelper|null Node helper */
 	private $nodeHelper;
+	/** @var bool Repository availability flag */
 	public bool $isAvailable = true;
+	/** @var string|null Last availability error message */
 	public ?string $availabilityError = null;
 
+	/**
+	 * @param User $user Current user
+	 * @param Config $mwConfig MediaWiki configuration
+	 */
 	public function __construct( User $user, Config $mwConfig ) {
 		$this->config = new EduSharingConfig( $user, $mwConfig );
 		if ( !$this->config->privateKey ) {
@@ -74,6 +84,11 @@ class EduSharingService {
 		);
 	}
 
+	/**
+	 * Get or create a ticket for the current user.
+	 *
+	 * @return string|null
+	 */
 	public function getTicket(): ?string {
 		if ( !$this->isAvailable || !isset( $this->ticketManager ) ) {
 			return null;
@@ -81,6 +96,12 @@ class EduSharingService {
 		return $this->ticketManager->getTicket();
 	}
 
+	/**
+	 * Create usage in the repository.
+	 *
+	 * @param \stdClass $postData Payload containing ticket/container/resource/nodeId
+	 * @return mixed
+	 */
 	public function createUsage( $postData ) {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -95,6 +116,12 @@ class EduSharingService {
 		return $result;
 	}
 
+	/**
+	 * Delete usage in the repository.
+	 *
+	 * @param \stdClass $postData Payload containing nodeId/usageId
+	 * @return mixed
+	 */
 	public function deleteUsage( $postData ) {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -116,6 +143,12 @@ class EduSharingService {
 		}
 	}
 
+	/**
+	 * Get a node by usage.
+	 *
+	 * @param \stdClass $postData Payload containing nodeId/nodeVersion/containerId/resourceId/usageId
+	 * @return mixed
+	 */
 	public function getNode( $postData ) {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -143,6 +176,12 @@ class EduSharingService {
 		}
 	}
 
+	/**
+	 * Get secured node information for a usage.
+	 *
+	 * @param Usage $usage
+	 * @return SecuredNode
+	 */
 	public function getSecuredNodeByUsage( Usage $usage ): SecuredNode {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -150,6 +189,11 @@ class EduSharingService {
 		return $this->nodeHelper->getSecuredNodeByUsage( $usage );
 	}
 
+	/**
+	 * Get the rendering service URL for direct calls.
+	 *
+	 * @return string
+	 */
 	public function getRenderingServiceUrl(): string {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -162,6 +206,11 @@ class EduSharingService {
 		throw new \RuntimeException( 'Rendering Service 2 is not configured in edu-sharing.' );
 	}
 
+	/**
+	 * Whether rendering service v2 is available.
+	 *
+	 * @return bool
+	 */
 	public function usesRenderingService2(): bool {
 		try {
 			$this->getRenderingServiceUrl();
@@ -184,6 +233,13 @@ class EduSharingService {
 		return $this->nodeHelper->getRedirectUrl( $mode, $usage, $additionalParams, $userId, $rendering2 );
 	}
 
+	/**
+	 * Get a preview for the given usage.
+	 *
+	 * @param Usage $usage
+	 * @param PreviewSize $size
+	 * @return CurlResult
+	 */
 	public function getPreview( Usage $usage, PreviewSize $size = PreviewSize::SIZE_400_PX ): CurlResult {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
@@ -191,6 +247,12 @@ class EduSharingService {
 		return $this->nodeHelper->getPreview( $usage, $size );
 	}
 
+	/**
+	 * Encrypt data with the repository public key.
+	 *
+	 * @param string $data
+	 * @return string
+	 */
 	public function encryptWithRepoKey( $data ) {
 		$dataEncrypted = '';
 		$key = $this->config->getRepoPublicKey();
@@ -205,13 +267,19 @@ class EduSharingService {
 		return $dataEncrypted;
 	}
 
+		/**
+		 * Build a fallback node with a preview snippet.
+		 *
+		 * @param string $nodeId
+		 * @return array
+		 */
 	private function getFakeNodeWithPreview( $nodeId ) {
 		$node = [
 			"node" => [ "mediatype" => "image" ],
 			"detailsSnippet" => "<img src='{$this->config->baseUrl}/preview?nodeId={$nodeId}' />"
 		 ];
 
-		 return $node;
+		return $node;
 	}
 
 }
