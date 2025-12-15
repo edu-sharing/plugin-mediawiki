@@ -1,3 +1,5 @@
+/* eslint-disable mediawiki/no-unlabeled-buttonwidget */
+
 /**
  * EduSharing Loading Spinner
  *

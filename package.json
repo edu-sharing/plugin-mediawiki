@@ -4,12 +4,23 @@
   "description": "# Purpose",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "grunt test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint-config-wikimedia": "github:wikimedia/eslint-config-wikimedia"
+    "eslint-config-wikimedia": "0.28.2",
+    "grunt-banana-checker": "0.13.0",
+    "grunt-eslint": "24.3.0",
+    "grunt-stylelint": "0.20.1",
+    "stylelint-config-wikimedia": "0.17.2"
+  },
+  "eslintIgnore": [
+    "coverage",
+    "vendor"
+  ],
+  "dependencies": {
+    "grunt": "^1.6.1"
   }
 }

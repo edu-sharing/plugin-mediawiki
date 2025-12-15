@@ -1,3 +1,26 @@
 {
-    "extends": "@wikimedia/eslint-config-wikimedia"
+	"root": true,
+	"extends": [
+		"wikimedia/client",
+		"wikimedia/mediawiki",
+		"wikimedia/jquery"
+	],
+	"env": {
+		"browser": true
+	},
+	"rules": {
+		"no-jquery/no-parse-html-literal": "off",
+		"no-jquery/no-global-selector": "off",
+		"mediawiki/msg-doc": "off"
+	},
+	"overrides": [
+		{
+			"files": [
+				"resources/js/ext.eduSharing.display.js"
+			],
+			"rules": {
+				"mediawiki/no-unlabeled-buttonwidget": "off"
+			}
+		}
+	]
 }
