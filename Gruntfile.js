@@ -9,7 +9,7 @@ module.exports = function ( grunt ) {
 	grunt.initConfig( {
 		eslint: {
 			options: {
-				extensions: [ '.js', '.json' ],                
+				extensions: [ '.js', '.json' ],
 				cache: true
 			},
 			all: [

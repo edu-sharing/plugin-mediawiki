@@ -1,5 +1,3 @@
-/* eslint-disable mediawiki/no-unlabeled-buttonwidget */
-
 /**
  * EduSharing Loading Spinner
  *
@@ -15,62 +13,62 @@
 /**
  * Removes the loading spinner from a specified container.
  *
- * @function removeSpinner
+ * @method removeSpinner
  * @param {HTMLElement} container The container element from which the spinner should be removed
  */
-function removeSpinner(container) {
-    const spinner = container.querySelector('.spinnerContainer');
-    if (spinner) {
-        spinner.remove();
-    }
+function removeSpinner( container ) {
+	const spinner = container.querySelector( '.spinnerContainer' );
+	if ( spinner ) {
+		spinner.remove();
+	}
 }
 
 /**
  * Checks all EduSharing containers and removes spinners if the content is rendered.
  *
- * @function checkContainers
+ * @method checkContainers
  */
 function checkContainers() {
-    const containers = document.querySelectorAll('.mw-edusharing-container');
-    containers.forEach(container => {
-        if (container.querySelector('edu-sharing-render')) {
-            removeSpinner(container);
-        }
-    });
+	const containers = document.querySelectorAll( '.mw-edusharing-container' );
+	containers.forEach( ( container ) => {
+		if ( container.querySelector( 'edu-sharing-render' ) ) {
+			removeSpinner( container );
+		}
+	} );
 }
 
 // MutationObserver to watch for dynamic changes in the DOM
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes) {
-            checkContainers();
-        }
-    });
-});
+const observer = new MutationObserver( ( mutations ) => {
+	mutations.forEach( ( mutation ) => {
+		if ( mutation.addedNodes ) {
+			checkContainers();
+		}
+	} );
+} );
 
 // Observe the entire document body for changes
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
+observer.observe( document.body, {
+	childList: true,
+	subtree: true
+} );
 
 /**
  * Initializes the EduSharing spinner management when the document is ready.
  */
-jQuery(document).ready(function($) {
-    if (typeof eduSharingScripts === 'function') {
-        eduSharingScripts();
-    }
-    checkContainers();
-});
+$( ( $ ) => {
+	if ( typeof eduSharingScripts === 'function' ) {
+		eduSharingScripts();
+	}
+	checkContainers();
+} );
 
 /**
  * Reloads the EduSharing scripts when the VisualEditor is deactivated.
  */
-if (typeof mw !== 'undefined' && typeof mw.hook === 'function') {
-    mw.hook("ve.deactivationComplete").add(function() {
-        if (typeof eduSharingScripts === 'function') {
-            eduSharingScripts();
-        }
-    });
+if ( typeof mw !== 'undefined' && typeof mw.hook === 'function' ) {
+	mw.hook( 've.deactivationComplete' ).add( () => {
+		if ( typeof eduSharingScripts === 'function' ) {
+			eduSharingScripts();
+		}
+	} );
 }

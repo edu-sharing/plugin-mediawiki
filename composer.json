@@ -1,4 +1,5 @@
-{	"require": {
+{
+	"require": {
 		"edu-sharing/auth-plugin": "10.0.x-dev"
 	},
 	"require-dev": {
