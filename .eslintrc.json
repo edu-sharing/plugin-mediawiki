@@ -1,26 +1,67 @@
 {
-	"root": true,
-	"extends": [
-		"wikimedia/client",
-		"wikimedia/mediawiki",
-		"wikimedia/jquery"
-	],
-	"env": {
-		"browser": true
-	},
-	"rules": {
-		"no-jquery/no-parse-html-literal": "off",
-		"no-jquery/no-global-selector": "off",
-		"mediawiki/msg-doc": "off"
-	},
-	"overrides": [
-		{
-			"files": [
-				"resources/js/ext.eduSharing.display.js"
-			],
-			"rules": {
-				"mediawiki/no-unlabeled-buttonwidget": "off"
-			}
-		}
-	]
+  "root": true,
+  "extends": [
+    "wikimedia/client",
+    "wikimedia/mediawiki",
+    "wikimedia/jquery"
+  ],
+  "env": {
+    "browser": true,
+    "es6": true,
+    "commonjs": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "script"
+  },
+  "globals": {
+    "ve": true,
+    "eduSharingScripts": "writable"
+  },
+  "rules": {
+    "jsdoc/check-tag-names": "error",
+    "jsdoc/require-returns": "off",
+    "jsdoc/require-returns-check": "off",
+    "max-len": "off",
+    "mediawiki/no-unlabeled-buttonwidget": "warn",
+    "no-console": ["error", { "allow": ["warn", "error"] }]
+  },
+  "overrides": [
+    {
+      "files": [
+        "resources/js/ext.eduSharing.display.js",
+        "resources/js/ext.eduSharing.render.js"
+      ],
+      "parserOptions": {
+        "ecmaVersion": 2017,
+        "sourceType": "script"
+      },
+      "rules": {
+        "mediawiki/no-unlabeled-buttonwidget": "off",
+        "no-underscore-dangle": ["error", {
+          "allow": [
+            "__env",
+            "__EDUSHARING_PUBLIC_PATH__",
+            "__eduSharingSW"
+          ]
+        }],
+        "camelcase": ["error", {
+          "properties": "never",
+          "ignoreDestructuring": true,
+          "allow": [
+            "encoded_node",
+            "render_url",
+            "encoded_user",
+            "service_worker_url",
+            "activate_service_worker",
+            "assets_url",
+            "preview_url",
+            "resource_url"
+          ]
+        }],
+        "es-x/no-async-functions": "off",
+        "compat/compat": "warn"
+      }
+    }
+  ]
 }

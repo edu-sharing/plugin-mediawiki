@@ -1,0 +1,29 @@
+{
+	"@metadata": {
+		"authors": [
+			"http://edu-sharing.net",
+			"http://idea-sketch.com"
+		]
+	},
+	"edusharing-desc": "Description of the EduSharing extension. {{desc}}",
+	"visualeditor-mwedusharingdialog-button": "Label for the button to open the EduSharing dialog in the VisualEditor toolbar. {{desc}}",
+	"visualeditor-mwedusharingdialog-title": "Title of the dialog for inserting EduSharing media. {{desc}}",
+	"visualeditor-mwedusharingdialog-help-title": "Title for the help section in the EduSharing dialog. {{desc}}",
+	"visualeditor-mwedusharingdialog-select": "Label for the button to select an object from the EduSharing repository. {{desc}}",
+	"visualeditor-mwedusharingdialog-change": "Label for the button to change the selected object in the EduSharing dialog. {{desc}}",
+	"visualeditor-mwedusharingdialog-options": "Label for the tab with advanced options in the EduSharing dialog. {{desc}}",
+	"visualeditor-mwedusharingdialog-action": "Label for the action field in the EduSharing dialog. {{desc}}",
+	"visualeditor-mwedusharingdialog-id": "Label for the ID field in the EduSharing dialog. The ID is a unique identifier for the object in the EduSharing repository. {{desc}}",
+	"visualeditor-mwedusharingdialog-caption": "Label for the caption field in the EduSharing dialog. The caption is a description of the media object. {{desc}}",
+	"visualeditor-mwedusharingdialog-mimetype": "Label for the MIME type field in the EduSharing dialog. The MIME type describes the format of the media object. {{desc}}",
+	"visualeditor-mwedusharingdialog-version": "Label for the version field in the EduSharing dialog. The version indicates the version of the media object. {{desc}}",
+	"visualeditor-mwedusharingdialog-repotype": "Label for the repository type field in the EduSharing dialog. The repository type indicates the type of the repository where the object is stored. {{desc}}",
+	"visualeditor-mwedusharingdialog-versionshow": "Label for the field to select which version of the object to display. {{desc}}",
+	"visualeditor-mwedusharingdialog-versionshow-latest": "Option to always display the latest version of the object. {{desc}}",
+	"visualeditor-mwedusharingdialog-versionshow-current": "Option to display the current version of the object. {{desc}}",
+	"visualeditor-mwedusharingdialog-size": "Label for the width field in the EduSharing dialog. The width is the display width of the media object. {{desc}}",
+	"visualeditor-mwedusharingdialog-align": "Label for the alignment field in the EduSharing dialog. The alignment determines how the media object is aligned in the text. {{desc}}",
+	"edusharing-placeholder-unavailable": "Message shown when the edu-sharing repository is unavailable. {{desc}}",
+	"edusharing-missing-keys-hint": "Hint shown when no edu-sharing keys are found. Instructs the user to run a maintenance script to generate keys and register the installation. {{desc}}",
+	"edusharing-signature-invalid-hint": "Hint shown when the signature verification fails. Asks the user to verify if the EduSharing extension is registered at the repository with the current keys. {{desc}}"
+}

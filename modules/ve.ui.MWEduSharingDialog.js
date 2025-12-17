@@ -33,7 +33,7 @@ ve.ui.MWEduSharingDialog.static.size = 'large';
 ve.ui.MWEduSharingDialog.static.allowedEmpty = true;
 ve.ui.MWEduSharingDialog.static.modelClasses = [ ve.dm.MWEduSharingNode ];
 
-var previewUrl = mw.config.get( 'edupreview' );
+let previewUrl = mw.config.get( 'edupreview' );
 
 /**
  * Initializes the dialog.
@@ -44,13 +44,13 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	// Parent method
 	ve.ui.MWEduSharingDialog.super.prototype.initialize.call( this );
 
-	this.$previewContainer = $( '<div>' ).addClass( 've-ui-mwEduSharingDialog-preview' );
+	this.$previewContainer = $( '<div>' ).addClass( 'ext-edusharing-dialog-preview' );
 	this.$edusharing = $( '<div>' ).appendTo( this.$previewContainer );
 
 	// Panel
 	this.indexLayout = new OO.ui.IndexLayout( {
 		expanded: false,
-		classes: [ 've-ui-mwEduSharingDialog-indexLayout' ]
+		classes: [ 'ext-edusharing-dialog-indexLayout' ]
 	} );
 	this.panel = new OO.ui.PanelLayout( {
 		expanded: false,
@@ -59,7 +59,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 
 	// Buttons & Fields
 	this.repoButton = new OO.ui.ButtonWidget( {
-		id: 'repo-button',
+		class: 'ext-edusharing-dialog-repo-button',
 		label: ve.msg( 'visualeditor-mwedusharingdialog-select' ),
 		flags: [
 			'primary',
@@ -178,7 +178,7 @@ function openRepo() {
 ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
 	const mwData = this.selectedNode.getAttribute( 'mw' );
 	const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-	const previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
+	previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
 
 	// Extract the UUID
 	const pureNodeId = fullId.replace( 'ccrep://local/', '' );
@@ -190,12 +190,12 @@ ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
 
 	// Display the preview image in the dialog
 	this.$edusharing.html( `
-        <div class="mw-edusharing-dialog-preview-container">
-            <img class="mw-edusharing-dialog-preview-image"
+        <div class="ext-edusharing-dialog-preview-container">
+            <img class="ext-edusharing-dialog-preview-image"
                  src="${ previewImageUrl }"
                  alt="${ mwData.body.extsrc || 'Preview' }"
                  style="max-width: 100%; height: auto;">
-            <div class="mw-edusharing-dialog-preview-caption">
+            <div class="ext-edusharing-dialog-preview-caption">
                 ${ mwData.body.extsrc || 'EduSharing content' }
             </div>
         </div>
@@ -235,15 +235,14 @@ ve.ui.MWEduSharingDialog.prototype.insertOrUpdateNode = function () {
 ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	this.indexLayout.setTabPanel( 'options' );
 
-	let id, caption, mediatype, mimetype, version, dimensions, versionshow, repotype;
-	id = this.id.getValue();
-	caption = this.caption.getValue();
-	mediatype = this.mediatype.getValue();
-	mimetype = this.mimetype.getValue();
-	dimensions = this.dimensions.getDimensions();
-	version = this.version.getValue();
-	repotype = this.repotype.getValue();
-	versionshow = this.versionshow.getValue();
+	const id = this.id.getValue(),
+		caption = this.caption.getValue(),
+		mediatype = this.mediatype.getValue(),
+		mimetype = this.mimetype.getValue(),
+		dimensions = this.dimensions.getDimensions(),
+		version = this.version.getValue(),
+		repotype = this.repotype.getValue(),
+		versionshow = this.versionshow.getValue();
 
 	// Parent method
 	ve.ui.MWEduSharingDialog.super.prototype.updateMwData.call( this, mwData );
@@ -265,7 +264,7 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	}
 	mwData.attrs.float = this.align.findSelectedItem().getData(); // EduSharing tag uses float, VE uses align
 	// If updating an EduSharing media, delete the resourceid tag attribute to get a new resource ID
-	if ( mwData.attrs.hasOwnProperty( 'resourceid' ) ) {
+	if ( Object.prototype.hasOwnProperty.call( mwData.attrs, 'resourceid' ) ) {
 		delete mwData.attrs.resourceid;
 	}
 };
@@ -317,11 +316,11 @@ ve.ui.MWEduSharingDialog.prototype.getTypeSwitchHelper = function ( data ) {
 ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 	return ve.ui.MWEduSharingDialog.super.prototype.getSetupProcess.call( this, data )
 		.next( function () {
-			let mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
+			const mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
 				mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
 				isReadOnly = this.isReadOnly(),
-				that = this,
-				node;
+				that = this;
+			let node;
 
 			// Function to update the preview
 			this.updatePreview = function () {
@@ -331,7 +330,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 				const mwData = this.selectedNode.getAttribute( 'mw' );
 				const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-				const previewUrl = mw.config.get( 'edupreview' );
 
 				// Extract the UUID from "ccrep://local/<UUID>"
 				const pureNodeId = fullId.replace( 'ccrep://local/', '' );
@@ -341,12 +339,12 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 				// Display the preview image in the dialog
 				this.$edusharing.html( `
-                    <div class="mw-edusharing-dialog-preview-container">
-                        <img class="mw-edusharing-dialog-preview-image"
+                    <div class="ext-edusharing-dialog-preview-container">
+                        <img class="ext-edusharing-dialog-preview-image"
                              src="${ previewImageUrl }"
                              alt="${ mwBody.extsrc || 'Preview' }"
                              style="max-width: 100%; height: auto;">
-                        <div class="mw-edusharing-dialog-preview-caption">
+                        <div class="ext-edusharing-dialog-preview-caption">
                             ${ mwBody.extsrc || 'EduSharing content' }
                         </div>
                     </div>
@@ -356,7 +354,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			// Receive data from iframe
 			window.addEventListener( 'message', handleRepo, false );
 			function handleRepo( event ) {
-				if ( event.data.event == 'APPLY_NODE' ) {
+				if ( event.data.event === 'APPLY_NODE' ) {
 					node = event.data.data;
 					window.win.close();
 
@@ -369,7 +367,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 					that.repotype.setValue( node.repositoryType );
 
 					// Update the preview with the new data
-					const previewUrl = mw.config.get( 'edupreview' );
 					const pureNodeId = node.objectUrl.slice( 14 ); // Extract the UUID
 
 					// Build the preview URL
@@ -377,12 +374,12 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 					// Display the new preview image in the dialog
 					that.$edusharing.html( `
-                        <div class="mw-edusharing-dialog-preview-container">
-                            <img class="mw-edusharing-dialog-preview-image"
+                        <div class="ext-edusharing-dialog-preview-container">
+                            <img class="ext-edusharing-dialog-preview-image"
                                  src="${ previewImageUrl }"
                                  alt="${ node.title || 'Preview' }"
                                  style="max-width: 100%; height: auto;">
-                            <div class="mw-edusharing-dialog-preview-caption">
+                            <div class="ext-edusharing-dialog-preview-caption">
                                 ${ node.title || 'EduSharing content' }
                             </div>
                         </div>
@@ -416,10 +413,10 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			if ( this.selectedNode ) {
 				const typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
 				if ( typeSwitchHelper === 'textlike' ) {
-					$( '#field-dimensions' ).hide();
+					this.dimensionsField.toggle( false );
 					this.$edusharing.html( '' );
 				} else {
-					$( '#field-dimensions' ).show();
+					this.dimensionsField.toggle( true );
 					const mwId = mwAttrs.id.replace( 'ccrep://local/', '' );
 					const url = previewUrl + 'nodeId=' + mwId;
 					this.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );

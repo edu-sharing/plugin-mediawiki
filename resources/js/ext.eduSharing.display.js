@@ -29,7 +29,7 @@ function removeSpinner( container ) {
  * @method checkContainers
  */
 function checkContainers() {
-	const containers = document.querySelectorAll( '.mw-edusharing-container' );
+	const containers = document.querySelectorAll( '.ext-edusharing-container' );
 	containers.forEach( ( container ) => {
 		if ( container.querySelector( 'edu-sharing-render' ) ) {
 			removeSpinner( container );
@@ -55,7 +55,7 @@ observer.observe( document.body, {
 /**
  * Initializes the EduSharing spinner management when the document is ready.
  */
-$( ( $ ) => {
+$( () => {
 	if ( typeof eduSharingScripts === 'function' ) {
 		eduSharingScripts();
 	}

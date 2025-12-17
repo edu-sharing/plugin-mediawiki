@@ -1,24 +1,46 @@
 // Output
-.mw-edusharing-container {
+.ext-edusharing-container {
 	position: relative;
 	min-width: 400px;
 	min-height: 250px;
 	background: #f8f8f8;
-	.inline-metadata {
-		background-color: transparent !important;
-	}
+
 	img {
 		max-width: 100%;
 		height: auto;
 	}
+
 	div.thumbinner {
 		text-align: left;
-		.mw-edusharing-caption {
-			padding: .5rem;
+
+		.ext-edusharing-caption {
+			padding: 0.5rem;
 		}
 	}
+
+	// .youtube-wrapper,
+	// youtube-player {
+	// 	max-width: 100%;
+	// 	width: 100%;
+	// 	aspect-ratio: 16 / 9; /* Seitenverhältnis 16:9 erzwingen */
+	// 	// iframe {
+	// 	// 	width: 100% !important;
+	// 	// 	max-width: 400px !important;
+	// 	// 	min-height: 225px !important;
+	// 	// 	aspect-ratio: 16/9 !important;
+	// 	// }
+	// }
+
+	// youtube-player-placeholder {
+	// 	width: 100% !important;
+	// 	height: auto !important;
+	// 	min-height: 225px; /* 400px / 16 * 9 = 225px */
+	// 	background-size: cover !important;
+	// }
+
 	.edusharing_rendering_content_footer {
 		text-align: left;
+
 		.edusharing_rendering_content_footer_top {
 			.edu_sharing_filename,
 			.license_permalink,
@@ -34,14 +56,14 @@
 		margin-right: 1em;
 		margin-bottom: 0.5em;
 	}
-	
+
 	&.tright {
 		float: right;
 		clear: right;
 		margin-left: 1em;
 		margin-bottom: 0.5em;
 	}
-	
+
 	&.tnone.center {
 		margin-left: auto;
 		margin-right: auto;
@@ -50,16 +72,16 @@
 		clear: both;
 		text-align: center;
 	}
-	
-	.mw-edusharing-container:after {
-		content: "";
+
+	.ext-edusharing-container::after {
+		content: '';
 		display: table;
 		clear: both;
 	}
 }
 
 .videoWrapperOuter {
-	max-width: 100%!important;
+	max-width: 100% !important;
 }
 
 .dataProtectionRegulations,
@@ -76,7 +98,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: rgba(0, 0, 0, 0.0); /*do not change*/
+	color: rgba( 0, 0, 0, 0 ); /* do not change */
 }
 
 .inner {
@@ -84,8 +106,9 @@
 	height: 50px;
 	display: inline-block;
 }
+
 .spinner1 {
-	background: url(./../images/hex1.svg);
+	background: url( ./../images/hex1.svg );
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 50px;
@@ -102,7 +125,7 @@
 }
 
 .spinner2 {
-	background: url(./../images/hex2.svg);
+	background: url( ./../images/hex2.svg );
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 50px;
@@ -119,7 +142,7 @@
 }
 
 .spinner3 {
-	background: url(./../images/hex3.svg);
+	background: url( ./../images/hex3.svg );
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 50px;
@@ -137,70 +160,70 @@
 
 @-webkit-keyframes spin {
 	0% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 
 	50% {
-		transform: scale(0.5);
+		transform: scale( 0.5 );
 	}
 
 	100% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 }
 
 @-moz-keyframes spin {
 	0% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 
 	50% {
-		transform: scale(0.5);
+		transform: scale( 0.5 );
 	}
 
 	100% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 }
 
 @-ms-keyframes spin {
 	0% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 
 	50% {
-		transform: scale(0.5);
+		transform: scale( 0.5 );
 	}
 
 	100% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 }
 
 @-o-keyframes spin {
 	0% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 
 	50% {
-		transform: scale(0.5);
+		transform: scale( 0.5 );
 	}
 
 	100% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 }
 
 @keyframes spin {
 	0% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 
 	50% {
-		transform: scale(0.5) rotate(90deg);
+		transform: scale( 0.5 ) rotate( 90deg );
 	}
 
 	100% {
-		transform: scale(1);
+		transform: scale( 1 );
 	}
 }

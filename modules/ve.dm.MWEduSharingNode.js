@@ -14,7 +14,7 @@
  *
  * @class ve.dm.MWEduSharingNode
  * @extends ve.dm.MWBlockExtensionNode
- * @mixins ve.dm.ResizableNode
+ * @mixes ve.dm.ResizableNode
  *
  * @constructor
  * @param {Object} [element] Reference to element in linear model
@@ -148,9 +148,9 @@ ve.dm.MWEduSharingNode.prototype.getRepoType = function () {
  * @return {string} Type of the content
  */
 ve.dm.MWEduSharingNode.prototype.getTypeSwitchHelper = function () {
-	let elementtype = this.getMediaType(),
-		repotype = this.getRepoType(),
-		typeSwitchHelper = '';
+	const elementtype = this.getMediaType();
+	const repotype = this.getRepoType();
+	let typeSwitchHelper = '';
 
 	if ( elementtype.indexOf( 'image' ) !== -1 ) {
 		typeSwitchHelper = 'image';

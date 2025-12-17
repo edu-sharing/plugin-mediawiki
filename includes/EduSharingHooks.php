@@ -648,7 +648,7 @@ class EduSharingHooks implements
 			if ( $eduService->availabilityError ) {
 				$msg .= ' (' . $eduService->availabilityError . ')';
 			}
-			return '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth .
+			return '<div class="ext-edusharing-container ' . $classes . '" ' . $wrapperWidth .
 				'><div class="thumbinner"><div class="edu_wrapper edusharing-render" ' .
 				'style="padding:8px;border:1px dashed #ccc;">' . htmlspecialchars( $msg ) .
 				'</div></div></div>';
@@ -701,7 +701,7 @@ class EduSharingHooks implements
 			} elseif ( $err ) {
 				$msg .= ': ' . $err;
 			}
-			return '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth .
+			return '<div class="ext-edusharing-container ' . $classes . '" ' . $wrapperWidth .
 				'><div class="thumbinner"><div class="edu_wrapper edusharing-render" ' .
 				'style="padding:8px;border:1px dashed #ccc;">' . htmlspecialchars( $msg ) .
 				'</div></div></div>';
@@ -785,7 +785,7 @@ class EduSharingHooks implements
 
 		$componentJson = FormatJson::encode( $componentData, false, FormatJson::ALL_OK );
 
-		$html = '<div class="mw-edusharing-container ' . $classes . '" ' . $wrapperWidth .
+		$html = '<div class="ext-edusharing-container ' . $classes . '" ' . $wrapperWidth .
 			'><div data-type="esObject" class="spinnerContainer"><div class="inner">' .
 			'<div class="spinner1"></div></div><div class="inner"><div class="spinner2"></div>' .
 			'</div><div class="inner"><div class="spinner3"></div></div></div>';

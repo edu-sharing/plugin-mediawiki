@@ -14,7 +14,7 @@
  *
  * @class ve.ce.MWEduSharingNode
  * @extends ve.ce.MWBlockExtensionNode
- * @mixins ve.ce.ResizableNode
+ * @mixes ve.ce.ResizableNode
  *
  * @constructor
  * @param {ve.dm.MWEduSharingNode} model Model to observe
@@ -22,17 +22,16 @@
  */
 ve.ce.MWEduSharingNode = function VeCeMWEduSharing( model, config ) {
 	config = config || {};
-	let typeSwitchHelper;
 
+	// Classes: thumbinner, ext-edusharing-preview
 	this.$thumbinner = $( '<div>' ).addClass( 'thumbinner' );
-	this.$edusharing = $( '<div>' ).addClass( 'mw-edusharing-preview' );
-	// this.$caption = $('<div>').addClass('mw-edusharing-caption');
+	this.$edusharing = $( '<div>' ).addClass( 'ext-edusharing-preview' );
 
 	// Parent constructor
 	ve.ce.MWEduSharingNode.super.apply( this, arguments );
 
 	// Mixin constructors
-	typeSwitchHelper = this.model.getTypeSwitchHelper();
+	const typeSwitchHelper = this.model.getTypeSwitchHelper();
 	if ( typeSwitchHelper === 'image' || typeSwitchHelper === 'video' ) {
 		ve.ce.ResizableNode.call( this, this.$edusharing, config );
 	}
@@ -43,13 +42,13 @@ ve.ce.MWEduSharingNode = function VeCeMWEduSharing( model, config ) {
 	this.model.connect( this, { attributeChange: 'onAttributeChange' } );
 
 	// DOM changes
+	// Classes: ve-ce-mwEduSharingNode, ext-edusharing-container, ext-edusharing-image, ext-edusharing-video, thumb
 	this.$element
 		.empty()
-		.addClass( 've-ce-mwEduSharingNode mw-edusharing-container mw-edusharing-' + typeSwitchHelper + ' thumb' )
+		.addClass( 've-ce-mwEduSharingNode ext-edusharing-container ext-edusharing-' + typeSwitchHelper + ' thumb' )
 		.append(
 			this.$thumbinner.append(
 				this.$edusharing
-				// this.$caption
 			)
 		);
 };
@@ -100,6 +99,8 @@ ve.ce.MWEduSharingNode.prototype.onSetup = function () {
 /**
  * Updates the EduSharing content rendering.
  *
+ * Classes: tleft, tnone, center, tright
+ *
  * @method
  */
 ve.ce.MWEduSharingNode.prototype.update = function () {
@@ -125,7 +126,7 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 		this.updateStatic();
 	}
 
-	// Classes documented in removeClass
+	// Classes: tleft, tnone, center, tright
 	this.$element
 		.removeClass( 'tleft tnone center tright' )
 		.addClass( alignClasses[ align ] );
@@ -142,11 +143,13 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 /**
  * Updates the static rendering of the EduSharing content.
  *
+ * Classes: tleft, tnone, center, tright, ext-edusharing-preview-container, ext-edusharing-preview-image, ext-edusharing-preview-caption
+ *
  * @method
  */
 ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 	const mwData = this.model.getAttribute( 'mw' );
-	const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
+	const fullId = mwData.attrs.id;
 	const previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
 	const align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
         ( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
@@ -157,6 +160,7 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 		};
 
 	// Remove old alignment classes
+	// Classes: tleft, tnone, center, tright
 	this.$element.removeClass( 'tleft tnone center tright' );
 
 	// Add the new alignment class
@@ -173,13 +177,14 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
         '&dontcache=' + Date.now();
 
 	// Display the preview image
+	// Classes: ext-edusharing-preview-container, ext-edusharing-preview-image, ext-edusharing-preview-caption
 	this.$edusharing.html( `
-        <div class="mw-edusharing-preview-container">
-            <img class="mw-edusharing-preview-image"
+        <div class="ext-edusharing-preview-container">
+            <img class="ext-edusharing-preview-image"
                  src="${ previewImageUrl }"
                  alt="${ mwData.body.extsrc || 'Preview' }"
                  style="max-width: 100%; height: auto;">
-            <div class="mw-edusharing-preview-caption">
+            <div class="ext-edusharing-preview-caption">
                 ${ mwData.body.extsrc || 'EduSharing content' }
             </div>
         </div>
