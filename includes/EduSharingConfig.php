@@ -80,7 +80,8 @@ class EduSharingConfig {
 		$this->openResourceInNewTab = (bool)$config->get( 'EduSharingOpenResourceInNewTab' );
 
 		if (
-				empty( $user ) ||
+				!isset( $user ) ||
+				!$user ||
 				filter_var( $user->getName(), FILTER_VALIDATE_IP ) !== false ||
 				$this->repoForceGuestUser === true
 			) {

@@ -223,7 +223,7 @@ class SpecialEduProxy extends SpecialPage {
 		$contentType = $result->info['content_type'] ?? 'application/octet-stream';
 		header( 'Content-Type: ' . $contentType );
 		header( 'Access-Control-Allow-Origin: *' );
-		if ( !empty( $responseHeaders ) ) {
+		if ( isset( $responseHeaders ) && $responseHeaders !== [] ) {
 			$host = $request->getHeader( 'Host' ) ?: parse_url( $request->getFullRequestURL(), PHP_URL_HOST );
 			foreach ( $responseHeaders as $hdr ) {
 				if ( stripos( $hdr, 'Set-Cookie:' ) === 0 ) {
