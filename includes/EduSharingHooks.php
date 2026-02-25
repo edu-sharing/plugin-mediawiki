@@ -87,8 +87,9 @@ class EduSharingHooks implements
 	 */
 	public static function getEduTags( $tag, $xml ) {
 		$tag = preg_quote( $tag, '#' );
-		// Match either self-closing <edusharing .../> or normal <edusharing ...>...</edusharing>
-		$pattern = '#<' . $tag . '\\b[^>]*?(?:/>|>.*?</' . $tag . '>)#is';
+		// Match only exact tag names (e.g. <edusharing ...>), not prefixed variants
+		// like <edusharing-widget ...>.
+		$pattern = '#<' . $tag . '(?=[\\s/>])[^>]*?(?:/>|>.*?</' . $tag . '\\s*>)#is';
 		preg_match_all( $pattern, $xml, $matches, PREG_PATTERN_ORDER );
 		$tags = $matches[0] ?? [];
 

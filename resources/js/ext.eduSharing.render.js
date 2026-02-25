@@ -120,7 +120,14 @@
 		}
 		window.__eduSharingSW = true;
 		try {
-			await navigator.serviceWorker.register( config.serviceWorkerUrl, { scope: '/' } );
+			let scope = '/';
+			try {
+				const swUrl = new URL( config.serviceWorkerUrl, window.location.href );
+				scope = swUrl.pathname.replace( /[^/]+$/, '' ) || '/';
+			} catch ( e ) {
+				scope = '/';
+			}
+			await navigator.serviceWorker.register( config.serviceWorkerUrl, { scope: scope } );
 			await navigator.serviceWorker.ready;
 		} catch ( e ) {
 			mw.log.warn( 'EduSharing service worker registration failed', e );
