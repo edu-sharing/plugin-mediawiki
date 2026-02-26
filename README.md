@@ -92,13 +92,22 @@ Clone the extension into your MediaWiki `extensions/` directory:
 
 ```bash
 cd extensions/
-git clone --recurse-submodules <repository-url> EduSharing
+git clone <repository-url> EduSharing
 ```
 
-Or, if you already cloned without submodules:
+### Install Dependencies via Composer
+
+Install dependencies with Composer in the extension directory:
 
 ```bash
-git submodule update --init
+cd extensions/EduSharing
+composer install --no-dev
+```
+
+If you only want to update dependencies later:
+
+```bash
+composer update
 ```
 
 ### Enable the Extension
