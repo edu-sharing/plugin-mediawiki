@@ -59,7 +59,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 
 	// Buttons & Fields
 	this.repoButton = new OO.ui.ButtonWidget( {
-		class: 'ext-edusharing-dialog-repo-button',
+		classes: [ 'ext-edusharing-dialog-repo-button' ],
 		label: ve.msg( 'visualeditor-mwedusharingdialog-select' ),
 		flags: [
 			'primary',
@@ -130,8 +130,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 	} );
 
 	this.panel.$element.append(
-		this.$previewContainer,
-		this.repoButton.$element,
+		this.$previewContainer.append(this.repoButton.$element),
 		this.idField.$element,
 		this.captionField.$element,
 		this.mediatypeField.$element,
@@ -194,10 +193,7 @@ ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
             <img class="ext-edusharing-dialog-preview-image"
                  src="${ previewImageUrl }"
                  alt="${ mwData.body.extsrc || 'Preview' }"
-                 style="max-width: 100%; height: auto;">
-            <div class="ext-edusharing-dialog-preview-caption">
-                ${ mwData.body.extsrc || 'EduSharing content' }
-            </div>
+                 style="max-width: 100%; height: auto;" />
         </div>
     ` );
 };
@@ -344,9 +340,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
                              src="${ previewImageUrl }"
                              alt="${ mwBody.extsrc || 'Preview' }"
                              style="max-width: 100%; height: auto;">
-                        <div class="ext-edusharing-dialog-preview-caption">
-                            ${ mwBody.extsrc || 'EduSharing content' }
-                        </div>
                     </div>
                 ` );
 			};
@@ -379,9 +372,6 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
                                  src="${ previewImageUrl }"
                                  alt="${ node.title || 'Preview' }"
                                  style="max-width: 100%; height: auto;">
-                            <div class="ext-edusharing-dialog-preview-caption">
-                                ${ node.title || 'EduSharing content' }
-                            </div>
                         </div>
                     ` );
 
