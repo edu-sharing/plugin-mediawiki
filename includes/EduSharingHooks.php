@@ -52,6 +52,14 @@ class EduSharingHooks implements
 
 	/** @inheritDoc */
 	public function onMakeGlobalVariablesScript( &$vars, $out ): void {
+		$request = $out->getRequest();
+		$action = $request->getVal( 'action', 'view' );
+		$veAction = $request->getVal( 'veaction', '' );
+		// Only prepare dialog ticket/config in editing contexts.
+		if ( $action !== 'edit' && $action !== 'submit' && $veAction !== 'edit' ) {
+			return;
+		}
+
 		$user    = $out->getUser();
 		$services = MediaWikiServices::getInstance();
 		$mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
