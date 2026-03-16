@@ -19,6 +19,8 @@ use MediaWiki\User\User;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 class EduSharingService {
+	/** @var array<string,array{ok:bool,msg:?string}> In-request compatibility cache */
+	private static array $compatibilityCache = [];
 
 	/** @var EduSharingConfig Extension configuration */
 	public EduSharingConfig $config;
@@ -51,20 +53,10 @@ class EduSharingService {
 			$this->config->appId
 		);
 
-		try {
-			$this->helperBase->verifyCompatibility();
-		} catch ( \Throwable $e ) {
+		$compat = $this->verifyCompatibilityCached();
+		if ( !$compat['ok'] ) {
 			$this->isAvailable = false;
-			$msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
-			// If keys exist but signature verification fails, offer guidance
-			$hasLocalKeys = (bool)$this->config->getPublicKey() && (bool)$this->config->getRepoPublicKey();
-			if ( $hasLocalKeys && $msg && stripos( $msg, 'signature' ) !== false ) {
-				$hint = wfMessage( 'edusharing-signature-invalid-hint' )->inContentLanguage()->text();
-				if ( $hint ) {
-					$msg .= ' - ' . $hint;
-				}
-			}
-			$this->availabilityError = $msg;
+			$this->availabilityError = $compat['msg'] ?: 'edu-sharing repository unavailable';
 			return;
 		}
 
@@ -82,6 +74,51 @@ class EduSharingService {
 			$authHelper,
 			$this->config
 		);
+	}
+
+	/**
+	 * Verify repository compatibility with short-lived cache to avoid repeated backend calls.
+	 *
+	 * @return array{ok:bool,msg:?string}
+	 */
+	private function verifyCompatibilityCached(): array {
+		$keySeed = $this->config->baseUrl . '|' . $this->config->appId;
+		$cacheKey = md5( $keySeed );
+
+		if ( isset( self::$compatibilityCache[$cacheKey] ) ) {
+			return self::$compatibilityCache[$cacheKey];
+		}
+
+		$cache = \MediaWiki\MediaWikiServices::getInstance()->getMainWANObjectCache();
+		$wanKey = $cache->makeKey( 'edusharing', 'compatibility', $cacheKey );
+		$cached = $cache->get( $wanKey );
+		if ( is_array( $cached ) && array_key_exists( 'ok', $cached ) ) {
+			self::$compatibilityCache[$cacheKey] = [
+				'ok' => (bool)$cached['ok'],
+				'msg' => $cached['msg'] ?? null
+			];
+			return self::$compatibilityCache[$cacheKey];
+		}
+
+		$result = [ 'ok' => true, 'msg' => null ];
+		try {
+			$this->helperBase->verifyCompatibility();
+		} catch ( \Throwable $e ) {
+			$msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
+			$hasLocalKeys = (bool)$this->config->getPublicKey() && (bool)$this->config->getRepoPublicKey();
+			if ( $hasLocalKeys && $msg && stripos( $msg, 'signature' ) !== false ) {
+				$hint = wfMessage( 'edusharing-signature-invalid-hint' )->inContentLanguage()->text();
+				if ( $hint ) {
+					$msg .= ' - ' . $hint;
+				}
+			}
+			$result = [ 'ok' => false, 'msg' => $msg ];
+		}
+
+		self::$compatibilityCache[$cacheKey] = $result;
+		$cache->set( $wanKey, $result, 300 );
+
+		return $result;
 	}
 
 	/**
