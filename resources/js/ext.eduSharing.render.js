@@ -157,6 +157,7 @@
 		element.assets_url = config.assetsUrl;
 		element.preview_url = config.previewUrl;
 		element.resource_url = config.resourceUrl;
+		element.signature_algorithm = config.signatureAlgorithm;
 		element.style.maxWidth = '100%';
 		if ( config.width ) {
 			element.style.width = config.width + 'px';

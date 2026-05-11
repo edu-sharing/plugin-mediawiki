@@ -74,6 +74,7 @@ class EduSharingService {
 			$authHelper,
 			$this->config
 		);
+        $this->helperBase->registerSignatureHandler( new EduSharingSignatureHandler( $this->nodeHelper ));
 	}
 
 	/**
@@ -165,20 +166,16 @@ class EduSharingService {
 		}
 
 		try {
-			$result = $this->nodeHelper->deleteUsage(
+			$this->nodeHelper->deleteUsage(
 				$postData->nodeId,
 				$postData->usageId
 			);
-			return $result;
-
-		} catch ( \Exception $e ) {
-			if ( $e instanceof UsageDeletedException ) {
-				error_log( 'noted, deleting locally: ' . $e->getMessage() );
-			} else {
-				throw $e;
-			}
-		}
-	}
+		} catch (UsageDeletedException $e) {
+            error_log('noted, deleting locally: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
 
 	/**
 	 * Get a node by usage.
@@ -319,4 +316,12 @@ class EduSharingService {
 		return $node;
 	}
 
+    public function getObjectIdFromUrl(string $url): string {
+        $objectId = parse_url($url, PHP_URL_PATH);
+        if ($objectId === false) {
+            throw new \InvalidArgumentException('Invalid URL');
+        }
+
+        return str_replace('/', '', $objectId);
+    }
 }

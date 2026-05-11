@@ -73,6 +73,11 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 		label: ve.msg( 'visualeditor-mwedusharingdialog-id' )
 	} ).toggle( false );
 
+	this.previewUrl = new OO.ui.TextInputWidget( {
+		align: 'left',
+		label: ve.msg( 'visualeditor-mwedusharingdialog-previewurl' )
+	} ).toggle( false );
+
 	this.caption = new OO.ui.TextInputWidget( {} );
 	this.captionField = new OO.ui.FieldLayout( this.caption, {
 		align: 'left',
@@ -166,6 +171,7 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
  * @method
  */
 function openRepo() {
+	window.console.log( 'Opening EduSharing repository...' );
 	window.win = window.open( mw.config.get( 'edugui' ) );
 }
 
@@ -175,7 +181,12 @@ function openRepo() {
  * @method
  */
 ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
+	// Probably deprecated
+	window.console.log( 'Updating preview... (ve.ui)' );
+	/**
+	window.console.log( 'Updating preview...' );
 	const mwData = this.selectedNode.getAttribute( 'mw' );
+	window.console.log( mwData );
 	const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
 	previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
 
@@ -196,6 +207,7 @@ ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
                  style="max-width: 100%; height: auto;" />
         </div>
     ` );
+		*/
 };
 
 /**
@@ -238,7 +250,8 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 		dimensions = this.dimensions.getDimensions(),
 		version = this.version.getValue(),
 		repotype = this.repotype.getValue(),
-		versionshow = this.versionshow.getValue();
+		versionshow = this.versionshow.getValue(),
+		previewUrl = this.previewUrl.getValue();
 
 	// Parent method
 	ve.ui.MWEduSharingDialog.super.prototype.updateMwData.call( this, mwData );
@@ -253,6 +266,7 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	mwData.attrs.repotype = repotype.toString();
 	mwData.attrs.versionshow = versionshow.toString();
 	mwData.attrs.width = dimensions.width.toString();
+	mwData.attrs.previewUrl = previewUrl.toString();
 	if ( isNaN( dimensions.height ) || dimensions.height === '' || dimensions.height === '0' ) {
 		mwData.attrs.height = 'auto';
 	} else {
@@ -320,6 +334,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			// Function to update the preview
 			this.updatePreview = function () {
+				window.console.error( 'Updating preview... (Line 337). Commented out, probably deprecated. Code is faulty, anyway.');
+				/*
 				if ( !this.selectedNode ) {
 					return;
 				}
@@ -342,6 +358,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
                              style="max-width: 100%; height: auto;">
                     </div>
                 ` );
+				 */
 			};
 
 			// Receive data from iframe
@@ -349,21 +366,19 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			function handleRepo( event ) {
 				if ( event.data.event === 'APPLY_NODE' ) {
 					node = event.data.data;
-					window.win.close();
 
 					// Set the new values
-					that.id.setValue( node.objectUrl );
+					that.id.setValue( node.ref.id );
 					that.caption.setValue( node.title );
 					that.mediatype.setValue( node.mediatype );
 					that.mimetype.setValue( node.mimetype );
 					that.version.setValue( node.content.version );
 					that.repotype.setValue( node.repositoryType );
+					that.previewUrl.setValue( node.preview.url );
 
 					// Update the preview with the new data
-					const pureNodeId = node.objectUrl.slice( 14 ); // Extract the UUID
-
 					// Build the preview URL
-					const previewImageUrl = previewUrl + 'nodeId=' + pureNodeId;
+					const previewImageUrl = node.preview.url;
 
 					// Display the new preview image in the dialog
 					that.$edusharing.html( `
@@ -401,6 +416,8 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			// Update preview if a node is selected
 			if ( this.selectedNode ) {
+				window.console.log( 'Updating preview... (this.selectedNode is not null)' );
+				/**
 				const typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
 				if ( typeSwitchHelper === 'textlike' ) {
 					this.dimensionsField.toggle( false );
@@ -412,6 +429,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 					this.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
 				}
 				this.updatePreview();
+					*/
 			}
 
 			// Align widget

@@ -143,7 +143,7 @@ class EduSharingHooks implements
 		);
 
 		$postData           = new \stdClass();
-		$postData->nodeId   = str_replace( "ccrep://local/", "", $resource->EDUSHARING_RESOURCE_OBJECT_URL );
+		$postData->nodeId   = $eduService->getObjectIdFromUrl($resource->EDUSHARING_RESOURCE_OBJECT_URL);
 		$postData->usageId  = $resource->EDUSHARING_RESOURCE_USAGE;
 
 		// delete usage from repo
@@ -182,14 +182,10 @@ class EduSharingHooks implements
 				? 0
 				: $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ]
 		);
-		$postData->resourceId   = $resourceId;
-			$postData->nodeId       = str_replace(
-				"ccrep://local/",
-				"",
-				$resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ]
-			);
+		$postData->resourceId = $resourceId;
+        $postData->nodeId = $eduService->getObjectIdFromUrl($resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ]);
 
-		$usage = $eduService->createUsage( $postData );
+        $usage = $eduService->createUsage( $postData );
 
 		if ( $usage ) {
 			$dbw->update(
@@ -378,6 +374,11 @@ class EduSharingHooks implements
 		foreach ( $matches as $match ) {
 			$edutagOriginal   = $match['raw'];
 			$edutagNormalized = $match['normalized'];
+            $edutagNormalized = preg_replace(
+                '/\s+previewUrl\s*=\s*"[^"]*"/',
+                '',
+                $edutagNormalized
+            );
 
 			libxml_use_internal_errors( true );
 			$Response = simplexml_load_string( $edutagNormalized );
@@ -663,7 +664,7 @@ class EduSharingHooks implements
 				'</div></div></div>';
 		}
 
-		$nodeId = str_replace( 'ccrep://local/', '', $args['id'] );
+        $nodeId = $eduService->getObjectIdFromUrl( $args['id'] );
 		$usage = new Usage(
 			$nodeId,
 			$args['nodeversion'] ?? null,
@@ -775,6 +776,7 @@ class EduSharingHooks implements
 			'id' => $wrapperId,
 			'encodedNode' => $securedNode->securedNode,
 			'signature' => $securedNode->signature,
+            'signatureAlgorithm' => $securedNode->signingAlgorithm ?? $eduService->helperBase->signatureHandler->getAlgorithm(),
 			'jwt' => $securedNode->jwt,
 			'renderUrl' => $renderingBase ?? $proxyBase,
 			'encodedUser' => base64_encode( json_encode( $userData ) ),

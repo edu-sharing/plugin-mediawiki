@@ -150,7 +150,6 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
 ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 	const mwData = this.model.getAttribute( 'mw' );
 	const fullId = mwData.attrs.id;
-	const previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
 	const align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
         ( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
 		alignClasses = {
@@ -168,20 +167,12 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 		this.$element.addClass( alignClasses[ align ] );
 	}
 
-	// Extract the UUID
-	const pureNodeId = fullId.replace( 'ccrep://local/', '' );
-
-	// Build the preview URL
-	const previewImageUrl = previewUrl + '?nodeId=' + pureNodeId +
-        '&storeProtocol=workspace&storeId=SpacesStore' +
-        '&dontcache=' + Date.now();
-
 	// Display the preview image
 	// Classes: ext-edusharing-preview-container, ext-edusharing-preview-image, ext-edusharing-preview-caption
 	this.$edusharing.html( `
         <div class="ext-edusharing-preview-container">
             <img class="ext-edusharing-preview-image"
-                 src="${ previewImageUrl }"
+                 src="${ mwData.attrs.previewUrl }"
                  alt="${ mwData.body.extsrc || 'Preview' }"
                  style="max-width: 100%; height: auto;">
             <div class="ext-edusharing-preview-caption">
