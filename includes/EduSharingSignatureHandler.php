@@ -31,10 +31,7 @@ class EduSharingSignatureHandler implements SignatureHandler {
             return $algorithm;
         }
         try {
-            error_log("getting about");
             $about = $this->nodeHelper->base->getAbout();
-            error_log("got about");
-            error_log(json_encode(array_keys($about)));
             if (isset($about['defaultSignatureAlgorithm'])) {
                 $this->cache->set($key, $about['defaultSignatureAlgorithm'], 1800);
                 return $about['defaultSignatureAlgorithm'];

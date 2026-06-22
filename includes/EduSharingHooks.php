@@ -742,7 +742,7 @@ class EduSharingHooks implements
 		$wrapperWidth = $width ? 'style="max-width: 100%; width: ' . $width . 'px;"' : '';
 
 		$proxyBase = rtrim( SpecialPage::getTitleFor( 'EduProxy' )->getFullURL(), '/' );
-		$renderComponentBase = $proxyBase . '/web-components/rendering-service';
+		$repoAssetBase = rtrim( $eduService->config->baseUrl, '/' ) . '/web-components/rendering-service';
 		$useServiceWorker = $eduService->config->enableServiceWorker;
 		$resourceUrl = $proxyBase . '/public/redirect?mode=content'
 			. '&nodeId=' . rawurlencode( $usage->nodeId )
@@ -769,7 +769,9 @@ class EduSharingHooks implements
 		} catch ( \Throwable $e ) {
 			$renderingBase = null;
 		}
-		// Rendering calls can go directly to rendering service; assets/service worker via proxy to avoid CORS
+		// Assets, REST and rendering calls go directly to the repository/rendering service
+		// (both are browser-reachable with CORS). Only the service worker (must be
+		// same-origin), preview and redirect stay on the proxy.
 		$renderComponentProxyBase = $proxyBase . '/web-components/rendering-service';
 
 		$componentData = [
@@ -780,13 +782,14 @@ class EduSharingHooks implements
 			'jwt' => $securedNode->jwt,
 			'renderUrl' => $renderingBase ?? $proxyBase,
 			'encodedUser' => base64_encode( json_encode( $userData ) ),
-			'assetsUrl' => $renderComponentProxyBase . '/assets',
-			'scriptUrl' => $renderComponentProxyBase . '/main.js',
-			'styleUrl' => $renderComponentProxyBase . '/styles.css',
+			'assetsUrl' => $repoAssetBase . '/assets',
+			'assetsBaseUrl' => $repoAssetBase . '/',
+			'scriptUrl' => $repoAssetBase . '/main.js',
+			'styleUrl' => $repoAssetBase . '/styles.css',
 			'serviceWorkerUrl' => $useServiceWorker ? $renderComponentProxyBase . '/edu-service-worker.js' : '',
 			'previewUrl' => $previewUrl,
 			'resourceUrl' => $resourceUrl,
-			'apiUrl' => $proxyBase . '/rest',
+			'apiUrl' => rtrim( $eduService->config->baseUrl, '/' ) . '/rest',
 			'width' => $width,
 			'activateServiceWorker' => $useServiceWorker,
 			'openInNewTab' => $eduService->config->openResourceInNewTab,

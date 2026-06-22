@@ -1,6 +1,6 @@
 {
 	"name": "EduSharing",
-	"version": "2.0",
+	"version": "2.1",
 	"author": [
 		"https://edu-sharing.net",
 		"https://idea-sketch.com"
@@ -29,6 +29,9 @@
 		"EduSharing": [
 			"i18n"
 		]
+	},
+	"ExtensionMessagesFiles": {
+		"EduSharingAlias": "EduSharing.alias.php"
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\EduSharing\\": "includes/"

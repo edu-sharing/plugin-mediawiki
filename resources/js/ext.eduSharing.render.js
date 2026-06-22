@@ -50,7 +50,7 @@
 	 * @param {string} apiUrl The base API URL for EduSharing
 	 * @param {string} renderUrl The base rendering URL for EduSharing
 	 */
-	const installRewrite = ( apiUrl, renderUrl ) => {
+	const installRewrite = ( apiUrl, assetsBaseUrl ) => {
 		if ( rewritesInstalled ) {
 			return;
 		}
@@ -99,7 +99,7 @@
 		window.EDU_SHARING_API_URL = apiUrl;
 		window.EDU_SHARING_BASE_URL = apiUrl;
 		window.EDU_SHARING_REST_URL = apiUrl;
-		window.__EDUSHARING_PUBLIC_PATH__ = renderUrl + '/web-components/rendering-service/';
+		window.__EDUSHARING_PUBLIC_PATH__ = assetsBaseUrl;
 
 		rewritesInstalled = true;
 	};
@@ -216,7 +216,7 @@
 				}
 				wrapper.dataset.edusharingInit = '1';
 				loadAssetsOnce( config );
-				installRewrite( config.apiUrl, config.renderUrl );
+				installRewrite( config.apiUrl, config.assetsBaseUrl );
 				registerServiceWorker( config ).catch( () => {} );
 
 				/**

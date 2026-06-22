@@ -33,10 +33,7 @@ class SpecialEduProxy extends SpecialPage {
 		}
 
 		$path = ltrim( (string)$par, '/' );
-		$isRest = str_starts_with( $path, 'rest/' );
-		$isAsset = str_starts_with( $path, 'web-components/rendering-service' );
 		$isPreview = str_starts_with( $path, 'public/preview' );
-		$isPublic = str_starts_with( $path, 'public/' );
 
 		$targetUrl = $this->resolveTarget( $eduService, $path );
 		if ( !$targetUrl ) {
@@ -47,16 +44,11 @@ class SpecialEduProxy extends SpecialPage {
 		$params = $request->getValues();
 		unset( $params['title'] );
 		if ( $params ) {
-			// ensure repoId is forwarded for rendering service calls (except preview which uses baseUrl)
-			if ( $isPublic && !$isPreview && !isset( $params['repoId'] ) && $eduService->config->repoId
-			) {
-				$params['repoId'] = $eduService->config->repoId;
-			}
 			$targetUrl .= ( str_contains( $targetUrl, '?' ) ? '&' : '?' ) . wfArrayToCgi( $params );
 		}
 
 		// Redirect handling: generate repo redirect and send it to client
-		if ( !$isAsset && str_starts_with( $path, 'public/redirect' ) ) {
+		if ( str_starts_with( $path, 'public/redirect' ) ) {
 			$usage = $this->requestToUsage( $params );
 			if ( $usage ) {
 				try {
@@ -96,15 +88,11 @@ class SpecialEduProxy extends SpecialPage {
 		];
 
 		$forwardHeaders = [];
-		$hasAuthHeader = false;
 		$hasOriginHeader = false;
 		foreach ( getallheaders() as $name => $value ) {
 			$nameLower = strtolower( $name );
 			if ( in_array( $nameLower, $skipHeaders, true ) ) {
 				continue;
-			}
-			if ( $nameLower === 'authorization' ) {
-				$hasAuthHeader = true;
 			}
 			if ( $nameLower === 'origin' ) {
 				$hasOriginHeader = true;
@@ -123,38 +111,8 @@ class SpecialEduProxy extends SpecialPage {
 				$forwardHeaders[] = 'Origin: ' . $origin;
 			}
 		}
-		// Add edu-sharing auth headers (not for static assets)
-		$ticket = $eduService->getTicket();
-		if ( $isRest && !$isAsset && $ticket && !$hasAuthHeader ) {
-			$forwardHeaders = array_filter(
-				$forwardHeaders,
-				static fn ( $h ) => stripos( $h, 'Authorization:' ) !== 0
-			);
-			$forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
-			$forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
-		}
-		// Public endpoints: keep client auth; only fall back to ticket if none is present
-		if ( $isPublic
-				&& ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) )
-				&& !$hasAuthHeader && $ticket
-		) {
-			$forwardHeaders[] = 'Authorization: EDU-TICKET ' . $ticket;
-			$forwardHeaders[] = 'X-Edu-App-Id: ' . $eduService->config->appId;
-		}
-
-		// Add signing headers for REST endpoints
-		if ( $isRest ) {
-			$ts = (int)( microtime( true ) * 1000 );
-			$toSign = $eduService->config->appId . $targetUrl . $ts;
-			$signature = $eduService->helperBase->sign( $toSign );
-			$forwardHeaders[] = 'X-Edu-App-Signed: ' . $toSign;
-			$forwardHeaders[] = 'X-Edu-App-Sig: ' . $signature;
-            $forwardHeaders[] = 'X-Edu-App-SignedAlg: ' . $eduService->helperBase->signatureHandler->getAlgorithm();
-            $forwardHeaders[] = 'X-Edu-App-Ts: ' . $ts;
-		}
-
-		// Usage signature headers for rendering public endpoints (preview/redirect)
-		if ( !$isAsset && ( $isPreview || str_contains( $path, 'public/redirect' ) ) ) {
+		// Usage signature headers for the preview endpoint (signed server-side with the app key)
+		if ( $isPreview ) {
 			$usage = $this->requestToUsage( $params );
 			if ( $usage ) {
 				$ts = (int)( microtime( true ) * 1000 );
@@ -171,14 +129,6 @@ class SpecialEduProxy extends SpecialPage {
 					$forwardHeaders[] = 'X-Edu-Usage-Node-Version: ' . $usage->nodeVersion;
 				}
 			}
-		}
-
-		if ( $isPublic && ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) ) ) {
-			$logHeaders = array_map(
-				static fn ( $h ) => stripos( $h, 'Authorization:' ) === 0 ? 'Authorization: [redacted]' : $h,
-				$forwardHeaders
-			);
-			$label = str_contains( $path, 'public/job' ) ? 'Public job proxy' : 'Public renderdata proxy';
 		}
 
 		try {
@@ -209,14 +159,6 @@ class SpecialEduProxy extends SpecialPage {
 		} catch ( \Throwable $e ) {
 			$this->outputError( 500, 'Proxy failed: ' . $e->getMessage() );
 			return;
-		}
-
-		if ( $isPublic && ( str_contains( $path, 'public/job' ) || str_contains( $path, 'public/renderdata' ) ) ) {
-			$bodyPreview = $result->content;
-			if ( strlen( $bodyPreview ) > 300 ) {
-				$bodyPreview = substr( $bodyPreview, 0, 300 ) . '...';
-			}
-			$label = str_contains( $path, 'public/job' ) ? 'Public job proxy result' : 'Public renderdata proxy result';
 		}
 
 		$status = (int)( $result->info['http_code'] ?? 500 );
@@ -255,17 +197,18 @@ class SpecialEduProxy extends SpecialPage {
 
 	private function resolveTarget( EduSharingService $eduService, string $path ): ?string {
 		$base = rtrim( $eduService->config->baseUrl, '/' );
-		if ( str_starts_with( $path, 'rest/' ) ) {
-			return $base . '/' . $path;
-		}
-		if ( str_starts_with( $path, 'web-components/rendering-service' ) ) {
-			// Assets are served from the repository host, not the rendering service
+		// Only a narrow set of requests is proxied; everything else (static assets, REST,
+		// job/renderdata) is called directly by the frontend against the repo/rendering service.
+		if ( $path === 'web-components/rendering-service/edu-service-worker.js' ) {
+			// Service workers must be served same-origin, so this one stays proxied.
 			return $base . '/' . $path;
 		}
 		if ( str_starts_with( $path, 'public/preview' ) ) {
 			return $base . '/preview';
 		}
-		if ( str_starts_with( $path, 'public/' ) ) {
+		if ( str_starts_with( $path, 'public/redirect' ) ) {
+			// Resolved non-null so execute() reaches its server-side 302 short-circuit;
+			// the redirect URL itself is generated by getRedirectUrl(), not proxied.
 			$rendering = $eduService->getRenderingServiceUrl();
 			if ( $rendering ) {
 				return rtrim( $rendering, '/' ) . '/' . $path;

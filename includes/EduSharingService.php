@@ -220,7 +220,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		return $this->nodeHelper->getSecuredNodeByUsage( $usage );
+		return $this->nodeHelper->getSecuredNodeByUsage($usage, $this->config->username);
 	}
 
 	/**
