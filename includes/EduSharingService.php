@@ -52,6 +52,9 @@ class EduSharingService {
 			$this->config->privateKey,
 			$this->config->appId
 		);
+		$this->helperBase->registerAboutApiCacheHandler(
+			new EduSharingAboutApiCacheHandler( $this->helperBase )
+		);
 
 		$compat = $this->verifyCompatibilityCached();
 		if ( !$compat['ok'] ) {
@@ -74,7 +77,6 @@ class EduSharingService {
 			$authHelper,
 			$this->config
 		);
-        $this->helperBase->registerSignatureHandler( new EduSharingSignatureHandler( $this->nodeHelper ));
 	}
 
 	/**
@@ -170,12 +172,12 @@ class EduSharingService {
 				$postData->nodeId,
 				$postData->usageId
 			);
-		} catch (UsageDeletedException $e) {
-            error_log('noted, deleting locally: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
+		} catch ( UsageDeletedException $e ) {
+			error_log( 'noted, deleting locally: ' . $e->getMessage() );
+		} catch ( \Exception $e ) {
+			throw $e;
+		}
+	}
 
 	/**
 	 * Get a node by usage.
@@ -220,7 +222,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		return $this->nodeHelper->getSecuredNodeByUsage($usage, $this->config->username);
+		return $this->nodeHelper->getSecuredNodeByUsage( $usage, $this->config->username );
 	}
 
 	/**
@@ -232,7 +234,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		$about = $this->helperBase->getAbout();
+		$about = $this->helperBase->getAboutCached();
 		if ( isset( $about['renderingService2']['url'] ) ) {
 			return $about['renderingService2']['url'];
 		}
@@ -316,12 +318,12 @@ class EduSharingService {
 		return $node;
 	}
 
-    public function getObjectIdFromUrl(string $url): string {
-        $objectId = parse_url($url, PHP_URL_PATH);
-        if ($objectId === false) {
-            throw new \InvalidArgumentException('Invalid URL');
-        }
+	public function getObjectIdFromUrl( string $url ): string {
+		$objectId = parse_url( $url, PHP_URL_PATH );
+		if ( $objectId === false ) {
+			throw new \InvalidArgumentException( 'Invalid URL' );
+		}
 
-        return str_replace('/', '', $objectId);
-    }
+		return str_replace( '/', '', $objectId );
+	}
 }
