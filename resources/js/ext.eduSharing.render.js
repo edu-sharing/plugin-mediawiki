@@ -149,6 +149,7 @@
 		const element = document.createElement( 'edu-sharing-render' );
 		element.encoded_node = config.encodedNode;
 		element.signature = config.signature;
+		element.signature_algorithm = config.signingAlgorithm;
 		element.jwt = config.jwt;
 		element.render_url = config.renderUrl;
 		element.encoded_user = config.encodedUser;

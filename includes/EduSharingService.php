@@ -52,6 +52,9 @@ class EduSharingService {
 			$this->config->privateKey,
 			$this->config->appId
 		);
+		$this->helperBase->registerAboutApiCacheHandler(
+			new EduSharingAboutApiCacheHandler( $this->helperBase )
+		);
 
 		$compat = $this->verifyCompatibilityCached();
 		if ( !$compat['ok'] ) {
@@ -223,7 +226,21 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		return $this->nodeHelper->getSecuredNodeByUsage( $usage );
+		$securedNode = $this->nodeHelper->getSecuredNodeByUsage( $usage );
+		$securedNode->signingAlgorithm = $this->getSigningAlgorithm();
+		return $securedNode;
+	}
+
+	/**
+	 * Get the signature algorithm advertised by the repository.
+	 *
+	 * @return string
+	 */
+	public function getSigningAlgorithm(): string {
+		if ( !$this->isAvailable ) {
+			throw new \RuntimeException( 'edu-sharing backend unavailable' );
+		}
+		return $this->helperBase->getAlgorithm();
 	}
 
 	/**
@@ -235,7 +252,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		$about = $this->helperBase->getAbout();
+		$about = $this->helperBase->getAboutCached();
 		if ( isset( $about['renderingService2']['url'] ) ) {
 			return $about['renderingService2']['url'];
 		}

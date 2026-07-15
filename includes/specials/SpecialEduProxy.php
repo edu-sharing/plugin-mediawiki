@@ -150,6 +150,7 @@ class SpecialEduProxy extends SpecialPage {
 			$forwardHeaders[] = 'X-Edu-App-Signed: ' . $toSign;
 			$forwardHeaders[] = 'X-Edu-App-Sig: ' . $signature;
 			$forwardHeaders[] = 'X-Edu-App-Ts: ' . $ts;
+			$forwardHeaders[] = 'X-Edu-App-SignedAlg: ' . $eduService->helperBase->getAlgorithm();
 		}
 
 		// Usage signature headers for rendering public endpoints (preview/redirect)
@@ -162,6 +163,7 @@ class SpecialEduProxy extends SpecialPage {
 				$forwardHeaders[] = 'X-Edu-App-Signed: ' . $toSign;
 				$forwardHeaders[] = 'X-Edu-App-Sig: ' . $signature;
 				$forwardHeaders[] = 'X-Edu-App-Ts: ' . $ts;
+				$forwardHeaders[] = 'X-Edu-App-SignedAlg: ' . $eduService->helperBase->getAlgorithm();
 				$forwardHeaders[] = 'X-Edu-Usage-Node-Id: ' . $usage->nodeId;
 				$forwardHeaders[] = 'X-Edu-Usage-Course-Id: ' . $usage->containerId;
 				$forwardHeaders[] = 'X-Edu-Usage-Resource-Id: ' . $usage->resourceId;

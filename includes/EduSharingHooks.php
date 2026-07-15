@@ -775,6 +775,7 @@ class EduSharingHooks implements
 			'id' => $wrapperId,
 			'encodedNode' => $securedNode->securedNode,
 			'signature' => $securedNode->signature,
+			'signingAlgorithm' => $securedNode->signingAlgorithm,
 			'jwt' => $securedNode->jwt,
 			'renderUrl' => $renderingBase ?? $proxyBase,
 			'encodedUser' => base64_encode( json_encode( $userData ) ),
