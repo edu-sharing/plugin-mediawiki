@@ -156,12 +156,14 @@ class EduSharingHooks implements
 	 * @param EduSharingService $eduService
 	 * @param array $resourceData
 	 * @param bool $isRestore
+	 * @param string|null $courseTitle Human-readable page title submitted with the usage
 	 * @return mixed Usage object
 	 */
 	private static function addResourceAndUsage(
 		EduSharingService $eduService,
 		$resourceData,
-		bool $isRestore = false
+		bool $isRestore = false,
+		?string $courseTitle = null
 	) {
 		// if we don't restore a previously deleted resource, we don't want to re-use an existing id
 		if ( $isRestore !== true ) {
@@ -184,6 +186,7 @@ class EduSharingHooks implements
 		);
 		$postData->resourceId = $resourceId;
 		$postData->nodeId = $eduService->getObjectIdFromUrl( $resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ] );
+		$postData->courseTitle = $courseTitle;
 
 		$usage = $eduService->createUsage( $postData );
 
@@ -331,17 +334,18 @@ class EduSharingHooks implements
 		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
 		$dbr = $dbProvider->getReplicaDatabase();
 
+		$title = MediaWikiServices::getInstance()
+			->getTitleFactory()
+			->newFromPageReference( $pageRef );
+		$pageTitle = $title->getPrefixedText();
+
 		if ( $pageRef instanceof ProperPageIdentity ) {
 			// if we have a PageIdentity object, we are in undelete context and have a pageId
 			$pageId = $pageRef->getId();
 		} else {
 			// otherwise we come from creating/editing a page and may or may not have a pageId
-			// to check we create a title object from the PageReference and and have a look at its articleId.
+			// to check we look at the title object's articleId.
 			// If 0, the page is new and we don't have a pageId and can't use it right now
-			$title = MediaWikiServices::getInstance()
-				->getTitleFactory()
-				->newFromPageReference( $pageRef );
-
 			$articleId = $title->getArticleID();
 			$pageId = ( $articleId > 0 ? $articleId : null );
 		}
@@ -404,7 +408,7 @@ class EduSharingHooks implements
 			 */
 			if ( $Response['action'] == 'new' ) {
 
-				$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
+				$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore, $pageTitle );
 				// if we don't have a pageId (b/c page is new and not yet saved) we need to save the resourceIds
 				// and add the pageId to the resource record in the PageSaveCompleteHook
 				if ( $pageId === null ) {
@@ -451,7 +455,7 @@ class EduSharingHooks implements
 
 				} else {
 
-					$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
+					$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore, $pageTitle );
 
 					$Response['resourceid'] = $usage->resourceId;
 					// if we don't have a pageId (b/c page is new and not yet saved) we need to save the resourceIds

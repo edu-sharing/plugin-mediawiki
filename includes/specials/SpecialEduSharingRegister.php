@@ -30,6 +30,7 @@ class SpecialEduSharingRegister extends SpecialPage {
 				'appid' => $eduService->config->appId,
 				'public_key' => $eduService->config->getPublicKey(),
 				'type' => $eduService->config->appType,
+				'subtype' => 'mediawiki',
 				'domain' => $eduService->config->appDomain,
 				'host' => $eduService->config->appHost,
 				'trustedclient' => 'true'

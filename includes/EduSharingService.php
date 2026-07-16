@@ -140,6 +140,7 @@ class EduSharingService {
 	 * Create usage in the repository.
 	 *
 	 * @param \stdClass $postData Payload containing ticket/container/resource/nodeId
+	 *  and optionally nodeVersion/courseTitle
 	 * @return mixed
 	 */
 	public function createUsage( $postData ) {
@@ -149,9 +150,11 @@ class EduSharingService {
 
 		$result = $this->nodeHelper->createUsage(
 			$postData->ticket,
-			$postData->containerId,
-			$postData->resourceId,
-			$postData->nodeId
+			(string)$postData->containerId,
+			(string)$postData->resourceId,
+			$postData->nodeId,
+			$postData->nodeVersion ?? null,
+			!empty( $postData->courseTitle ) ? (string)$postData->courseTitle : null
 		);
 		return $result;
 	}
