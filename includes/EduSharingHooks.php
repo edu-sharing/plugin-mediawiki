@@ -543,32 +543,93 @@ class EduSharingHooks implements
 		$pageId = $wikiPage->getId();
 		$title  = $wikiPage->getTitle();
 		$pageKey = $wikiPage->getNamespace() . ':' . $wikiPage->getDBkey();
+		$resourceIds = self::$pendingResourceIds[$pageKey] ?? [];
 
-		if ( empty( self::$pendingResourceIds[$pageKey] ) ) {
+		// VisualEditor may run the pre-save transform in a separate request. In that
+		// case the in-memory pending list is gone, so recover the IDs from the saved revision.
+		$content = $revisionRecord->getContent( SlotRecord::MAIN );
+		if ( $content instanceof TextContent ) {
+			foreach ( self::getEduTags( 'edusharing', $content->getText() ) as $match ) {
+				$tag = simplexml_load_string( $match['normalized'] );
+				$resourceId = $tag !== false ? (int)$tag['resourceid'] : 0;
+				if ( $resourceId > 0 ) {
+					$resourceIds[] = $resourceId;
+				}
+			}
+		}
+
+		$resourceIds = array_values( array_unique( $resourceIds ) );
+		if ( !$resourceIds ) {
+			unset( self::$pendingResourceIds[$pageKey] );
 			return;
 		}
 
-		$resourceIds = self::$pendingResourceIds[$pageKey];
-
 		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
 		$dbw = $dbProvider->getPrimaryDatabase();
+		$eduService = null;
 
 		foreach ( $resourceIds as $resId ) {
-			$dbw->update(
+			$resource = $dbw->selectRow(
 				'edusharing_resource',
 				[
-					'EDUSHARING_RESOURCE_PAGE_ID'   => $pageId,
-					'EDUSHARING_RESOURCE_TITLE'     => $title->getPrefixedText(),
+					'EDUSHARING_RESOURCE_ID',
+					'EDUSHARING_RESOURCE_PAGE_ID',
+					'EDUSHARING_RESOURCE_USAGE',
+					'EDUSHARING_RESOURCE_OBJECT_URL'
 				],
 				[
-					'EDUSHARING_RESOURCE_ID'      => $resId,
+					'EDUSHARING_RESOURCE_ID' => $resId,
 					'EDUSHARING_RESOURCE_PAGE_ID' => null,
 				],
 				__METHOD__
 			);
+			if ( !$resource ) {
+				continue;
+			}
+
+			if ( $eduService === null ) {
+				$services = MediaWikiServices::getInstance();
+				$mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
+				$serviceUser = $user instanceof \MediaWiki\User\User ?
+					$user : $services->getUserFactory()->newFromUserIdentity( $user );
+				$eduService = new EduSharingService( $serviceUser, $mwConfig );
+			}
+
+			try {
+				$postData = new \stdClass();
+				$postData->ticket = $eduService->getTicket();
+				$postData->containerId = $pageId;
+				$postData->resourceId = $resId;
+				$postData->nodeId = $eduService->getObjectIdFromUrl(
+					$resource->EDUSHARING_RESOURCE_OBJECT_URL
+				);
+				$newUsage = $eduService->createUsage( $postData );
+
+				$dbw->update(
+					'edusharing_resource',
+					[
+						'EDUSHARING_RESOURCE_PAGE_ID' => $pageId,
+						'EDUSHARING_RESOURCE_TITLE' => $title->getPrefixedText(),
+						'EDUSHARING_RESOURCE_USAGE' => $newUsage->usageId,
+					],
+					[
+						'EDUSHARING_RESOURCE_ID' => $resId,
+						'EDUSHARING_RESOURCE_PAGE_ID' => null,
+					],
+					__METHOD__
+				);
+				if ( $resource->EDUSHARING_RESOURCE_USAGE &&
+					$resource->EDUSHARING_RESOURCE_USAGE !== $newUsage->usageId ) {
+					$deleteData = new \stdClass();
+					$deleteData->nodeId = $postData->nodeId;
+					$deleteData->usageId = $resource->EDUSHARING_RESOURCE_USAGE;
+					$eduService->deleteUsage( $deleteData );
+				}
+			} catch ( \Throwable $e ) {
+				error_log( 'Unable to finalize edu-sharing usage for resource ' . $resId . ': ' . $e->getMessage() );
+			}
 		}
 
-		// Optional: aufräumen
 		unset( self::$pendingResourceIds[$pageKey] );
 	}
 
@@ -602,11 +663,19 @@ class EduSharingHooks implements
 		}
 
 		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-		$dbr = $dbProvider->getReplicaDatabase();
+		// The VE renders the saved revision immediately after PageSaveComplete.
+		// Read from primary so the finalized page ID and usage are visible without
+		// waiting for replica synchronization.
+		$dbr = $dbProvider->getPrimaryDatabase();
 
 		$res = $dbr->selectRow(
 			'edusharing_resource',
-			[ 'EDUSHARING_RESOURCE_ID', 'EDUSHARING_RESOURCE_USAGE', 'EDUSHARING_RESOURCE_OBJECT_URL' ],
+			[
+				'EDUSHARING_RESOURCE_ID',
+				'EDUSHARING_RESOURCE_PAGE_ID',
+				'EDUSHARING_RESOURCE_USAGE',
+				'EDUSHARING_RESOURCE_OBJECT_URL'
+			],
 			'EDUSHARING_RESOURCE_ID = ' . $args['resourceid'],
 			__METHOD__,
 			[ 'ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC' ]
@@ -668,7 +737,7 @@ class EduSharingHooks implements
 		$usage = new Usage(
 			$nodeId,
 			$args['nodeversion'] ?? null,
-			(string)$title->getArticleID(),
+			(string)$res->EDUSHARING_RESOURCE_PAGE_ID,
 			(string)$args['resourceid'],
 			(string)$res->EDUSHARING_RESOURCE_USAGE
 		);
