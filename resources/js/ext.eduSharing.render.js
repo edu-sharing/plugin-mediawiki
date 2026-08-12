@@ -19,6 +19,7 @@
 	 * @type {boolean}
 	 */
 	let rewritesInstalled = false;
+	let serviceWorkerPromise = null;
 
 	/**
 	 * Loads EduSharing rendering assets (script and stylesheet) only once.
@@ -115,23 +116,29 @@
 		if ( !config.activateServiceWorker || !config.serviceWorkerUrl || !( 'serviceWorker' in navigator ) ) {
 			return;
 		}
-		if ( window.__eduSharingSW ) {
-			return;
+		if ( serviceWorkerPromise ) {
+			return serviceWorkerPromise;
 		}
-		window.__eduSharingSW = true;
-		try {
-			let scope = '/';
-			try {
-				const swUrl = new URL( config.serviceWorkerUrl, window.location.href );
-				scope = swUrl.pathname.replace( /[^/]+$/, '' ) || '/';
-			} catch ( e ) {
-				scope = '/';
-			}
-			await navigator.serviceWorker.register( config.serviceWorkerUrl, { scope: scope } );
+
+		serviceWorkerPromise = ( async () => {
+			await navigator.serviceWorker.register( config.serviceWorkerUrl, { scope: '/' } );
 			await navigator.serviceWorker.ready;
-		} catch ( e ) {
+
+			if ( !navigator.serviceWorker.controller ) {
+				await new Promise( ( resolve ) => {
+					const timeout = setTimeout( resolve, 5000 );
+					navigator.serviceWorker.addEventListener( 'controllerchange', () => {
+						clearTimeout( timeout );
+						resolve();
+					}, { once: true } );
+				} );
+			}
+		} )().catch( ( e ) => {
+			serviceWorkerPromise = null;
 			mw.log.warn( 'EduSharing service worker registration failed', e );
-		}
+		} );
+
+		return serviceWorkerPromise;
 	};
 
 	/**
@@ -153,7 +160,9 @@
 		element.render_url = config.renderUrl;
 		element.encoded_user = config.encodedUser;
 		element.service_worker_url = config.serviceWorkerUrl;
-		element.activate_service_worker = !!config.activateServiceWorker;
+		// Registration is handled above so every renderer shares the same root-scoped worker.
+		element.activate_service_worker = false;
+		element.target_blank = !!config.openInNewTab;
 		element.assets_url = config.assetsUrl;
 		element.preview_url = config.previewUrl;
 		element.resource_url = config.resourceUrl;
@@ -163,32 +172,6 @@
 			element.style.width = config.width + 'px';
 		}
 		wrapper.appendChild( element );
-
-		// Enforce link target for resource links if configured
-		if ( config.openInNewTab ) {
-			/**
-			 * Sets the target attribute for all links in the EduSharing component.
-			 *
-			 * @method setTargets
-			 */
-			const setTargets = () => {
-				const root = element.shadowRoot || element;
-				Array.prototype.forEach.call( root.querySelectorAll( 'a' ), ( link ) => {
-					link.target = '_blank';
-				} );
-			};
-			let attempts = 0;
-			const poll = setInterval( () => {
-				setTargets();
-				attempts++;
-				if ( attempts > 200 ) {
-					clearInterval( poll );
-				}
-			}, 50 );
-			const observer = new MutationObserver( () => setTargets() );
-			observer.observe( element.shadowRoot || element, { childList: true, subtree: true } );
-			setTimeout( () => observer.disconnect(), 10000 );
-		}
 	};
 
 	/**
@@ -217,8 +200,6 @@
 				wrapper.dataset.edusharingInit = '1';
 				loadAssetsOnce( config );
 				installRewrite( config.apiUrl, config.assetsBaseUrl );
-				registerServiceWorker( config ).catch( () => {} );
-
 				/**
 				 * Waits for the custom element to be defined and initializes the EduSharing component.
 				 *
@@ -231,7 +212,7 @@
 					}
 					setTimeout( waitForElement, 50 );
 				};
-				waitForElement();
+				registerServiceWorker( config ).then( waitForElement );
 			}
 		);
 	};

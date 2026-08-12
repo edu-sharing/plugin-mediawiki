@@ -141,6 +141,19 @@ class SpecialEduProxy extends SpecialPage {
 			}
 		}
 
+		$curlOptions = [
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_FAILONERROR => false,
+			// Avoid downstream compression issues; upstream can still compress.
+			CURLOPT_ENCODING => 'identity',
+			CURLOPT_CUSTOMREQUEST => $method,
+			CURLOPT_HTTPHEADER => $forwardHeaders,
+		];
+		if ( $body !== '' && $method !== 'GET' && $method !== 'HEAD' ) {
+			$curlOptions[CURLOPT_POSTFIELDS] = $body;
+		}
+
 		try {
 			$responseHeaders = [];
 			$headerFn = static function ( $ch, $header ) use ( &$responseHeaders ) {
@@ -155,17 +168,8 @@ class SpecialEduProxy extends SpecialPage {
 				}
 				return $len;
 			};
-			$result = $eduService->helperBase->handleCurlRequest( $targetUrl, [
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_FAILONERROR => false,
-				// avoid downstream compression issues; upstream can still compress
-				CURLOPT_ENCODING => 'identity',
-				CURLOPT_CUSTOMREQUEST => $method,
-				CURLOPT_HTTPHEADER => $forwardHeaders,
-				CURLOPT_POSTFIELDS => $body,
-				CURLOPT_HEADERFUNCTION => $headerFn,
-			] );
+			$curlOptions[CURLOPT_HEADERFUNCTION] = $headerFn;
+			$result = $eduService->helperBase->handleCurlRequest( $targetUrl, $curlOptions );
 		} catch ( \Throwable $e ) {
 			$this->outputError( 500, 'Proxy failed: ' . $e->getMessage() );
 			return;
@@ -207,8 +211,11 @@ class SpecialEduProxy extends SpecialPage {
 
 	private function resolveTarget( EduSharingService $eduService, string $path ): ?string {
 		$base = rtrim( $eduService->config->baseUrl, '/' );
-		// Only a narrow set of requests is proxied; everything else (static assets, REST,
-		// job/renderdata) is called directly by the frontend against the repo/rendering service.
+		if ( str_starts_with( $path, 'rest/' ) ) {
+			return $base . '/' . $path;
+		}
+		// Proxy REST, service-worker and preview requests. Static assets and rendering jobs
+		// are still loaded directly from the repository and rendering service.
 		if ( $path === 'web-components/rendering-service/edu-service-worker.js' ) {
 			// Service workers must be served same-origin, so this one stays proxied.
 			return $base . '/' . $path;

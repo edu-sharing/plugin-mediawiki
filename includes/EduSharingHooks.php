@@ -840,9 +840,8 @@ class EduSharingHooks implements
 		} catch ( \Throwable $e ) {
 			$renderingBase = null;
 		}
-		// Assets, REST and rendering calls go directly to the repository/rendering service
-		// (both are browser-reachable with CORS). Only the service worker (must be
-		// same-origin), preview and redirect stay on the proxy.
+		// Static assets and rendering jobs go directly to the external services. REST,
+		// service-worker, preview and redirect requests use the same-origin proxy.
 		$renderComponentProxyBase = $proxyBase . '/web-components/rendering-service';
 
 		$componentData = [
@@ -860,7 +859,7 @@ class EduSharingHooks implements
 			'serviceWorkerUrl' => $useServiceWorker ? $renderComponentProxyBase . '/edu-service-worker.js' : '',
 			'previewUrl' => $previewUrl,
 			'resourceUrl' => $resourceUrl,
-			'apiUrl' => rtrim( $eduService->config->baseUrl, '/' ) . '/rest',
+			'apiUrl' => $proxyBase . '/rest',
 			'width' => $width,
 			'activateServiceWorker' => $useServiceWorker,
 			'openInNewTab' => $eduService->config->openResourceInNewTab,
