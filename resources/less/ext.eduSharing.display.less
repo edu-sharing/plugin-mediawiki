@@ -1,6 +1,8 @@
 // Output
 .ext-edusharing-container {
 	position: relative;
+	// Keep floated renderers above following positioned wrappers with transparent float space.
+	z-index: 1;
 	min-width: 400px;
 	min-height: 250px;
 	background: #f8f8f8;
