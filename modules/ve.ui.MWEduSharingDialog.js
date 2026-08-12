@@ -33,7 +33,40 @@ ve.ui.MWEduSharingDialog.static.size = 'large';
 ve.ui.MWEduSharingDialog.static.allowedEmpty = true;
 ve.ui.MWEduSharingDialog.static.modelClasses = [ ve.dm.MWEduSharingNode ];
 
-let previewUrl = mw.config.get( 'edupreview' );
+const previewBaseUrl = mw.config.get( 'edupreview' );
+let repositoryWindow = null;
+
+/**
+ * Returns a repository preview URL for old ccrep IDs and current UUIDs.
+ *
+ * @param {string} id Repository object ID
+ * @param {string} [providedUrl] Preview URL supplied by the repository picker
+ * @return {string} Preview URL
+ */
+function getPreviewUrl( id, providedUrl ) {
+	if ( providedUrl ) {
+		return providedUrl;
+	}
+	const nodeId = ( id || '' ).replace( /^ccrep:\/\/[^/]+\//, '' );
+	return previewBaseUrl + 'nodeId=' + encodeURIComponent( nodeId );
+}
+
+/**
+ * Renders a preview image without injecting repository data as HTML.
+ *
+ * @param {jQuery} $container Preview container
+ * @param {string} url Preview URL
+ * @param {string} alt Alternative text
+ */
+function renderPreview( $container, url, alt ) {
+	const $image = $( '<img>' )
+		.addClass( 'ext-edusharing-dialog-preview-image' )
+		.attr( { src: url, alt: alt || 'Preview' } )
+		.css( { maxWidth: '100%', height: 'auto' } );
+	$container.empty().append(
+		$( '<div>' ).addClass( 'ext-edusharing-dialog-preview-container' ).append( $image )
+	);
+}
 
 /**
  * Initializes the dialog.
@@ -171,8 +204,14 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
  * @method
  */
 function openRepo() {
-	window.console.log( 'Opening EduSharing repository...' );
-	window.win = window.open( mw.config.get( 'edugui' ) );
+	const configuredRepoUrl = mw.config.get( 'edugui' );
+	const hasConfiguredRepoUrl = configuredRepoUrl &&
+		configuredRepoUrl !== 'null' &&
+		configuredRepoUrl.indexOf( '/null' ) === -1;
+	const repoUrl = hasConfiguredRepoUrl ?
+		configuredRepoUrl :
+		mw.util.getUrl( 'Special:EduProxy', { edupath: 'components/search' } );
+	repositoryWindow = window.open( repoUrl );
 }
 
 /**
@@ -181,33 +220,14 @@ function openRepo() {
  * @method
  */
 ve.ui.MWEduSharingDialog.prototype.updatePreview = function () {
-	// Probably deprecated
-	window.console.log( 'Updating preview... (ve.ui)' );
-	/**
-	window.console.log( 'Updating preview...' );
+	if ( !this.selectedNode ) {
+		this.$edusharing.empty();
+		return;
+	}
+
 	const mwData = this.selectedNode.getAttribute( 'mw' );
-	window.console.log( mwData );
-	const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-	previewUrl = 'https://repository.staging.openeduhub.net/edu-sharing/preview';
-
-	// Extract the UUID
-	const pureNodeId = fullId.replace( 'ccrep://local/', '' );
-
-	// Build the preview URL
-	const previewImageUrl = previewUrl + '?nodeId=' + pureNodeId +
-                          '&storeProtocol=workspace&storeId=SpacesStore' +
-                          '&dontcache=' + Date.now();
-
-	// Display the preview image in the dialog
-	this.$edusharing.html( `
-        <div class="ext-edusharing-dialog-preview-container">
-            <img class="ext-edusharing-dialog-preview-image"
-                 src="${ previewImageUrl }"
-                 alt="${ mwData.body.extsrc || 'Preview' }"
-                 style="max-width: 100%; height: auto;" />
-        </div>
-    ` );
-		*/
+	const url = getPreviewUrl( mwData.attrs.id, mwData.attrs.previewUrl );
+	renderPreview( this.$edusharing, url, mwData.body.extsrc );
 };
 
 /**
@@ -328,71 +348,41 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 		.next( function () {
 			const mwAttrs = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).attrs || {},
 				mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
-				isReadOnly = this.isReadOnly(),
-				that = this;
+				isReadOnly = this.isReadOnly();
 			let node;
 
-			// Function to update the preview
-			this.updatePreview = function () {
-				window.console.error( 'Updating preview... (Line 337). Commented out, probably deprecated. Code is faulty, anyway.');
-				/*
-				if ( !this.selectedNode ) {
-					return;
-				}
-
-				const mwData = this.selectedNode.getAttribute( 'mw' );
-				const fullId = mwData.attrs.id; // Example: "ccrep://local/4edefed7-239d-4845-b1a8-9527fdeef9ab"
-
-				// Extract the UUID from "ccrep://local/<UUID>"
-				const pureNodeId = fullId.replace( 'ccrep://local/', '' );
-
-				// Build the preview URL
-				const previewImageUrl = previewUrl + 'nodeId=' + pureNodeId;
-
-				// Display the preview image in the dialog
-				this.$edusharing.html( `
-                    <div class="ext-edusharing-dialog-preview-container">
-                        <img class="ext-edusharing-dialog-preview-image"
-                             src="${ previewImageUrl }"
-                             alt="${ mwBody.extsrc || 'Preview' }"
-                             style="max-width: 100%; height: auto;">
-                    </div>
-                ` );
-				 */
-			};
-
 			// Receive data from iframe
-			window.addEventListener( 'message', handleRepo, false );
-			function handleRepo( event ) {
-				if ( event.data.event === 'APPLY_NODE' ) {
+			this.repoMessageHandler = ( event ) => {
+				if ( event.data && event.data.event === 'APPLY_NODE' ) {
 					node = event.data.data;
 
+					const sourceWindow = event.source || repositoryWindow;
+					if ( sourceWindow && !sourceWindow.closed ) {
+						sourceWindow.close();
+					}
+					repositoryWindow = null;
+					window.focus();
+
 					// Set the new values
-					that.id.setValue( node.ref.id );
-					that.caption.setValue( node.title );
-					that.mediatype.setValue( node.mediatype );
-					that.mimetype.setValue( node.mimetype );
-					that.version.setValue( node.content.version );
-					that.repotype.setValue( node.repositoryType );
-					that.previewUrl.setValue( node.preview.url );
+					this.id.setValue( node.ref.id );
+					this.caption.setValue( node.title );
+					this.mediatype.setValue( node.mediatype );
+					this.mimetype.setValue( node.mimetype );
+					this.version.setValue( node.content.version );
+					this.repotype.setValue( node.repositoryType );
+					const repositoryPreview = node.preview && node.preview.url;
+					this.previewUrl.setValue( repositoryPreview || '' );
+					renderPreview(
+						this.$edusharing,
+						getPreviewUrl( node.ref.id, repositoryPreview ),
+						node.title
+					);
 
-					// Update the preview with the new data
-					// Build the preview URL
-					const previewImageUrl = node.preview.url;
-
-					// Display the new preview image in the dialog
-					that.$edusharing.html( `
-                        <div class="ext-edusharing-dialog-preview-container">
-                            <img class="ext-edusharing-dialog-preview-image"
-                                 src="${ previewImageUrl }"
-                                 alt="${ node.title || 'Preview' }"
-                                 style="max-width: 100%; height: auto;">
-                        </div>
-                    ` );
-
-					window.removeEventListener( 'message', handleRepo, false );
+					window.removeEventListener( 'message', this.repoMessageHandler, false );
+					this.repoMessageHandler = null;
 				}
-			}
+			};
+			window.addEventListener( 'message', this.repoMessageHandler, false );
 
 			// Initialization
 			if ( this.selectedNode ) {
@@ -416,20 +406,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 
 			// Update preview if a node is selected
 			if ( this.selectedNode ) {
-				window.console.log( 'Updating preview... (this.selectedNode is not null)' );
-				/**
-				const typeSwitchHelper = this.getTypeSwitchHelper( mwAttrs );
-				if ( typeSwitchHelper === 'textlike' ) {
-					this.dimensionsField.toggle( false );
-					this.$edusharing.html( '' );
-				} else {
-					this.dimensionsField.toggle( true );
-					const mwId = mwAttrs.id.replace( 'ccrep://local/', '' );
-					const url = previewUrl + 'nodeId=' + mwId;
-					this.$edusharing.html( '<img src="' + url + '" alt="" style="width: 100%; height: auto; "/>' );
-				}
 				this.updatePreview();
-					*/
 			}
 
 			// Align widget
@@ -456,6 +433,10 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 ve.ui.MWEduSharingDialog.prototype.getTeardownProcess = function ( data ) {
 	return ve.ui.MWEduSharingDialog.super.prototype.getTeardownProcess.call( this, data )
 		.first( function () {
+			if ( this.repoMessageHandler ) {
+				window.removeEventListener( 'message', this.repoMessageHandler, false );
+				this.repoMessageHandler = null;
+			}
 			// Disconnect events
 			this.indexLayout.disconnect( this );
 			this.id.disconnect( this );

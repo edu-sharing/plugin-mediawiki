@@ -43,7 +43,10 @@ class EduSharingHooks implements
 
 	/** @inheritDoc */
 	public function onResourceLoaderGetConfigVars( array &$vars, $skin, Config $config ): void {
-		# TODO: move static js config here from self::onMakeGlobalVariablesScript()
+		// VE can be opened through AJAX from view mode, so static preview config must
+		// not depend on the initial request already containing veaction=edit.
+		$baseUrl = rtrim( (string)$config->get( 'EduSharingBaseUrl' ), '/' );
+		$vars['edupreview'] = $baseUrl . '/preview?';
 	}
 
 	/**
@@ -80,7 +83,6 @@ class EduSharingHooks implements
 
 		$out->addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
 		$out->addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
-		$out->addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
 		$out->addJsConfigVars( [
 			'eduicon' => $wgServer . $wgScriptPath .
 				'/extensions/EduSharing/resources/images/edu-icon.svg'

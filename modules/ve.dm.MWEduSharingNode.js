@@ -62,10 +62,14 @@ ve.dm.MWEduSharingNode.static.toDataElement = function () {
  * @return {string} Preview URL
  */
 ve.dm.MWEduSharingNode.static.getUrl = function ( dataElement ) {
-	const mwId = dataElement.attributes.mw.attrs.id.slice( 14 ),
-		previewUrl = mw.config.get( 'edupreview' );
+	const fullId = dataElement.attributes.mw.attrs.id || '',
+		// Older tags used ccrep://<repo>/<uuid>; current tags contain the UUID directly.
+		mwId = fullId.replace( /^ccrep:\/\/[^/]+\//, '' ),
+		previewUrl = mw.config.get( 'edupreview' ) || '',
+		separator = previewUrl.endsWith( '?' ) || previewUrl.endsWith( '&' ) ? '' :
+			( previewUrl.includes( '?' ) ? '&' : '?' );
 
-	return previewUrl + 'nodeId=' + mwId;
+	return previewUrl + separator + 'nodeId=' + encodeURIComponent( mwId );
 };
 
 /**

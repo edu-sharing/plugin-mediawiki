@@ -32,7 +32,17 @@ class SpecialEduProxy extends SpecialPage {
 			return;
 		}
 
-		$path = ltrim( (string)$par, '/' );
+		$path = ltrim( (string)( $par ?: $request->getVal( 'edupath', '' ) ), '/' );
+
+		if ( $path === 'components/search' ) {
+			$ticket = $eduService->getTicket() ?? '';
+			$searchUrl = rtrim( $eduService->config->baseUrl, '/' ) . '/components/search?' . wfArrayToCgi( [
+				'ticket' => $ticket,
+				'reurl' => 'WINDOW',
+			] );
+			header( 'Location: ' . $searchUrl, true, 302 );
+			return;
+		}
 		$isPreview = str_starts_with( $path, 'public/preview' );
 
 		$targetUrl = $this->resolveTarget( $eduService, $path );

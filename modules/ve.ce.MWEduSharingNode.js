@@ -148,8 +148,9 @@ ve.ce.MWEduSharingNode.prototype.update = function () {
  * @method
  */
 ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
-	const mwData = this.model.getAttribute( 'mw' );
-	const fullId = mwData.attrs.id;
+	const mwData = this.model.getAttribute( 'mw' ),
+		caption = ve.getProp( mwData, 'body', 'extsrc' ) || 'EduSharing content',
+		previewUrl = ve.getProp( mwData, 'attrs', 'previewUrl' ) || this.model.getUrl();
 	const align = ve.getProp( this.model.getAttribute( 'mw' ), 'attrs', 'float' ) ||
         ( this.model.doc.getDir() === 'ltr' ? 'right' : 'left' ),
 		alignClasses = {
@@ -169,17 +170,23 @@ ve.ce.MWEduSharingNode.prototype.updateStatic = function () {
 
 	// Display the preview image
 	// Classes: ext-edusharing-preview-container, ext-edusharing-preview-image, ext-edusharing-preview-caption
-	this.$edusharing.html( `
-        <div class="ext-edusharing-preview-container">
-            <img class="ext-edusharing-preview-image"
-                 src="${ mwData.attrs.previewUrl }"
-                 alt="${ mwData.body.extsrc || 'Preview' }"
-                 style="max-width: 100%; height: auto;">
-            <div class="ext-edusharing-preview-caption">
-                ${ mwData.body.extsrc || 'EduSharing content' }
-            </div>
-        </div>
-    ` );
+	this.$edusharing.empty().append(
+		$( '<div>' ).addClass( 'ext-edusharing-preview-container' ).append(
+			$( '<img>' )
+				.addClass( 'ext-edusharing-preview-image' )
+				.attr( {
+					src: previewUrl,
+					alt: caption
+				} )
+				.css( {
+					maxWidth: '100%',
+					height: 'auto'
+				} ),
+			$( '<div>' )
+				.addClass( 'ext-edusharing-preview-caption' )
+				.text( caption )
+		)
+	);
 };
 
 /**
