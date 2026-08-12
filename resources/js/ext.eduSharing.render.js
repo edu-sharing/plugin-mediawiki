@@ -230,6 +230,14 @@
 			const node = $content && $content[ 0 ] ? $content[ 0 ] : document;
 			init( node );
 		} );
-		window.mw.hook( 'postEdit' ).add( () => init() );
+		window.mw.hook( 'postEdit' ).add( () => {
+			// The rendering web component does not start a second rendering job after
+			// VisualEditor replaces page content in the same document. Load the fresh
+			// view once after saving instead of leaving an incomplete component behind.
+			if ( document.querySelector( '.ve-ce-surface' ) &&
+				document.querySelector( '.edusharing-render[data-edusharing-config]' ) ) {
+				window.location.replace( mw.util.getUrl( mw.config.get( 'wgPageName' ) ) );
+			}
+		} );
 	}
 }() );
