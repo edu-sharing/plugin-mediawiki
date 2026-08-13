@@ -464,28 +464,25 @@ class EduSharingHooks implements
 					 * So add new record and add usage.
 					 */
 
-				$resCount = 0;
-				if ( $pageId !== null ) {
-					$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-					$dbr = $dbProvider->getPrimaryDatabase();
-					$resCount = $dbr->newSelectQueryBuilder()
-						->select( 'EDUSHARING_RESOURCE_ID' )
-						->from( 'edusharing_resource' )
-						->where( [
-							'EDUSHARING_RESOURCE_PAGE_ID' => $pageId,
-							'EDUSHARING_RESOURCE_ID' => (int)$Response['resourceid']
-						] )
-						->caller( __METHOD__ )
-						->fetchRowCount();
-				}
+				$resourceId = (int)$Response['resourceid'];
 
 				/*
 				 * If record exists unset resource from deletion list
 				 */
-				if ( $resCount > 0 ) {
-
-					$_resourceid = (int)$Response['resourceid'];
-					unset( $old_list[$_resourceid] );
+				if ( isset( $old_list[$resourceId] ) ) {
+					$dbw = $dbProvider->getPrimaryDatabase();
+					$dbw->update(
+						'edusharing_resource',
+						[
+							'EDUSHARING_RESOURCE_TITLE' => $pageRef->getDBkey(),
+							'EDUSHARING_RESOURCE_WIDTH' => (string)$Response['width'],
+							'EDUSHARING_RESOURCE_HEIGHT' => (string)$Response['height'],
+							'EDUSHARING_RESOURCE_FLOAT' => (string)$Response['float'],
+						],
+						[ 'EDUSHARING_RESOURCE_ID' => $resourceId ],
+						__METHOD__
+					);
+					unset( $old_list[$resourceId] );
 
 				} else {
 

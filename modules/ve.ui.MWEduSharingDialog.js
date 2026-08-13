@@ -276,8 +276,11 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 	// Parent method
 	ve.ui.MWEduSharingDialog.super.prototype.updateMwData.call( this, mwData );
 
-	// Set the EduSharing tag attributes
-	mwData.attrs.action = 'new'; // Always set action to 'new' to get a new resource ID
+	// Existing resources keep their usage when only layout or metadata changes.
+	if ( !this.selectedNode || this.repositoryNodeSelected ) {
+		mwData.attrs.action = 'new';
+		delete mwData.attrs.resourceid;
+	}
 	mwData.body.extsrc = caption;
 	mwData.attrs.id = id.toString();
 	mwData.attrs.mediatype = mediatype.toString();
@@ -293,10 +296,6 @@ ve.ui.MWEduSharingDialog.prototype.updateMwData = function ( mwData ) {
 		mwData.attrs.height = dimensions.height.toString();
 	}
 	mwData.attrs.float = this.align.findSelectedItem().getData(); // EduSharing tag uses float, VE uses align
-	// If updating an EduSharing media, delete the resourceid tag attribute to get a new resource ID
-	if ( Object.prototype.hasOwnProperty.call( mwData.attrs, 'resourceid' ) ) {
-		delete mwData.attrs.resourceid;
-	}
 };
 
 /**
@@ -350,11 +349,13 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 				mwBody = this.selectedNode && this.selectedNode.getAttribute( 'mw' ).body || {},
 				isReadOnly = this.isReadOnly();
 			let node;
+			this.repositoryNodeSelected = false;
 
 			// Receive data from iframe
 			this.repoMessageHandler = ( event ) => {
 				if ( event.data && event.data.event === 'APPLY_NODE' ) {
 					node = event.data.data;
+					this.repositoryNodeSelected = true;
 
 					const sourceWindow = event.source || repositoryWindow;
 					if ( sourceWindow && !sourceWindow.closed ) {
@@ -401,6 +402,7 @@ ve.ui.MWEduSharingDialog.prototype.getSetupProcess = function ( data ) {
 			this.mimetype.setValue( mwAttrs.mimetype ).setDisabled( isReadOnly );
 			this.version.setValue( mwAttrs.version ).setDisabled( isReadOnly );
 			this.repotype.setValue( mwAttrs.repotype ).setDisabled( isReadOnly );
+			this.previewUrl.setValue( mwAttrs.previewUrl || '' );
 			this.versionshow.setValue( mwAttrs.versionshow ).setDisabled( isReadOnly );
 			this.dimensions.setDimensions( this.scalable.getCurrentDimensions() ).setReadOnly( isReadOnly );
 
