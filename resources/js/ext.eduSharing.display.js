@@ -31,7 +31,7 @@ function removeSpinner( container ) {
 function checkContainers() {
 	const containers = document.querySelectorAll( '.ext-edusharing-container' );
 	containers.forEach( ( container ) => {
-		if ( container.querySelector( 'edu-sharing-render' ) ) {
+		if ( container.querySelector( 'edu-sharing-render, .edusharing-render-frame' ) ) {
 			removeSpinner( container );
 		}
 	} );
