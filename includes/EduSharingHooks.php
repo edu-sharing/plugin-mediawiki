@@ -659,6 +659,9 @@ class EduSharingHooks implements
 	public static function wfEduSharingRender( $input, array $args, Parser $parser, \PPFrame $frame ) {
 		$isProcessed = isset( $args['action'] ) && $args['action'] === 'processed';
 		$isPreview = $parser->getOptions()->getIsPreview();
+		// Rendering tokens currently expire after one hour. Regenerate parser output
+		// with sufficient headroom instead of serving expired tokens from the cache.
+		$parser->getOutput()->updateCacheExpiry( 1800 );
 
 		if ( !$isProcessed && !$isPreview ) {
 			return 'Unknown edusharing action: "' . ( $args['action'] ?? '' ) . '"';
