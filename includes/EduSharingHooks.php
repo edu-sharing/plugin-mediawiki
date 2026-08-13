@@ -25,14 +25,13 @@ use MediaWiki\Revision\SlotRecord;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 use Parser;
-use StatusValue;
 
 class EduSharingHooks implements
 	\MediaWiki\ResourceLoader\Hook\ResourceLoaderGetConfigVarsHook,
 	\MediaWiki\Output\Hook\MakeGlobalVariablesScriptHook,
 	\MediaWiki\Hook\ParserFirstCallInitHook,
 	\MediaWiki\Hook\ParserPreSaveTransformCompleteHook,
-	\MediaWiki\Page\Hook\PageDeleteHook,
+	\MediaWiki\Page\Hook\PageDeleteCompleteHook,
 	\MediaWiki\Page\Hook\PageUndeleteCompleteHook,
 	\MediaWiki\Output\Hook\BeforePageDisplayHook,
 	\MediaWiki\Storage\Hook\PageSaveCompleteHook
@@ -132,24 +131,46 @@ class EduSharingHooks implements
 	 * @return void
 	 */
 	private static function deleteResourceAndUsage( EduSharingService $eduService, $resource ) {
-		/*
-		* Delete record in db
-		*/
-		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-		$dbw = $dbProvider->getPrimaryDatabase();
+		$usageId = (string)$resource->EDUSHARING_RESOURCE_USAGE;
+		if ( $usageId !== '' ) {
+			$nodeId = $eduService->getObjectIdFromUrl( $resource->EDUSHARING_RESOURCE_OBJECT_URL );
+			try {
+				$postData = new \stdClass();
+				$postData->nodeId = $nodeId;
+				$postData->usageId = $usageId;
+				$eduService->deleteUsage( $postData );
+			} catch ( \Throwable $e ) {
+				if ( !$eduService->config->usageCleanupJobFallback ) {
+					throw $e;
+				}
+				self::enqueueUsageCleanup( $nodeId, $usageId );
+				error_log(
+					'Queued failed edu-sharing usage deletion ' . $usageId . ': ' . $e->getMessage()
+				);
+			}
+		}
 
+		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
 		$dbw->delete(
 			'edusharing_resource',
-			[ 'EDUSHARING_RESOURCE_ID = ' . $resource->EDUSHARING_RESOURCE_ID ],
-			$fname = 'Database::delete'
+			[ 'EDUSHARING_RESOURCE_ID' => $resource->EDUSHARING_RESOURCE_ID ],
+			__METHOD__
 		);
+	}
 
-		$postData           = new \stdClass();
-		$postData->nodeId   = $eduService->getObjectIdFromUrl($resource->EDUSHARING_RESOURCE_OBJECT_URL);
-		$postData->usageId  = $resource->EDUSHARING_RESOURCE_USAGE;
-
-		// delete usage from repo
-		$eduService->deleteUsage( $postData );
+	/**
+	 * Queue a repository usage deletion for retry.
+	 *
+	 * @param string $nodeId Repository node ID
+	 * @param string $usageId Repository usage ID
+	 * @return void
+	 */
+	private static function enqueueUsageCleanup( string $nodeId, string $usageId ): void {
+		$job = new EduSharingUsageCleanupJob( [
+			'nodeId' => $nodeId,
+			'usageId' => $usageId,
+		] );
+		MediaWikiServices::getInstance()->getJobQueueGroup()->push( $job );
 	}
 
 	/**
@@ -185,9 +206,20 @@ class EduSharingHooks implements
 				: $resourceData[ 'EDUSHARING_RESOURCE_PAGE_ID' ]
 		);
 		$postData->resourceId = $resourceId;
-        $postData->nodeId = $eduService->getObjectIdFromUrl($resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ]);
+		$postData->nodeId = $eduService->getObjectIdFromUrl(
+			$resourceData[ 'EDUSHARING_RESOURCE_OBJECT_URL' ]
+		);
 
-        $usage = $eduService->createUsage( $postData );
+		try {
+			$usage = $eduService->createUsage( $postData );
+		} catch ( \Throwable $e ) {
+			$dbw->delete(
+				'edusharing_resource',
+				[ 'EDUSHARING_RESOURCE_ID' => $resourceId ],
+				__METHOD__
+			);
+			throw $e;
+		}
 
 		if ( $usage ) {
 			$dbw->update(
@@ -207,22 +239,26 @@ class EduSharingHooks implements
 	 * @param ProperPageIdentity $page
 	 * @param Authority $deleter
 	 * @param string $reason
-	 * @param StatusValue $status
-	 * @param bool $suppress
-	 * @return bool
+	 * @param int $pageID
+	 * @param RevisionRecord $deletedRev
+	 * @param ManualLogEntry $logEntry
+	 * @param int $archivedRevisionCount
+	 * @return void
 	 */
-	public function onPageDelete(
+	public function onPageDeleteComplete(
 		ProperPageIdentity $page,
 		Authority $deleter,
 		string $reason,
-		StatusValue $status,
-		bool $suppress
-	) {
+		int $pageID,
+		RevisionRecord $deletedRev,
+		ManualLogEntry $logEntry,
+		int $archivedRevisionCount
+	): void {
 		/*
 		 * Select edu-sharing resources of the article that will be deleted
 		 */
 		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-		$dbr = $dbProvider->getReplicaDatabase();
+		$dbr = $dbProvider->getPrimaryDatabase();
 
 		$res = $dbr->select( 'edusharing_resource',
 			[
@@ -230,7 +266,7 @@ class EduSharingHooks implements
 				'EDUSHARING_RESOURCE_USAGE',
 				'EDUSHARING_RESOURCE_OBJECT_URL'
 			], // $vars (columns of the table)
-			'EDUSHARING_RESOURCE_PAGE_ID = ' . $page->getId(),
+			[ 'EDUSHARING_RESOURCE_PAGE_ID' => $pageID ],
 			'Database::select',
 			[ 'ORDER BY' => 'EDUSHARING_RESOURCE_ID ASC' ]
 		);
@@ -243,14 +279,16 @@ class EduSharingHooks implements
 		$mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
 		$eduService = new EduSharingService( $user, $mwConfig );
-		if ( !$eduService->isAvailable ) {
-			return true;
-		}
 		foreach ( $res as $resource ) {
-			self::deleteResourceAndUsage( $eduService, $resource );
+			try {
+				self::deleteResourceAndUsage( $eduService, $resource );
+			} catch ( \Throwable $e ) {
+				error_log(
+					'Unable to delete edu-sharing usage ' . $resource->EDUSHARING_RESOURCE_USAGE .
+					': ' . $e->getMessage()
+				);
+			}
 		}
-
-		return true;
 	}
 
 	/**
@@ -331,7 +369,7 @@ class EduSharingHooks implements
 		 * Select all article's resources
 		 */
 		$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-		$dbr = $dbProvider->getReplicaDatabase();
+		$dbr = $dbProvider->getPrimaryDatabase();
 
 		if ( $pageRef instanceof ProperPageIdentity ) {
 			// if we have a PageIdentity object, we are in undelete context and have a pageId
@@ -422,25 +460,19 @@ class EduSharingHooks implements
 					 * So add new record and add usage.
 					 */
 
-				$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
-				$dbr = $dbProvider->getReplicaDatabase();
-
-				$res = $dbr->select(
-					'edusharing_resource',
-					[
-						'EDUSHARING_RESOURCE_ID',
-						'EDUSHARING_RESOURCE_PAGE_ID',
-						'EDUSHARING_RESOURCE_USAGE'
-					],
-					[
-						'EDUSHARING_RESOURCE_PAGE_ID = ' . $pageId,
-						'EDUSHARING_RESOURCE_ID = ' . $Response['resourceid']
-					]
-				);
-
 				$resCount = 0;
-				foreach ( $res as $r ) {
-					$resCount++;
+				if ( $pageId !== null ) {
+					$dbProvider = MediaWikiServices::getInstance()->getConnectionProvider();
+					$dbr = $dbProvider->getPrimaryDatabase();
+					$resCount = $dbr->newSelectQueryBuilder()
+						->select( 'EDUSHARING_RESOURCE_ID' )
+						->from( 'edusharing_resource' )
+						->where( [
+							'EDUSHARING_RESOURCE_PAGE_ID' => $pageId,
+							'EDUSHARING_RESOURCE_ID' => (int)$Response['resourceid']
+						] )
+						->caller( __METHOD__ )
+						->fetchRowCount();
 				}
 
 				/*
@@ -453,7 +485,15 @@ class EduSharingHooks implements
 
 				} else {
 
-					$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
+					try {
+						$usage = self::addResourceAndUsage( $eduService, $resourceData, $isRestore );
+					} catch ( \Throwable $e ) {
+						error_log(
+							'Unable to restore edu-sharing resource ' . (string)$Response['id'] .
+							': ' . $e->getMessage()
+						);
+						continue;
+					}
 
 					$Response['resourceid'] = $usage->resourceId;
 					// if we don't have a pageId (b/c page is new and not yet saved) we need to save the resourceIds

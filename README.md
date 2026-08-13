@@ -51,6 +51,7 @@ The extension requires configuration in your `LocalSettings.php`:
 | `$wgEduSharingBaseUrl`        | The base URL of your edu-sharing repository (e.g., `https://repository.example.org`). | Yes      | -         |
 | `$wgEduSharingForceGuestUser` | Force anonymous access for all users.                                                 | No       | `false`   |
 | `$wgEduSharingGuestUserName`  | Username for anonymous access to the repository.                                      | No       | `esguest` |
+| `$wgEduSharingUsageCleanupJobFallback` | Retry failed repository usage deletions through MediaWiki's JobQueue.       | No       | `true`    |
 
 ### Example Configuration
 
@@ -69,6 +70,9 @@ $wgEduSharingForceGuestUser = true;
 
 # Optional: Custom guest username
 $wgEduSharingGuestUserName = 'YourGuestUserName';
+
+# Optional: Disable JobQueue retries for failed usage deletions
+$wgEduSharingUsageCleanupJobFallback = false;
 ```
 
 ### Configuration Notes:
@@ -152,6 +156,26 @@ Follow the [Configuration](#configuration) steps to register your wiki with the 
 
 - The extension creates a `edusharing_resource` table to store metadata and references.
 - This table is automatically updated during installation or upgrades.
+
+## Usage Cleanup and JobQueue Fallback
+
+When an embedded resource or an entire wiki page is deleted, the extension first tries to
+delete the corresponding usage synchronously in the edu-sharing repository. If that request
+fails and `$wgEduSharingUsageCleanupJobFallback` is enabled, a persistent
+`eduSharingUsageCleanup` job is queued and the local resource record is removed. The job only
+contains the old node and usage IDs, so restoring the page can safely create a new usage while
+the old deletion is still pending. Deleting an already missing usage is treated as successful.
+
+The fallback requires a persistently configured MediaWiki JobQueue and a regularly running job
+runner. For example:
+
+```bash
+php maintenance/run.php runJobs --type=eduSharingUsageCleanup
+```
+
+Failed jobs return an error and remain eligible for retry according to the configured JobQueue
+backend. Set `$wgEduSharingUsageCleanupJobFallback = false;` to retain the previous synchronous-only
+behavior. If enqueueing itself fails, the local resource record is retained for manual recovery.
 
 ---
 

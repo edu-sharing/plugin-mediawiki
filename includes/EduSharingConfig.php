@@ -56,6 +56,8 @@ class EduSharingConfig {
 	public string $previewEndpoint;
 	/** @var bool Open resource links in new tab */
 	public bool $openResourceInNewTab;
+	/** @var bool Retry failed usage deletions through the job queue */
+	public bool $usageCleanupJobFallback;
 
 	/**
 	 * @param User $user Current user
@@ -78,6 +80,7 @@ class EduSharingConfig {
 		$this->redirectEndpoint     = (string)$config->get( 'EduSharingRedirectEndpoint' );
 		$this->previewEndpoint      = (string)$config->get( 'EduSharingPreviewEndpoint' );
 		$this->openResourceInNewTab = (bool)$config->get( 'EduSharingOpenResourceInNewTab' );
+		$this->usageCleanupJobFallback = (bool)$config->get( 'EduSharingUsageCleanupJobFallback' );
 
 		if (
 				!isset( $user ) ||
