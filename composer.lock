@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a1f1d3010be0da2d9f1b7d12e9fbe923",
+    "content-hash": "b02cefa86635ccbacba52468c550091d",
     "packages": [
         {
             "name": "edu-sharing/auth-plugin",
-            "version": "10.0.x-dev",
+            "version": "11.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/edu-sharing/php-auth-plugin.git",
-                "reference": "d8ef2f3501d56f488cd9c01939417bdd407ff7c6"
+                "reference": "67f3ead46b4b6a94f366c11d6d224226db503b99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/edu-sharing/php-auth-plugin/zipball/d8ef2f3501d56f488cd9c01939417bdd407ff7c6",
-                "reference": "d8ef2f3501d56f488cd9c01939417bdd407ff7c6",
+                "url": "https://api.github.com/repos/edu-sharing/php-auth-plugin/zipball/67f3ead46b4b6a94f366c11d6d224226db503b99",
+                "reference": "67f3ead46b4b6a94f366c11d6d224226db503b99",
                 "shasum": ""
             },
             "require": {
@@ -29,7 +29,6 @@
             "require-dev": {
                 "phpunit/phpunit": "^12"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -49,9 +48,9 @@
             "description": "Plugin to provide authentification via Auth By App with a edu-sharing repository",
             "support": {
                 "issues": "https://github.com/edu-sharing/php-auth-plugin/issues",
-                "source": "https://github.com/edu-sharing/php-auth-plugin/tree/10.0"
+                "source": "https://github.com/edu-sharing/php-auth-plugin/tree/11.0.0"
             },
-            "time": "2026-06-18T11:45:30+00:00"
+            "time": "2026-07-13T08:26:22+00:00"
         }
     ],
     "packages-dev": [
@@ -2634,9 +2633,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "edu-sharing/auth-plugin": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {},

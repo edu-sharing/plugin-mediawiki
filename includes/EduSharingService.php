@@ -19,9 +19,6 @@ use MediaWiki\User\User;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 class EduSharingService {
-	/** @var array<string,array{ok:bool,msg:?string}> In-request compatibility cache */
-	private static array $compatibilityCache = [];
-
 	/** @var EduSharingConfig Extension configuration */
 	public EduSharingConfig $config;
 	/** @var EduSharingTicketManager Ticket manager */
@@ -52,11 +49,23 @@ class EduSharingService {
 			$this->config->privateKey,
 			$this->config->appId
 		);
+		$this->helperBase->registerAboutApiCacheHandler(
+			new EduSharingAboutApiCacheHandler( $this->helperBase )
+		);
 
-		$compat = $this->verifyCompatibilityCached();
-		if ( !$compat['ok'] ) {
+		try {
+			$this->helperBase->verifyCompatibility();
+		} catch ( \Throwable $e ) {
+			$msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
+			$hasLocalKeys = (bool)$this->config->getPublicKey() && (bool)$this->config->getRepoPublicKey();
+			if ( $hasLocalKeys && stripos( $msg, 'signature' ) !== false ) {
+				$hint = wfMessage( 'edusharing-signature-invalid-hint' )->inContentLanguage()->text();
+				if ( $hint ) {
+					$msg .= ' - ' . $hint;
+				}
+			}
 			$this->isAvailable = false;
-			$this->availabilityError = $compat['msg'] ?: 'edu-sharing repository unavailable';
+			$this->availabilityError = $msg;
 			return;
 		}
 
@@ -74,52 +83,6 @@ class EduSharingService {
 			$authHelper,
 			$this->config
 		);
-        $this->helperBase->registerSignatureHandler( new EduSharingSignatureHandler( $this->nodeHelper ));
-	}
-
-	/**
-	 * Verify repository compatibility with short-lived cache to avoid repeated backend calls.
-	 *
-	 * @return array{ok:bool,msg:?string}
-	 */
-	private function verifyCompatibilityCached(): array {
-		$keySeed = $this->config->baseUrl . '|' . $this->config->appId;
-		$cacheKey = md5( $keySeed );
-
-		if ( isset( self::$compatibilityCache[$cacheKey] ) ) {
-			return self::$compatibilityCache[$cacheKey];
-		}
-
-		$cache = \MediaWiki\MediaWikiServices::getInstance()->getMainWANObjectCache();
-		$wanKey = $cache->makeKey( 'edusharing', 'compatibility', $cacheKey );
-		$cached = $cache->get( $wanKey );
-		if ( is_array( $cached ) && array_key_exists( 'ok', $cached ) ) {
-			self::$compatibilityCache[$cacheKey] = [
-				'ok' => (bool)$cached['ok'],
-				'msg' => $cached['msg'] ?? null
-			];
-			return self::$compatibilityCache[$cacheKey];
-		}
-
-		$result = [ 'ok' => true, 'msg' => null ];
-		try {
-			$this->helperBase->verifyCompatibility();
-		} catch ( \Throwable $e ) {
-			$msg = trim( strtok( $e->getMessage(), "\n" ) ) ?: 'edu-sharing repository unavailable';
-			$hasLocalKeys = (bool)$this->config->getPublicKey() && (bool)$this->config->getRepoPublicKey();
-			if ( $hasLocalKeys && $msg && stripos( $msg, 'signature' ) !== false ) {
-				$hint = wfMessage( 'edusharing-signature-invalid-hint' )->inContentLanguage()->text();
-				if ( $hint ) {
-					$msg .= ' - ' . $hint;
-				}
-			}
-			$result = [ 'ok' => false, 'msg' => $msg ];
-		}
-
-		self::$compatibilityCache[$cacheKey] = $result;
-		$cache->set( $wanKey, $result, 300 );
-
-		return $result;
 	}
 
 	/**
@@ -138,6 +101,7 @@ class EduSharingService {
 	 * Create usage in the repository.
 	 *
 	 * @param \stdClass $postData Payload containing ticket/container/resource/nodeId
+	 *  and optionally nodeVersion/courseTitle
 	 * @return mixed
 	 */
 	public function createUsage( $postData ) {
@@ -147,9 +111,11 @@ class EduSharingService {
 
 		$result = $this->nodeHelper->createUsage(
 			$postData->ticket,
-			$postData->containerId,
-			$postData->resourceId,
-			$postData->nodeId
+			(string)$postData->containerId,
+			(string)$postData->resourceId,
+			$postData->nodeId,
+			$postData->nodeVersion ?? null,
+			!empty( $postData->courseTitle ) ? (string)$postData->courseTitle : null
 		);
 		return $result;
 	}
@@ -170,12 +136,12 @@ class EduSharingService {
 				$postData->nodeId,
 				$postData->usageId
 			);
-		} catch (UsageDeletedException $e) {
-            error_log('noted, deleting locally: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
+		} catch ( UsageDeletedException $e ) {
+			error_log( 'noted, deleting locally: ' . $e->getMessage() );
+		} catch ( \Exception $e ) {
+			throw $e;
+		}
+	}
 
 	/**
 	 * Get a node by usage.
@@ -220,7 +186,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		return $this->nodeHelper->getSecuredNodeByUsage($usage, $this->config->username);
+		return $this->nodeHelper->getSecuredNodeByUsage( $usage, $this->config->username );
 	}
 
 	/**
@@ -232,7 +198,7 @@ class EduSharingService {
 		if ( !$this->isAvailable ) {
 			throw new \RuntimeException( 'edu-sharing backend unavailable' );
 		}
-		$about = $this->helperBase->getAbout();
+		$about = $this->helperBase->getAboutCached();
 		if ( isset( $about['renderingService2']['url'] ) ) {
 			return $about['renderingService2']['url'];
 		}
@@ -316,12 +282,12 @@ class EduSharingService {
 		return $node;
 	}
 
-    public function getObjectIdFromUrl(string $url): string {
-        $objectId = parse_url($url, PHP_URL_PATH);
-        if ($objectId === false) {
-            throw new \InvalidArgumentException('Invalid URL');
-        }
+	public function getObjectIdFromUrl( string $url ): string {
+		$objectId = parse_url( $url, PHP_URL_PATH );
+		if ( $objectId === false ) {
+			throw new \InvalidArgumentException( 'Invalid URL' );
+		}
 
-        return str_replace('/', '', $objectId);
-    }
+		return str_replace( '/', '', $objectId );
+	}
 }

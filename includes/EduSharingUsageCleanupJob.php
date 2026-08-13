@@ -1,8 +1,8 @@
 <?php
 namespace MediaWiki\Extension\EduSharing;
 
-use Job;
 use GenericParameterJob;
+use Job;
 use MediaWiki\MediaWikiServices;
 
 class EduSharingUsageCleanupJob extends Job implements GenericParameterJob {
