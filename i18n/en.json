@@ -6,7 +6,6 @@
 		]
 	},
 	"edusharing-desc": "Enables the inclusion of media content from the Edu-Sharing Repository",
-
 	"visualeditor-mwedusharingdialog-button": "edu-sharing Media",
 	"visualeditor-mwedusharingdialog-title": "Insert edu-sharing Media",
 	"visualeditor-mwedusharingdialog-help-title": "Help",
@@ -26,5 +25,10 @@
 	"visualeditor-mwedusharingdialog-align": "Alignment",
 	"edusharing-placeholder-unavailable": "edu-sharing repository unavailable",
 	"edusharing-missing-keys-hint": "No edu-sharing keys found. Run the maintenance script \"php extensions/EduSharing/maintenance/createKeys.php\" and register this installation at the repository.",
-	"edusharing-signature-invalid-hint": "Signature verification failed. Did you register the EduSharing extension at repository using the current keys?"
+	"edusharing-signature-invalid-hint": "Signature verification failed. Did you register the EduSharing extension at repository using the current keys?",
+	"edusharing-popup-blocked": "Your browser blocked the edu-sharing window. Allow pop-ups for this wiki and try again.",
+	"edusharing-ticket-failed": "Could not obtain an edu-sharing session. Check that this wiki is registered at the repository.",
+	"apierror-edusharing-unavailable": "The edu-sharing repository is not available: $1",
+	"apierror-edusharing-noticket": "Could not obtain a ticket from the edu-sharing repository. This wiki may not be registered at the repository, or the configured repository user does not exist.",
+	"apihelp-edusharingticket-example-1": "Get a repository picker URL for the current user"
 }

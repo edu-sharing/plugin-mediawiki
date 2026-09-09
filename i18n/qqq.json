@@ -25,5 +25,10 @@
 	"visualeditor-mwedusharingdialog-align": "Label for the alignment field in the EduSharing dialog. The alignment determines how the media object is aligned in the text. {{desc}}",
 	"edusharing-placeholder-unavailable": "Message shown when the edu-sharing repository is unavailable. {{desc}}",
 	"edusharing-missing-keys-hint": "Hint shown when no edu-sharing keys are found. Instructs the user to run a maintenance script to generate keys and register the installation. {{desc}}",
-	"edusharing-signature-invalid-hint": "Hint shown when the signature verification fails. Asks the user to verify if the EduSharing extension is registered at the repository with the current keys. {{desc}}"
+	"edusharing-signature-invalid-hint": "Hint shown when the signature verification fails. Asks the user to verify if the EduSharing extension is registered at the repository with the current keys. {{desc}}",
+	"edusharing-popup-blocked": "Error shown when the browser's pop-up blocker prevented the repository picker window from opening.",
+	"edusharing-ticket-failed": "Error shown when no repository ticket could be obtained for the current user.",
+	"apierror-edusharing-unavailable": "API error. Parameters:\n* $1 - reason reported by the repository connection",
+	"apierror-edusharing-noticket": "API error shown when the repository refused to issue a ticket.",
+	"apihelp-edusharingticket-example-1": "{{doc-apihelp-example|edusharingticket}}"
 }

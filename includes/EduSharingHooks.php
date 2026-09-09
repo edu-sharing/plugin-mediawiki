@@ -52,38 +52,29 @@ class EduSharingHooks implements
 
 	/** @inheritDoc */
 	public function onMakeGlobalVariablesScript( &$vars, $out ): void {
-		$request = $out->getRequest();
-		$action = $request->getVal( 'action', 'view' );
-		$veAction = $request->getVal( 'veaction', '' );
-		// Only prepare dialog ticket/config in editing contexts.
-		if ( $action !== 'edit' && $action !== 'submit' && $veAction !== 'edit' ) {
-			return;
-		}
-
-		$user    = $out->getUser();
+		// These variables are emitted unconditionally and deliberately contain
+		// no ticket. Gating them on action=edit/veaction=edit used to leave them
+		// undefined whenever VisualEditor was activated client-side (clicking the
+		// Edit tab performs no page render), which made the picker button open
+		// "/null" instead of the repository. The ticket is fetched on demand by
+		// the ApiEduSharingTicket module, so nothing here talks to the repository
+		// and ordinary page views stay free of remote calls.
+		$user     = $out->getUser();
 		$services = MediaWikiServices::getInstance();
 		$mwConfig = $services->getConfigFactory()->makeConfig( 'edusharing' );
 
-		$eduService = new EduSharingService( $user, $mwConfig );
-		$ticket = $eduService->getTicket() ?? '';
+		$eduConfig = new EduSharingConfig( $user, $mwConfig );
 
 		global $wgServer, $wgScriptPath;
 
-		$out->addModules( 'ext.eduSharing.dialog' );
-		$out->addJsConfigVars( [ 'eduticket' => $ticket ] );
-		$out->addJsConfigVars( [ 'eduusername' => $eduService->config->username ] );
-		$out->addJsConfigVars( [ 'eduappid' => $eduService->config->appId ] );
 		$out->addJsConfigVars( [
-			'edugui' => $eduService->config->baseUrl .
-				'/components/search?ticket=' . $ticket . '&reurl=WINDOW'
-		] );
-
-		$out->addJsConfigVars( [ 'edu_preview_icon_video' => $eduService->config->iconMimeVideo ] );
-		$out->addJsConfigVars( [ 'edu_preview_icon_audio' => $eduService->config->iconMimeAudio ] );
-		$out->addJsConfigVars( [ 'edupreview' => $eduService->config->baseUrl . '/preview?' ] );
-		$out->addJsConfigVars( [
+			'eduusername' => $eduConfig->username,
+			'eduappid' => $eduConfig->appId,
+			'edupreview' => $eduConfig->baseUrl . '/preview?',
+			'edu_preview_icon_video' => $eduConfig->iconMimeVideo,
+			'edu_preview_icon_audio' => $eduConfig->iconMimeAudio,
 			'eduicon' => $wgServer . $wgScriptPath .
-				'/extensions/EduSharing/resources/images/edu-icon.svg'
+				'/extensions/EduSharing/resources/images/edu-icon.svg',
 		] );
 	}
 

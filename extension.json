@@ -103,7 +103,8 @@
 				"oojs-ui.styles.icons-editing-advanced",
 				"ext.visualEditor.mwcore",
 				"ext.visualEditor.mwimage.core",
-				"mediawiki.widgets.Table"
+				"mediawiki.widgets.Table",
+				"mediawiki.api"
 			],
 			"messages": [
 				"visualeditor-mwedusharingdialog-button",
@@ -122,7 +123,9 @@
 				"visualeditor-mwedusharingdialog-versionshow-latest",
 				"visualeditor-mwedusharingdialog-versionshow-current",
 				"visualeditor-mwedusharingdialog-size",
-				"visualeditor-mwedusharingdialog-align"
+				"visualeditor-mwedusharingdialog-align",
+				"edusharing-popup-blocked",
+				"edusharing-ticket-failed"
 			],
 			"targets": [
 				"mobile",
@@ -195,5 +198,8 @@
 		"localBasePath": "",
 		"remoteExtPath": "EduSharing"
 	},
-	"manifest_version": 2
+	"manifest_version": 2,
+	"APIModules": {
+		"edusharingticket": "MediaWiki\\Extension\\EduSharing\\ApiEduSharingTicket"
+	}
 }

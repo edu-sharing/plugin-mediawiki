@@ -156,8 +156,10 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 		this.indexLayout.$element
 	);
 
-	this.repoButton.$element.on( 'click', () => {
-		openRepo();
+	// Use the widget's own event rather than a DOM handler on $element, so the
+	// callback runs exactly once per activation (and also fires on keyboard use).
+	this.repoButton.on( 'click', () => {
+		this.openRepo();
 	} );
 
 	if ( this.selectedNode ) {
@@ -168,12 +170,46 @@ ve.ui.MWEduSharingDialog.prototype.initialize = function () {
 /**
  * Opens the EduSharing repository in a new window.
  *
+ * The picker URL carries a repository ticket that is only valid for a short
+ * time, so it is requested here rather than being baked into the page at render
+ * time. The window has to be opened synchronously to stay within the browser's
+ * user-gesture window - otherwise the popup blocker discards it - and is then
+ * pointed at the repository once the ticket arrives.
+ *
  * @method
  */
-function openRepo() {
-	window.console.log( 'Opening EduSharing repository...' );
-	window.win = window.open( mw.config.get( 'edugui' ) );
-}
+ve.ui.MWEduSharingDialog.prototype.openRepo = function () {
+	const repoWindow = window.open( '', '_blank' );
+
+	if ( !repoWindow ) {
+		mw.notify( ve.msg( 'edusharing-popup-blocked' ), { type: 'error' } );
+		return;
+	}
+
+	// Keep the legacy handle: the repository posts APPLY_NODE back to us and
+	// other code may still expect window.win to reference the picker.
+	window.win = repoWindow;
+
+	new mw.Api().get( { action: 'edusharingticket' } ).then(
+		( data ) => {
+			const url = data && data.edusharingticket && data.edusharingticket.gui;
+			if ( !url ) {
+				repoWindow.close();
+				mw.notify( ve.msg( 'edusharing-ticket-failed' ), { type: 'error' } );
+				return;
+			}
+			repoWindow.location = url;
+		},
+		( code, result ) => {
+			repoWindow.close();
+			const detail = result && result.error && result.error.info;
+			mw.notify(
+				detail || ve.msg( 'edusharing-ticket-failed' ),
+				{ type: 'error' }
+			);
+		}
+	);
+};
 
 /**
  * Updates the preview of the EduSharing content.
