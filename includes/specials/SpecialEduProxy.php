@@ -11,8 +11,12 @@ class SpecialEduProxy extends SpecialPage {
 	 * Proxy requests to edu-sharing rendering/API endpoints, handling cookies and headers.
 	 */
 	public function __construct() {
-		parent::__construct( 'EduProxy', '', false );
+		parent::__construct( 'EduProxy' );
 	}
+
+    public function isListed(): bool {
+        return false;
+    }
 
 	/**
 	 * Proxy a request to the configured edu-sharing rendering/API endpoints.

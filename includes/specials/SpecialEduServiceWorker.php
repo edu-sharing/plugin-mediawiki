@@ -10,8 +10,12 @@ class SpecialEduServiceWorker extends SpecialPage {
 	 * Special page that proxies the edu-sharing service worker through MediaWiki.
 	 */
 	public function __construct() {
-		parent::__construct( 'EduServiceWorker', '', false );
+		parent::__construct( 'EduServiceWorker' );
 	}
+
+    public function isListed(): bool {
+        return false;
+    }
 
 	/**
 	 * Output the service worker script fetched from the edu-sharing rendering service.

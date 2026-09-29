@@ -10,10 +10,13 @@ class SpecialEduSharingRegister extends SpecialPage {
 	/**
 	 * Register page for edu-sharing to provide application XML.
 	 */
-	public function __construct() {
-		parent::__construct( 'EduSharingRegister', '', false );
-	}
+    public function __construct() {
+        parent::__construct( 'EduSharingRegister' );
+    }
 
+    public function isListed(): bool {
+        return false;
+    }
 	/**
 	 * Output the registration XML for this application.
 	 *
